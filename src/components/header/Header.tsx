@@ -1,13 +1,9 @@
-import StatusBar from "./StatusBar";
+const Header = () => null;
+// Header layout moved into Navigation (with built-in announcement bar + sticky glass nav)
 import Navigation from "./Navigation";
-
-const Header = () => {
-  return (
-    <header className="w-full sticky top-0 z-50">
-      {/* <StatusBar /> */}
-      <Navigation />
-    </header>
-  );
-};
-
-export default Header;
+const HeaderWrap = () => (
+  <header className="w-full">
+    <Navigation />
+  </header>
+);
+export default HeaderWrap;
