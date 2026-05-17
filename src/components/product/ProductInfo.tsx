@@ -1,115 +1,113 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  Breadcrumb, 
-  BreadcrumbItem, 
-  BreadcrumbLink, 
-  BreadcrumbList, 
-  BreadcrumbPage, 
-  BreadcrumbSeparator 
-} from "@/components/ui/breadcrumb";
-import { Minus, Plus } from "lucide-react";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { BadgeCheck, Shield, TrendingUp, Heart } from "lucide-react";
+import { getProduct, formatPrice, rarityClass } from "@/data/products";
 
 const ProductInfo = () => {
-  const [quantity, setQuantity] = useState(1);
+  const { productId } = useParams();
+  const product = getProduct(productId ?? 1);
+  const [tab, setTab] = useState<"buy" | "bid">("buy");
 
-  const incrementQuantity = () => setQuantity(prev => prev + 1);
-  const decrementQuantity = () => setQuantity(prev => Math.max(1, prev - 1));
+  const trend = product.lastSale ? product.price - product.lastSale : 0;
+  const trendPct = product.lastSale ? (trend / product.lastSale) * 100 : 0;
 
   return (
-    <div className="space-y-6">
-      {/* Breadcrumb - Show only on desktop */}
+    <div className="space-y-8">
       <div className="hidden lg:block">
         <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link to="/">Home</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
+          <BreadcrumbList className="text-muted-foreground">
+            <BreadcrumbItem><BreadcrumbLink asChild><Link to="/" className="text-xs font-mono tracking-wider hover:text-foreground">HOME</Link></BreadcrumbLink></BreadcrumbItem>
             <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link to="/category/earrings">Earrings</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
+            <BreadcrumbItem><BreadcrumbLink asChild><Link to="/category/all" className="text-xs font-mono tracking-wider hover:text-foreground">MARKET</Link></BreadcrumbLink></BreadcrumbItem>
             <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Pantheon</BreadcrumbPage>
-            </BreadcrumbItem>
+            <BreadcrumbItem><BreadcrumbPage className="text-xs font-mono tracking-wider text-foreground uppercase">{product.name}</BreadcrumbPage></BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       </div>
 
-      {/* Product title and price */}
-      <div className="space-y-2">
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-sm font-light text-muted-foreground mb-1">Earrings</p>
-            <h1 className="text-2xl md:text-3xl font-light text-foreground">Pantheon</h1>
-          </div>
-          <div className="text-right">
-            <p className="text-xl font-light text-foreground">€2,850</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Product details */}
-      <div className="space-y-4 py-4 border-b border-border">
-        <div className="space-y-2">
-          <h3 className="text-sm font-light text-foreground">Material</h3>
-          <p className="text-sm font-light text-muted-foreground">18k Gold Plated Sterling Silver</p>
-        </div>
-        
-        <div className="space-y-2">
-          <h3 className="text-sm font-light text-foreground">Dimensions</h3>
-          <p className="text-sm font-light text-muted-foreground">2.5cm x 1.2cm</p>
-        </div>
-        
-        <div className="space-y-2">
-          <h3 className="text-sm font-light text-foreground">Weight</h3>
-          <p className="text-sm font-light text-muted-foreground">4.2g per earring</p>
-        </div>
-        
-        <div className="space-y-2">
-          <h3 className="text-sm font-light text-foreground">Editor's notes</h3>
-          <p className="text-sm font-light text-muted-foreground italic">"A modern interpretation of classical architecture, these earrings bridge timeless elegance with contemporary minimalism."</p>
-        </div>
-      </div>
-
-      {/* Quantity and Add to Cart */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-light text-foreground">Quantity</span>
-          <div className="flex items-center border border-border">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={decrementQuantity}
-              className="h-10 w-10 p-0 hover:bg-transparent hover:opacity-50 rounded-none border-none"
-            >
-              <Minus className="h-4 w-4" />
-            </Button>
-            <span className="h-10 flex items-center px-4 text-sm font-light min-w-12 justify-center border-l border-r border-border">
-              {quantity}
+      {/* Title */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={`inline-flex items-center px-2 py-1 text-[10px] tracking-[0.18em] uppercase font-mono border ${rarityClass[product.rarity]}`}>
+            {product.rarity}
+          </span>
+          <span className="px-2 py-1 text-[10px] tracking-[0.18em] uppercase font-mono border border-border text-foreground/80">{product.grade}</span>
+          {product.verified && (
+            <span className="flex items-center gap-1 px-2 py-1 text-[10px] tracking-[0.18em] uppercase font-mono border border-verified/30 text-verified">
+              <BadgeCheck size={11} /> Verified
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={incrementQuantity}
-              className="h-10 w-10 p-0 hover:bg-transparent hover:opacity-50 rounded-none border-none"
+          )}
+        </div>
+        <p className="eyebrow">{product.series}</p>
+        <h1 className="font-display text-4xl md:text-5xl tracking-tight text-foreground leading-tight">
+          {product.name}
+        </h1>
+        <p className="text-sm text-muted-foreground">{product.set} · {product.edition}</p>
+      </div>
+
+      {/* Market panel */}
+      <div className="border border-border bg-surface-1 p-6 space-y-5">
+        <div className="flex border-b border-border">
+          {(["buy", "bid"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`flex-1 py-3 text-[11px] tracking-[0.18em] uppercase font-mono transition-colors ${
+                tab === t ? "text-foreground border-b-2 border-foreground -mb-px" : "text-muted-foreground hover:text-foreground"
+              }`}
             >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
+              {t === "buy" ? "Buy Now" : "Place Bid"}
+            </button>
+          ))}
         </div>
 
-        <Button 
-          className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 font-light rounded-none"
-        >
-          Add to Bag
-        </Button>
+        <div className="flex items-baseline justify-between">
+          <div>
+            <p className="eyebrow mb-1">{tab === "buy" ? "Lowest Ask" : "Highest Bid"}</p>
+            <p className="font-display text-4xl text-foreground tabular-nums tracking-tight">
+              {formatPrice(tab === "buy" ? product.price : Math.round(product.price * 0.92))}
+            </p>
+          </div>
+          {product.lastSale && (
+            <div className="text-right">
+              <p className="eyebrow mb-1">Last Sale</p>
+              <p className="text-base text-foreground tabular-nums font-mono">{formatPrice(product.lastSale)}</p>
+              <p className={`text-xs font-mono tabular-nums mt-0.5 ${trend >= 0 ? "text-verified" : "text-destructive"}`}>
+                <TrendingUp size={10} className="inline -mt-0.5" /> {trend >= 0 ? "+" : ""}{trendPct.toFixed(1)}%
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          <Button className="flex-1 h-12 bg-foreground text-background hover:bg-foreground/90 rounded-none font-medium tracking-wider text-xs">
+            {tab === "buy" ? `BUY NOW · ${formatPrice(product.price)}` : "PLACE A BID"}
+          </Button>
+          <Button variant="outline" size="icon" className="h-12 w-12 rounded-none border-border hover:border-foreground/40 bg-transparent">
+            <Heart size={16} strokeWidth={1.5} />
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-3 text-[11px] font-mono tracking-wider text-muted-foreground pt-2 border-t border-border/50">
+          <Shield size={12} className="text-verified" />
+          ESCROW PROTECTED · INSURED SHIPPING · 7-DAY AUTHENTICATION GUARANTEE
+        </div>
+      </div>
+
+      {/* Stats grid */}
+      <div className="grid grid-cols-3 gap-px bg-border">
+        {[
+          { l: "Population", v: product.population?.toString() ?? "—" },
+          { l: "Edition", v: product.edition },
+          { l: "Grade", v: product.grade },
+        ].map((s) => (
+          <div key={s.l} className="bg-background p-4">
+            <p className="eyebrow mb-1.5">{s.l}</p>
+            <p className="text-sm text-foreground font-mono">{s.v}</p>
+          </div>
+        ))}
       </div>
     </div>
   );

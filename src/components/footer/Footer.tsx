@@ -1,89 +1,84 @@
+import { Link } from "react-router-dom";
+import { ArrowUpRight } from "lucide-react";
+
 const Footer = () => {
   return (
-    <footer className="w-full bg-white text-black pt-8 pb-2 px-6 border-t border-[#e5e5e5] mt-48">
-      <div className="">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-8">
-          {/* Brand - Left side */}
-          <div>
-            <img 
-              src="/Linea_Jewelry_Inc-2.svg" 
-              alt="Linea Jewelry Inc." 
-              className="mb-4 h-6 w-auto"
-            />
-            <p className="text-sm font-light text-black/70 leading-relaxed max-w-md mb-6">
-              Minimalist jewelry crafted for the modern individual
-            </p>
-            
-            {/* Contact Information */}
-            <div className="space-y-2 text-sm font-light text-black/70">
-              <div>
-                <p className="font-normal text-black mb-1">Visit Us</p>
-                <p>123 Madison Avenue</p>
-                <p>New York, NY 10016</p>
-              </div>
-              <div>
-                <p className="font-normal text-black mb-1 mt-3">Contact</p>
-                <p>+1 (212) 555-0123</p>
-                <p>hello@lineajewelry.com</p>
-              </div>
+    <footer className="relative bg-background border-t border-border/60 mt-32">
+      {/* Marquee */}
+      <div className="overflow-hidden border-b border-border/60 py-6">
+        <div className="flex whitespace-nowrap animate-marquee">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="flex shrink-0 items-center gap-12 pr-12">
+              {["Authenticated", "Insured Shipping", "Escrow Protected", "PSA Partner", "Global Marketplace", "1.2M Listings", "Verified Sellers"].map((t) => (
+                <span key={t} className="font-display text-5xl md:text-7xl font-light tracking-tight text-foreground/15 hover:text-foreground/40 transition-colors duration-700">
+                  {t} ·
+                </span>
+              ))}
             </div>
-          </div>
-
-          {/* Link lists - Right side */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Shop */}
-            <div>
-              <h4 className="text-sm font-normal mb-4">Shop</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-sm font-light text-black/70 hover:text-black transition-colors">New In</a></li>
-                <li><a href="#" className="text-sm font-light text-black/70 hover:text-black transition-colors">Rings</a></li>
-                <li><a href="#" className="text-sm font-light text-black/70 hover:text-black transition-colors">Earrings</a></li>
-                <li><a href="#" className="text-sm font-light text-black/70 hover:text-black transition-colors">Bracelets</a></li>
-                <li><a href="#" className="text-sm font-light text-black/70 hover:text-black transition-colors">Necklaces</a></li>
-              </ul>
-            </div>
-
-            {/* Support */}
-            <div>
-              <h4 className="text-sm font-normal mb-4">Support</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-sm font-light text-black/70 hover:text-black transition-colors">Size Guide</a></li>
-                <li><a href="#" className="text-sm font-light text-black/70 hover:text-black transition-colors">Care Instructions</a></li>
-                <li><a href="#" className="text-sm font-light text-black/70 hover:text-black transition-colors">Returns</a></li>
-                <li><a href="#" className="text-sm font-light text-black/70 hover:text-black transition-colors">Shipping</a></li>
-                <li><a href="#" className="text-sm font-light text-black/70 hover:text-black transition-colors">Contact</a></li>
-              </ul>
-            </div>
-
-            {/* Connect */}
-            <div>
-              <h4 className="text-sm font-normal mb-4">Connect</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-sm font-light text-black/70 hover:text-black transition-colors">Instagram</a></li>
-                <li><a href="#" className="text-sm font-light text-black/70 hover:text-black transition-colors">Pinterest</a></li>
-                <li><a href="#" className="text-sm font-light text-black/70 hover:text-black transition-colors">Newsletter</a></li>
-              </ul>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Bottom section - edge to edge separator */}
-      <div className="border-t border-[#e5e5e5] -mx-6 px-6 pt-2">
-        <div className="flex flex-col md:flex-row justify-between items-center">
-          <p className="text-sm font-light text-black mb-1 md:mb-0">
-            © 2024 Linea. All rights reserved. Template made by{" "}
-            <a href="https://www.liljeros.co" target="_blank" rel="noopener noreferrer" className="hover:text-black/70 transition-colors underline">
-              Rickard Liljeros
-            </a>
+      <div className="px-6 lg:px-12 pt-20 pb-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-20">
+          {/* Brand */}
+          <div className="lg:col-span-5">
+            <Link to="/" className="font-display text-3xl font-semibold tracking-[0.32em] text-foreground">
+              ANIMEX
+            </Link>
+            <p className="mt-6 text-sm text-muted-foreground max-w-md leading-relaxed">
+              The trusted global marketplace for graded, authenticated anime collectibles. Verified provenance, secure escrow, and curated by collectors who care.
+            </p>
+
+            <form className="mt-10 max-w-md">
+              <p className="eyebrow mb-3">Receive Drop Notices</p>
+              <div className="flex border-b border-border focus-within:border-foreground/60 transition-colors">
+                <input
+                  type="email"
+                  placeholder="you@domain.com"
+                  className="flex-1 bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground/60"
+                />
+                <button className="px-2 py-3 text-foreground hover:text-accent transition-colors">
+                  <ArrowUpRight size={18} strokeWidth={1.5} />
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Links */}
+          <div className="lg:col-span-7 grid grid-cols-2 md:grid-cols-4 gap-8">
+            {[
+              { h: "Market", l: ["All Cards", "New Listings", "Trending", "Auctions", "Grails"] },
+              { h: "Sell", l: ["List a Card", "Authentication", "Fees", "Seller Hub"] },
+              { h: "Trust", l: ["Grading", "Escrow", "Insurance", "Help Center"] },
+              { h: "Company", l: ["About", "Press", "Careers", "Contact"] },
+            ].map((col) => (
+              <div key={col.h}>
+                <p className="eyebrow mb-5">{col.h}</p>
+                <ul className="space-y-3">
+                  {col.l.map((l) => (
+                    <li key={l}>
+                      <a href="#" className="text-sm text-foreground/70 hover:text-foreground transition-colors">
+                        {l}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="border-t border-border/60 pt-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <p className="text-xs text-muted-foreground font-mono tracking-wider">
+            © 2026 ANIMEX MARKETPLACE INC · ALL RIGHTS RESERVED
           </p>
-          <div className="flex space-x-6">
-            <a href="/privacy-policy" className="text-sm font-light text-black hover:text-black/70 transition-colors">
-              Privacy Policy
-            </a>
-            <a href="/terms-of-service" className="text-sm font-light text-black hover:text-black/70 transition-colors">
-              Terms of Service
-            </a>
+          <div className="flex gap-6 text-xs text-muted-foreground font-mono tracking-wider">
+            <Link to="/privacy-policy" className="hover:text-foreground transition-colors">PRIVACY</Link>
+            <Link to="/terms-of-service" className="hover:text-foreground transition-colors">TERMS</Link>
+            <a href="#" className="hover:text-foreground transition-colors">COOKIES</a>
+            <a href="#" className="hover:text-foreground transition-colors">INSTAGRAM</a>
+            <a href="#" className="hover:text-foreground transition-colors">X / TWITTER</a>
           </div>
         </div>
       </div>
