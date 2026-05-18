@@ -1,17 +1,32 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { BadgeCheck, Shield, TrendingUp, Heart } from "lucide-react";
 import { getProduct, formatPrice, rarityClass } from "@/data/products";
+import { useCart } from "@/context/CartContext";
+import { toast } from "sonner";
 
 const ProductInfo = () => {
   const { productId } = useParams();
+  const navigate = useNavigate();
   const product = getProduct(productId ?? 1);
   const [tab, setTab] = useState<"buy" | "bid">("buy");
+  const { add } = useCart();
 
   const trend = product.lastSale ? product.price - product.lastSale : 0;
   const trendPct = product.lastSale ? (trend / product.lastSale) * 100 : 0;
+
+  const handleBuy = () => {
+    if (tab === "bid") {
+      toast.info("Bidding coming soon");
+      return;
+    }
+    add(product, 1);
+    toast.success(`${product.name} added to bag`);
+    navigate("/checkout");
+  };
+
 
   return (
     <div className="space-y-8">
@@ -82,7 +97,7 @@ const ProductInfo = () => {
         </div>
 
         <div className="flex gap-2">
-          <Button className="flex-1 h-12 bg-foreground text-background hover:bg-foreground/90 rounded-none font-medium tracking-wider text-xs">
+          <Button onClick={handleBuy} className="flex-1 h-12 bg-foreground text-background hover:bg-foreground/90 rounded-none font-medium tracking-wider text-xs">
             {tab === "buy" ? `BUY NOW · ${formatPrice(product.price)}` : "PLACE A BID"}
           </Button>
           <Button variant="outline" size="icon" className="h-12 w-12 rounded-none border-border hover:border-foreground/40 bg-transparent">

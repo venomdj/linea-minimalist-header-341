@@ -5,15 +5,7 @@ import ShoppingBag from "./ShoppingBag";
 import card01 from "@/assets/card-product-01.jpg";
 import card02 from "@/assets/card-product-02.jpg";
 import card03 from "@/assets/card-product-03.jpg";
-
-interface CartItem {
-  id: number;
-  name: string;
-  price: string;
-  image: string;
-  quantity: number;
-  category: string;
-}
+import { useCart } from "@/context/CartContext";
 
 const navItems = [
   { name: "Marketplace", href: "/category/all", sub: ["All Cards", "New Listings", "Trending", "Auctions Ending"] },
@@ -28,12 +20,7 @@ const Navigation = () => {
   const [search, setSearch] = useState(false);
   const [mobile, setMobile] = useState(false);
   const [bagOpen, setBagOpen] = useState(false);
-
-  const [cart, setCart] = useState<CartItem[]>([
-    { id: 1, name: "Obsidian Vanguard", price: "$18,400", image: card01, quantity: 1, category: "Æther Order" },
-    { id: 2, name: "Lumen Archivist", price: "$8,650", image: card02, quantity: 1, category: "Silent Chronicle" },
-    { id: 3, name: "Crimson Monolith", price: "$3,950", image: card03, quantity: 1, category: "Eclipse Saga" },
-  ]);
+  const { items, count, setQty } = useCart();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -42,12 +29,17 @@ const Navigation = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const total = cart.reduce((s, i) => s + i.quantity, 0);
+  const total = count;
+  const updateQty = (id: number, q: number) => setQty(id, q);
+  const cart = items.map((i) => ({
+    id: i.id,
+    name: i.name,
+    price: `$${i.price.toLocaleString()}`,
+    image: i.image,
+    quantity: i.quantity,
+    category: i.series,
+  }));
 
-  const updateQty = (id: number, q: number) => {
-    if (q <= 0) setCart((c) => c.filter((i) => i.id !== id));
-    else setCart((c) => c.map((i) => (i.id === id ? { ...i, quantity: q } : i)));
-  };
 
   return (
     <>
