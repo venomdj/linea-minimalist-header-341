@@ -1,669 +1,409 @@
 import { useState } from "react";
-import { Minus, Plus, CreditCard, Check } from "lucide-react";
-import CheckoutHeader from "../components/header/CheckoutHeader";
-import Footer from "../components/footer/Footer";
+import { Link, useNavigate } from "react-router-dom";
+import { z } from "zod";
+import { Minus, Plus, Trash2, Check, ShieldCheck, Lock, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
-import pantheonImage from "@/assets/pantheon.jpg";
-import eclipseImage from "@/assets/eclipse.jpg";
+import { toast } from "sonner";
+import CheckoutHeader from "@/components/header/CheckoutHeader";
+import Footer from "@/components/footer/Footer";
+import { useCart } from "@/context/CartContext";
+import { formatPrice } from "@/data/products";
+
+const buyerSchema = z.object({
+  email: z.string().trim().email("Enter a valid email").max(255),
+  firstName: z.string().trim().min(1, "Required").max(80),
+  lastName: z.string().trim().min(1, "Required").max(80),
+  phone: z
+    .string()
+    .trim()
+    .min(6, "Enter a valid phone")
+    .max(30)
+    .regex(/^[+0-9()\-\s]+$/, "Invalid phone"),
+  address: z.string().trim().min(3, "Required").max(160),
+  address2: z.string().trim().max(160).optional().or(z.literal("")),
+  city: z.string().trim().min(1, "Required").max(80),
+  postalCode: z.string().trim().min(2, "Required").max(20),
+  country: z.string().trim().min(2, "Required").max(80),
+  shipping: z.enum(["standard", "express", "overnight"]),
+});
+
+type BuyerForm = z.infer<typeof buyerSchema>;
+type FormErrors = Partial<Record<keyof BuyerForm, string>>;
+
+const shippingOptions = [
+  { id: "standard", label: "Standard · Insured", eta: "5–7 business days", price: 0 },
+  { id: "express", label: "Express · Signature required", eta: "2–3 business days", price: 25 },
+  { id: "overnight", label: "Overnight · White Glove", eta: "Next business day", price: 75 },
+] as const;
+
+const initial: BuyerForm = {
+  email: "",
+  firstName: "",
+  lastName: "",
+  phone: "",
+  address: "",
+  address2: "",
+  city: "",
+  postalCode: "",
+  country: "",
+  shipping: "standard",
+};
 
 const Checkout = () => {
-  const [showDiscountInput, setShowDiscountInput] = useState(false);
-  const [discountCode, setDiscountCode] = useState("");
-  const [customerDetails, setCustomerDetails] = useState({
-    email: "",
-    firstName: "",
-    lastName: "",
-    phone: ""
-  });
-  const [shippingAddress, setShippingAddress] = useState({
-    address: "",
-    city: "",
-    postalCode: "",
-    country: ""
-  });
-  const [hasSeparateBilling, setHasSeparateBilling] = useState(false);
-  const [billingDetails, setBillingDetails] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    address: "",
-    city: "",
-    postalCode: "",
-    country: ""
-  });
-  const [shippingOption, setShippingOption] = useState("standard");
-  const [paymentDetails, setPaymentDetails] = useState({
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-    cardholderName: ""
-  });
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentComplete, setPaymentComplete] = useState(false);
-  
-  // Mock cart data - in a real app this would come from state management
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Pantheon Ring",
-      price: "€2,450",
-      quantity: 1,
-      image: pantheonImage,
-      size: "54 EU / 7 US"
-    },
-    {
-      id: 2,
-      name: "Eclipse Earrings", 
-      price: "€1,850",
-      quantity: 1,
-      image: eclipseImage
+  const navigate = useNavigate();
+  const { items, subtotal, setQty, remove, clear } = useCart();
+  const [form, setForm] = useState<BuyerForm>(initial);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const shippingCost = shippingOptions.find((s) => s.id === form.shipping)?.price ?? 0;
+  const taxes = Math.round(subtotal * 0.08);
+  const total = subtotal + shippingCost + taxes;
+
+  const update = <K extends keyof BuyerForm>(key: K, value: BuyerForm[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (errors[key]) setErrors((e) => ({ ...e, [key]: undefined }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsed = buyerSchema.safeParse(form);
+    if (!parsed.success) {
+      const next: FormErrors = {};
+      for (const issue of parsed.error.issues) {
+        const k = issue.path[0] as keyof BuyerForm;
+        if (!next[k]) next[k] = issue.message;
+      }
+      setErrors(next);
+      toast.error("Please correct the highlighted fields");
+      return;
     }
-  ]);
-
-  const updateQuantity = (id: number, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      setCartItems(items => items.filter(item => item.id !== id));
-    } else {
-      setCartItems(items => 
-        items.map(item => 
-          item.id === id ? { ...item, quantity: newQuantity } : item
-        )
-      );
+    if (items.length === 0) {
+      toast.error("Your bag is empty");
+      return;
     }
+    setSubmitting(true);
+    // Placeholder until Stripe is wired up
+    await new Promise((r) => setTimeout(r, 1200));
+    setSubmitting(false);
+    setSuccess(true);
+    clear();
+    toast.success("Order placed");
   };
 
-  const subtotal = cartItems.reduce((sum, item) => {
-    const price = parseFloat(item.price.replace('€', '').replace(',', ''));
-    return sum + (price * item.quantity);
-  }, 0);
-
-  const getShippingCost = () => {
-    switch (shippingOption) {
-      case "express":
-        return 15;
-      case "overnight":
-        return 35;
-      default:
-        return 0; // Standard shipping is free
-    }
-  };
-  
-  const shipping = getShippingCost();
-  const total = subtotal + shipping;
-
-  const handleDiscountSubmit = () => {
-    // Handle discount code submission
-    console.log("Discount code submitted:", discountCode);
-    setShowDiscountInput(false);
-  };
-
-  const handleCustomerDetailsChange = (field: string, value: string) => {
-    setCustomerDetails(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleShippingAddressChange = (field: string, value: string) => {
-    setShippingAddress(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleBillingDetailsChange = (field: string, value: string) => {
-    setBillingDetails(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handlePaymentDetailsChange = (field: string, value: string) => {
-    setPaymentDetails(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleCompleteOrder = async () => {
-    setIsProcessing(true);
-    
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsProcessing(false);
-    setPaymentComplete(true);
-  };
+  if (success) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <CheckoutHeader />
+        <main className="flex-1 flex items-center justify-center px-6 py-24">
+          <div className="max-w-md text-center space-y-6">
+            <div className="w-14 h-14 mx-auto rounded-full border border-verified/40 flex items-center justify-center">
+              <Check size={22} className="text-verified" />
+            </div>
+            <p className="eyebrow">Order Received</p>
+            <h1 className="font-display text-3xl text-foreground tracking-tight">
+              Your vault is being prepared.
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              We've sent a confirmation to <span className="text-foreground">{form.email}</span>. Authentication
+              and insured shipping begin shortly.
+            </p>
+            <Button
+              onClick={() => navigate("/")}
+              className="rounded-none bg-foreground text-background hover:bg-foreground/90 px-8 h-12 text-xs tracking-wider"
+            >
+              CONTINUE BROWSING
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <CheckoutHeader />
-      
-      <main className="pt-6 pb-12">
+
+      <main className="flex-1 pt-10 pb-20">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            {/* Order Summary - First on mobile, last on desktop */}
-            <div className="lg:col-span-1 lg:order-2">
-              <div className="bg-muted/20 p-8 rounded-none sticky top-6">
-                <h2 className="text-lg font-light text-foreground mb-6">Order Summary</h2>
-                
-                <div className="space-y-6">
-                  {cartItems.map((item) => (
-                    <div key={item.id} className="flex gap-4">
-                      <div className="w-20 h-20 bg-muted rounded-none overflow-hidden">
-                        <img 
-                          src={item.image} 
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-light text-foreground">{item.name}</h3>
-                        {item.size && (
-                          <p className="text-sm text-muted-foreground">Size: {item.size}</p>
-                        )}
-                        
-                        {/* Quantity controls */}
-                        <div className="flex items-center gap-2 mt-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="h-8 w-8 p-0 rounded-none border-muted-foreground/20"
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="text-sm font-medium text-foreground min-w-[2ch] text-center">
-                            {item.quantity}
-                          </span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="h-8 w-8 p-0 rounded-none border-muted-foreground/20"
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="text-foreground font-medium">
-                        {item.price}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+          <div className="mb-10">
+            <p className="eyebrow mb-2">Secure Checkout</p>
+            <h1 className="font-display text-3xl md:text-4xl text-foreground tracking-tight">
+              Complete your acquisition
+            </h1>
+          </div>
 
-                {/* Discount Code Section */}
-                <div className="mt-8 pt-6 border-t border-muted-foreground/20">
-                  {!showDiscountInput ? (
-                    <button 
-                      onClick={() => setShowDiscountInput(true)}
-                      className="text-sm text-foreground underline hover:no-underline transition-all"
-                    >
-                      Discount code
-                    </button>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="flex gap-2">
-                        <Input
-                          type="text"
-                          value={discountCode}
-                          onChange={(e) => setDiscountCode(e.target.value)}
-                          placeholder="Enter discount code"
-                          className="flex-1 rounded-none"
-                        />
-                        <button 
-                          onClick={handleDiscountSubmit}
-                          className="text-sm text-foreground underline hover:no-underline transition-all px-2"
-                        >
-                          Apply
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="border-t border-muted-foreground/20 mt-4 pt-6">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span className="text-foreground">€{subtotal.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Left Column - Forms */}
-            <div className="lg:col-span-2 lg:order-1 space-y-8">
-
-              {/* Customer Details Form */}
-              <div className="bg-muted/20 p-8 rounded-none">
-                <h2 className="text-lg font-light text-foreground mb-6">Customer Details</h2>
-                
-                <div className="space-y-6">
-                  <div>
-                    <Label htmlFor="email" className="text-sm font-light text-foreground">
-                      Email Address *
-                    </Label>
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            {/* Forms */}
+            <div className="lg:col-span-2 space-y-10">
+              {/* Contact */}
+              <section className="border border-border bg-surface-1 p-6 md:p-8">
+                <header className="flex items-baseline justify-between mb-6">
+                  <h2 className="font-display text-lg text-foreground tracking-tight">Contact</h2>
+                  <span className="eyebrow">Step 01</span>
+                </header>
+                <Field label="Email *" error={errors.email}>
+                  <Input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => update("email", e.target.value)}
+                    placeholder="you@example.com"
+                    className="rounded-none bg-background border-border h-11"
+                    autoComplete="email"
+                  />
+                </Field>
+                <div className="grid grid-cols-2 gap-4 mt-5">
+                  <Field label="First Name *" error={errors.firstName}>
                     <Input
-                      id="email"
-                      type="email"
-                      value={customerDetails.email}
-                      onChange={(e) => handleCustomerDetailsChange("email", e.target.value)}
-                      className="mt-2 rounded-none"
-                      placeholder="Enter your email"
+                      value={form.firstName}
+                      onChange={(e) => update("firstName", e.target.value)}
+                      className="rounded-none bg-background border-border h-11"
+                      autoComplete="given-name"
                     />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="firstName" className="text-sm font-light text-foreground">
-                        First Name *
-                      </Label>
-                      <Input
-                        id="firstName"
-                        type="text"
-                        value={customerDetails.firstName}
-                        onChange={(e) => handleCustomerDetailsChange("firstName", e.target.value)}
-                        className="mt-2 rounded-none"
-                        placeholder="First name"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="lastName" className="text-sm font-light text-foreground">
-                        Last Name *
-                      </Label>
-                      <Input
-                        id="lastName"
-                        type="text"
-                        value={customerDetails.lastName}
-                        onChange={(e) => handleCustomerDetailsChange("lastName", e.target.value)}
-                        className="mt-2 rounded-none"
-                        placeholder="Last name"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="phone" className="text-sm font-light text-foreground">
-                      Phone Number
-                    </Label>
+                  </Field>
+                  <Field label="Last Name *" error={errors.lastName}>
                     <Input
-                      id="phone"
+                      value={form.lastName}
+                      onChange={(e) => update("lastName", e.target.value)}
+                      className="rounded-none bg-background border-border h-11"
+                      autoComplete="family-name"
+                    />
+                  </Field>
+                </div>
+                <div className="mt-5">
+                  <Field label="Phone *" error={errors.phone}>
+                    <Input
                       type="tel"
-                      value={customerDetails.phone}
-                      onChange={(e) => handleCustomerDetailsChange("phone", e.target.value)}
-                      className="mt-2 rounded-none"
-                      placeholder="Enter your phone number"
+                      value={form.phone}
+                      onChange={(e) => update("phone", e.target.value)}
+                      placeholder="+1 555 000 0000"
+                      className="rounded-none bg-background border-border h-11"
+                      autoComplete="tel"
                     />
-                  </div>
-
-                  {/* Shipping Address */}
-                  <div className="border-t border-muted-foreground/20 pt-6 mt-8">
-                    <h3 className="text-base font-light text-foreground mb-4">Shipping Address</h3>
-                    
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="shippingAddress" className="text-sm font-light text-foreground">
-                          Address *
-                        </Label>
-                        <Input
-                          id="shippingAddress"
-                          type="text"
-                          value={shippingAddress.address}
-                          onChange={(e) => handleShippingAddressChange("address", e.target.value)}
-                          className="mt-2 rounded-none"
-                          placeholder="Street address"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="shippingCity" className="text-sm font-light text-foreground">
-                            City *
-                          </Label>
-                          <Input
-                            id="shippingCity"
-                            type="text"
-                            value={shippingAddress.city}
-                            onChange={(e) => handleShippingAddressChange("city", e.target.value)}
-                            className="mt-2 rounded-none"
-                            placeholder="City"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="shippingPostalCode" className="text-sm font-light text-foreground">
-                            Postal Code *
-                          </Label>
-                          <Input
-                            id="shippingPostalCode"
-                            type="text"
-                            value={shippingAddress.postalCode}
-                            onChange={(e) => handleShippingAddressChange("postalCode", e.target.value)}
-                            className="mt-2 rounded-none"
-                            placeholder="Postal code"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="shippingCountry" className="text-sm font-light text-foreground">
-                          Country *
-                        </Label>
-                        <Input
-                          id="shippingCountry"
-                          type="text"
-                          value={shippingAddress.country}
-                          onChange={(e) => handleShippingAddressChange("country", e.target.value)}
-                          className="mt-2 rounded-none"
-                          placeholder="Country"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Billing Address Checkbox */}
-                  <div className="border-t border-muted-foreground/20 pt-6 mt-8">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="separateBilling"
-                        checked={hasSeparateBilling}
-                        onCheckedChange={(checked) => setHasSeparateBilling(checked === true)}
-                      />
-                      <Label 
-                        htmlFor="separateBilling" 
-                        className="text-sm font-light text-foreground cursor-pointer"
-                      >
-                        Other billing address
-                      </Label>
-                    </div>
-                  </div>
-
-                  {/* Billing Details - shown when checkbox is checked */}
-                  {hasSeparateBilling && (
-                    <div className="space-y-6 pt-4">
-                      <h3 className="text-base font-light text-foreground">Billing Details</h3>
-                      
-                      <div>
-                        <Label htmlFor="billingEmail" className="text-sm font-light text-foreground">
-                          Email Address *
-                        </Label>
-                        <Input
-                          id="billingEmail"
-                          type="email"
-                          value={billingDetails.email}
-                          onChange={(e) => handleBillingDetailsChange("email", e.target.value)}
-                          className="mt-2 rounded-none"
-                          placeholder="Enter billing email"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="billingFirstName" className="text-sm font-light text-foreground">
-                            First Name *
-                          </Label>
-                          <Input
-                            id="billingFirstName"
-                            type="text"
-                            value={billingDetails.firstName}
-                            onChange={(e) => handleBillingDetailsChange("firstName", e.target.value)}
-                            className="mt-2 rounded-none"
-                            placeholder="First name"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="billingLastName" className="text-sm font-light text-foreground">
-                            Last Name *
-                          </Label>
-                          <Input
-                            id="billingLastName"
-                            type="text"
-                            value={billingDetails.lastName}
-                            onChange={(e) => handleBillingDetailsChange("lastName", e.target.value)}
-                            className="mt-2 rounded-none"
-                            placeholder="Last name"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="billingPhone" className="text-sm font-light text-foreground">
-                          Phone Number
-                        </Label>
-                        <Input
-                          id="billingPhone"
-                          type="tel"
-                          value={billingDetails.phone}
-                          onChange={(e) => handleBillingDetailsChange("phone", e.target.value)}
-                          className="mt-2 rounded-none"
-                          placeholder="Enter billing phone number"
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="billingAddress" className="text-sm font-light text-foreground">
-                          Address *
-                        </Label>
-                        <Input
-                          id="billingAddress"
-                          type="text"
-                          value={billingDetails.address}
-                          onChange={(e) => handleBillingDetailsChange("address", e.target.value)}
-                          className="mt-2 rounded-none"
-                          placeholder="Street address"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="billingCity" className="text-sm font-light text-foreground">
-                            City *
-                          </Label>
-                          <Input
-                            id="billingCity"
-                            type="text"
-                            value={billingDetails.city}
-                            onChange={(e) => handleBillingDetailsChange("city", e.target.value)}
-                            className="mt-2 rounded-none"
-                            placeholder="City"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="billingPostalCode" className="text-sm font-light text-foreground">
-                            Postal Code *
-                          </Label>
-                          <Input
-                            id="billingPostalCode"
-                            type="text"
-                            value={billingDetails.postalCode}
-                            onChange={(e) => handleBillingDetailsChange("postalCode", e.target.value)}
-                            className="mt-2 rounded-none"
-                            placeholder="Postal code"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="billingCountry" className="text-sm font-light text-foreground">
-                          Country *
-                        </Label>
-                        <Input
-                          id="billingCountry"
-                          type="text"
-                          value={billingDetails.country}
-                          onChange={(e) => handleBillingDetailsChange("country", e.target.value)}
-                          className="mt-2 rounded-none"
-                          placeholder="Country"
-                        />
-                      </div>
-                    </div>
-                  )}
+                  </Field>
                 </div>
-              </div>
+              </section>
 
-            {/* Shipping Options */}
-            <div className="bg-muted/20 p-8 rounded-none">
-              <h2 className="text-lg font-light text-foreground mb-6">Shipping Options</h2>
-              
-              <RadioGroup 
-                value={shippingOption} 
-                onValueChange={setShippingOption}
-                className="space-y-4"
-              >
-                <div className="flex items-center justify-between p-4 border border-muted-foreground/20 rounded-none">
-                  <div className="flex items-center space-x-3">
-                    <RadioGroupItem value="standard" id="standard" />
-                    <Label htmlFor="standard" className="font-light text-foreground">
-                      Standard Shipping
-                    </Label>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Free • 3-5 business days
-                  </div>
+              {/* Shipping address */}
+              <section className="border border-border bg-surface-1 p-6 md:p-8">
+                <header className="flex items-baseline justify-between mb-6">
+                  <h2 className="font-display text-lg text-foreground tracking-tight">Shipping Address</h2>
+                  <span className="eyebrow">Step 02</span>
+                </header>
+                <Field label="Address *" error={errors.address}>
+                  <Input
+                    value={form.address}
+                    onChange={(e) => update("address", e.target.value)}
+                    placeholder="Street address"
+                    className="rounded-none bg-background border-border h-11"
+                    autoComplete="address-line1"
+                  />
+                </Field>
+                <div className="mt-5">
+                  <Field label="Apartment, suite, etc." error={errors.address2}>
+                    <Input
+                      value={form.address2 ?? ""}
+                      onChange={(e) => update("address2", e.target.value)}
+                      className="rounded-none bg-background border-border h-11"
+                      autoComplete="address-line2"
+                    />
+                  </Field>
                 </div>
+                <div className="grid grid-cols-2 gap-4 mt-5">
+                  <Field label="City *" error={errors.city}>
+                    <Input
+                      value={form.city}
+                      onChange={(e) => update("city", e.target.value)}
+                      className="rounded-none bg-background border-border h-11"
+                      autoComplete="address-level2"
+                    />
+                  </Field>
+                  <Field label="Postal Code *" error={errors.postalCode}>
+                    <Input
+                      value={form.postalCode}
+                      onChange={(e) => update("postalCode", e.target.value)}
+                      className="rounded-none bg-background border-border h-11"
+                      autoComplete="postal-code"
+                    />
+                  </Field>
+                </div>
+                <div className="mt-5">
+                  <Field label="Country *" error={errors.country}>
+                    <Input
+                      value={form.country}
+                      onChange={(e) => update("country", e.target.value)}
+                      placeholder="United States"
+                      className="rounded-none bg-background border-border h-11"
+                      autoComplete="country-name"
+                    />
+                  </Field>
+                </div>
+              </section>
 
-                <div className="flex items-center justify-between p-4 border border-muted-foreground/20 rounded-none">
-                  <div className="flex items-center space-x-3">
-                    <RadioGroupItem value="express" id="express" />
-                    <Label htmlFor="express" className="font-light text-foreground">
-                      Express Shipping
-                    </Label>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    €15 • 1-2 business days
-                  </div>
-                </div>
+              {/* Shipping method */}
+              <section className="border border-border bg-surface-1 p-6 md:p-8">
+                <header className="flex items-baseline justify-between mb-6">
+                  <h2 className="font-display text-lg text-foreground tracking-tight">Shipping Method</h2>
+                  <span className="eyebrow">Step 03</span>
+                </header>
+                <RadioGroup
+                  value={form.shipping}
+                  onValueChange={(v) => update("shipping", v as BuyerForm["shipping"])}
+                  className="space-y-3"
+                >
+                  {shippingOptions.map((opt) => (
+                    <label
+                      key={opt.id}
+                      htmlFor={`ship-${opt.id}`}
+                      className={`flex items-center justify-between gap-4 border p-4 cursor-pointer transition-colors ${
+                        form.shipping === opt.id
+                          ? "border-foreground/40 bg-surface-2"
+                          : "border-border hover:border-foreground/20"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <RadioGroupItem id={`ship-${opt.id}`} value={opt.id} />
+                        <div>
+                          <p className="text-sm text-foreground">{opt.label}</p>
+                          <p className="text-xs text-muted-foreground font-mono tracking-wider mt-0.5">{opt.eta}</p>
+                        </div>
+                      </div>
+                      <span className="text-sm text-foreground font-mono tabular-nums">
+                        {opt.price === 0 ? "FREE" : formatPrice(opt.price)}
+                      </span>
+                    </label>
+                  ))}
+                </RadioGroup>
+              </section>
 
-                <div className="flex items-center justify-between p-4 border border-muted-foreground/20 rounded-none">
-                  <div className="flex items-center space-x-3">
-                    <RadioGroupItem value="overnight" id="overnight" />
-                    <Label htmlFor="overnight" className="font-light text-foreground">
-                      Overnight Delivery
-                    </Label>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    €35 • Next business day
-                  </div>
+              {/* Payment placeholder */}
+              <section className="border border-border bg-surface-1 p-6 md:p-8">
+                <header className="flex items-baseline justify-between mb-6">
+                  <h2 className="font-display text-lg text-foreground tracking-tight">Payment</h2>
+                  <span className="eyebrow">Step 04</span>
+                </header>
+                <div className="flex items-start gap-3 border border-dashed border-border p-4 text-xs text-muted-foreground">
+                  <Lock size={14} className="mt-0.5 text-foreground/60" />
+                  <p>
+                    Stripe-secured payment is wired up in the next step. For now you can submit to validate the
+                    flow — no card will be charged.
+                  </p>
                 </div>
-              </RadioGroup>
+              </section>
             </div>
 
-            {/* Payment Section */}
-            <div className="bg-muted/20 p-8 rounded-none">
-              <h2 className="text-lg font-light text-foreground mb-6">Payment Details</h2>
-              
-              {!paymentComplete ? (
-                <div className="space-y-6">
-                  <div>
-                    <Label htmlFor="cardholderName" className="text-sm font-light text-foreground">
-                      Cardholder Name *
-                    </Label>
-                    <Input
-                      id="cardholderName"
-                      type="text"
-                      value={paymentDetails.cardholderName}
-                      onChange={(e) => handlePaymentDetailsChange("cardholderName", e.target.value)}
-                      className="mt-2 rounded-none"
-                      placeholder="Name on card"
-                    />
-                  </div>
+            {/* Order Summary */}
+            <aside className="lg:col-span-1">
+              <div className="border border-border bg-surface-1 p-6 md:p-8 sticky top-24 space-y-6">
+                <div className="flex items-baseline justify-between">
+                  <h2 className="font-display text-lg text-foreground tracking-tight">Order Summary</h2>
+                  <span className="eyebrow">{items.length} item{items.length !== 1 ? "s" : ""}</span>
+                </div>
 
-                  <div>
-                    <Label htmlFor="cardNumber" className="text-sm font-light text-foreground">
-                      Card Number *
-                    </Label>
-                    <div className="relative mt-2">
-                      <Input
-                        id="cardNumber"
-                        type="text"
-                        value={paymentDetails.cardNumber}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
-                          if (value.length <= 19) {
-                            handlePaymentDetailsChange("cardNumber", value);
-                          }
-                        }}
-                        className="rounded-none pl-10"
-                        placeholder="4242 4242 4242 4242"
-                        maxLength={19}
-                      />
-                      <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    </div>
+                {items.length === 0 ? (
+                  <div className="text-center py-10 space-y-4">
+                    <p className="text-sm text-muted-foreground">Your bag is empty.</p>
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="rounded-none border-border hover:border-foreground/40 bg-transparent text-xs tracking-wider"
+                    >
+                      <Link to="/category/all">BROWSE MARKETPLACE</Link>
+                    </Button>
                   </div>
+                ) : (
+                  <>
+                    <ul className="space-y-5 max-h-[360px] overflow-y-auto pr-1">
+                      {items.map((item) => (
+                        <li key={item.id} className="flex gap-4">
+                          <div className="w-16 h-20 bg-surface-2 overflow-hidden shrink-0">
+                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="eyebrow truncate">{item.series}</p>
+                            <p className="text-sm text-foreground truncate">{item.name}</p>
+                            <div className="mt-2 flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setQty(item.id, item.quantity - 1)}
+                                aria-label="Decrease"
+                                className="w-6 h-6 border border-border hover:border-foreground/40 flex items-center justify-center"
+                              >
+                                <Minus size={11} />
+                              </button>
+                              <span className="text-xs font-mono tabular-nums min-w-[2ch] text-center">
+                                {item.quantity}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setQty(item.id, item.quantity + 1)}
+                                aria-label="Increase"
+                                className="w-6 h-6 border border-border hover:border-foreground/40 flex items-center justify-center"
+                              >
+                                <Plus size={11} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => remove(item.id)}
+                                aria-label="Remove"
+                                className="ml-auto text-muted-foreground hover:text-destructive transition-colors"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-sm text-foreground font-mono tabular-nums whitespace-nowrap">
+                            {formatPrice(item.price * item.quantity)}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="expiryDate" className="text-sm font-light text-foreground">
-                        Expiry Date *
-                      </Label>
-                      <Input
-                        id="expiryDate"
-                        type="text"
-                        value={paymentDetails.expiryDate}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '').replace(/(\d{2})(\d{2})/, '$1/$2');
-                          if (value.length <= 5) {
-                            handlePaymentDetailsChange("expiryDate", value);
-                          }
-                        }}
-                        className="mt-2 rounded-none"
-                        placeholder="MM/YY"
-                        maxLength={5}
+                    <div className="border-t border-border pt-5 space-y-2.5 text-sm">
+                      <Row label="Subtotal" value={formatPrice(subtotal)} />
+                      <Row
+                        label="Shipping"
+                        value={shippingCost === 0 ? "Free" : formatPrice(shippingCost)}
                       />
+                      <Row label="Estimated tax" value={formatPrice(taxes)} muted />
                     </div>
-                    <div>
-                      <Label htmlFor="cvv" className="text-sm font-light text-foreground">
-                        CVV *
-                      </Label>
-                      <Input
-                        id="cvv"
-                        type="text"
-                        value={paymentDetails.cvv}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '');
-                          if (value.length <= 3) {
-                            handlePaymentDetailsChange("cvv", value);
-                          }
-                        }}
-                        className="mt-2 rounded-none"
-                        placeholder="123"
-                        maxLength={3}
-                      />
-                    </div>
-                  </div>
 
-                  {/* Order Total Summary */}
-                  <div className="bg-muted/10 p-6 rounded-none border border-muted-foreground/20 space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Subtotal</span>
-                      <span className="text-foreground">€{subtotal.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Shipping</span>
-                      <span className="text-foreground">
-                        {shipping === 0 ? "Free" : `€${shipping}`}
+                    <div className="border-t border-border pt-5 flex items-baseline justify-between">
+                      <span className="text-sm text-foreground">Total</span>
+                      <span className="font-display text-2xl text-foreground tabular-nums">
+                        {formatPrice(total)}
                       </span>
                     </div>
-                    <div className="flex justify-between text-lg font-medium border-t border-muted-foreground/20 pt-3">
-                      <span className="text-foreground">Total</span>
-                      <span className="text-foreground">€{total.toLocaleString()}</span>
-                    </div>
-                  </div>
 
-                  <Button
-                    onClick={handleCompleteOrder}
-                    disabled={isProcessing || !paymentDetails.cardNumber || !paymentDetails.expiryDate || !paymentDetails.cvv || !paymentDetails.cardholderName}
-                    className="w-full rounded-none h-12 text-base"
-                  >
-                    {isProcessing ? "Processing..." : `Complete Order • €${total.toLocaleString()}`}
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <Check className="h-8 w-8 text-green-600" />
-                  </div>
-                  <h3 className="text-xl font-light text-foreground mb-2">Order Complete!</h3>
-                  <p className="text-muted-foreground">Thank you for your purchase. Your order confirmation has been sent to your email.</p>
-                 </div>
-               )}
-             </div>
-            </div>
-          </div>
+                    <Button
+                      type="submit"
+                      disabled={submitting}
+                      className="w-full h-12 rounded-none bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.18em]"
+                    >
+                      {submitting ? "PROCESSING…" : `PLACE ORDER · ${formatPrice(total)}`}
+                    </Button>
+
+                    <ul className="space-y-2 pt-2 text-[11px] font-mono tracking-wider text-muted-foreground">
+                      <li className="flex items-center gap-2">
+                        <ShieldCheck size={12} className="text-verified" /> ESCROW PROTECTED
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Truck size={12} className="text-verified" /> INSURED WHITE-GLOVE SHIPPING
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Lock size={12} className="text-verified" /> ENCRYPTED CHECKOUT
+                      </li>
+                    </ul>
+                  </>
+                )}
+              </div>
+            </aside>
+          </form>
         </div>
       </main>
 
@@ -671,5 +411,30 @@ const Checkout = () => {
     </div>
   );
 };
+
+const Field = ({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) => (
+  <div>
+    <Label className="eyebrow block mb-2">{label}</Label>
+    {children}
+    {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}
+  </div>
+);
+
+const Row = ({ label, value, muted }: { label: string; value: string; muted?: boolean }) => (
+  <div className="flex justify-between">
+    <span className={muted ? "text-muted-foreground" : "text-muted-foreground"}>{label}</span>
+    <span className={`tabular-nums font-mono ${muted ? "text-muted-foreground" : "text-foreground"}`}>
+      {value}
+    </span>
+  </div>
+);
 
 export default Checkout;
