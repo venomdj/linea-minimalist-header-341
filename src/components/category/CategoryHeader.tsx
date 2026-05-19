@@ -32,7 +32,7 @@ const CategoryHeader = ({ category }: Props) => {
           </h1>
         </div>
         <p className="text-sm text-muted-foreground max-w-md">
-          Every listing in {title.toLowerCase()} is graded, authenticated, and held under escrow until verified delivery. Prices in USD.
+          Every listing in {title.toLowerCase()} is graded, authenticated, and held under escrow until verified delivery. Prices in INR, inclusive of all taxes.
         </p>
       </div>
     </section>

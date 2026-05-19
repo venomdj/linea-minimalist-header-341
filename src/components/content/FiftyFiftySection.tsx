@@ -25,8 +25,8 @@ const FiftyFiftySection = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
         {[
-          { img: card01, title: "Æther Order — Series 03", caption: "1st Edition · 12 graded copies in circulation", href: "/category/all", price: "from $14,200", tag: "Grail" },
-          { img: card04, title: "Lantern Codex — Holofoil Set", caption: "Complete 9-card master set · PSA 10", href: "/category/all", price: "from $28,400", tag: "Master Set" },
+          { img: card01, title: "Æther Order — Series 03", caption: "1st Edition · 12 graded copies in circulation", href: "/category/all", price: "from ₹1,12,000", tag: "Grail" },
+          { img: card04, title: "Lantern Codex — Holofoil Set", caption: "Complete 9-card master set · PSA 10", href: "/category/all", price: "from ₹2,24,000", tag: "Master Set" },
         ].map((d, i) => (
           <Link key={i} to={d.href} className="group block">
             <div className="relative aspect-[4/5] overflow-hidden bg-surface-1">

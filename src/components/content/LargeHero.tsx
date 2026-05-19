@@ -76,8 +76,8 @@ const LargeHero = () => {
           <div className="mt-16 flex flex-wrap items-center gap-x-10 gap-y-4 text-xs font-mono tracking-wider text-muted-foreground animate-fade-up" style={{ animationDelay: "0.55s" }}>
             <span className="flex items-center gap-2"><BadgeCheck size={14} className="text-verified" strokeWidth={1.8} /> PSA & BGS PARTNER</span>
             <span>1.2M+ LISTINGS</span>
-            <span>$840M GMV</span>
-            <span>180 COUNTRIES</span>
+            <span>₹680Cr GMV</span>
+            <span>28 STATES · 8 UTs</span>
           </div>
         </div>
       </div>
