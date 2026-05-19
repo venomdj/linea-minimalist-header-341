@@ -34,7 +34,7 @@ const Navigation = () => {
   const cart = items.map((i) => ({
     id: i.id,
     name: i.name,
-    price: `$${i.price.toLocaleString()}`,
+    price: `₹${i.price.toLocaleString("en-IN")}`,
     image: i.image,
     quantity: i.quantity,
     category: i.series,
@@ -51,7 +51,7 @@ const Navigation = () => {
             LIVE — 12,408 LISTINGS · 1,204 AUCTIONS ENDING TODAY
           </div>
           <div className="flex items-center gap-6">
-            <span>FREE INSURED SHIPPING OVER $500</span>
+            <span>FREE INSURED SHIPPING OVER ₹25,000 · PAN-INDIA</span>
             <Link to="/about/our-story" className="hover:text-foreground transition-colors">Sell with us →</Link>
           </div>
         </div>

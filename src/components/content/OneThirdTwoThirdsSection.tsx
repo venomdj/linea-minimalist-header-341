@@ -57,7 +57,7 @@ const OneThirdTwoThirdsSection = () => {
               Lumen Archivist.
             </h2>
             <p className="mt-4 text-sm md:text-base text-foreground/70 max-w-md leading-relaxed">
-              A flawless Vol. II holofoil, one of only 47 graded copies in circulation. Sold last cycle for $8,200 — currently listed at $8,650.
+              A flawless Vol. II holofoil, one of only 47 graded copies in circulation. Sold last cycle for ₹64,500 — currently listed at ₹68,000.
             </p>
             <div className="mt-8 inline-flex items-center gap-3 text-sm text-foreground/90 group-hover:text-foreground transition-colors">
               <span className="border-b border-foreground/40 pb-0.5">View the listing</span>

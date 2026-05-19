@@ -29,7 +29,7 @@ const FilterSortBar = ({ filtersOpen, setFiltersOpen, itemCount }: FilterSortBar
   const [sortBy, setSortBy] = useState("featured");
 
   const categories = ["Æther Order", "Silent Chronicle", "Eclipse Saga", "Hollow Vow", "Lantern Codex"];
-  const priceRanges = ["Under $1,000", "$1,000 — $5,000", "$5,000 — $15,000", "Over $15,000"];
+  const priceRanges = ["Under ₹10,000", "₹10,000 — ₹50,000", "₹50,000 — ₹1,00,000", "Over ₹1,00,000"];
   const materials = ["PSA 10", "PSA 9", "BGS 9.5", "Ungraded"];
 
   return (
