@@ -6,27 +6,37 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import CheckoutHeader from "@/components/header/CheckoutHeader";
 import Footer from "@/components/footer/Footer";
 import { useCart } from "@/context/CartContext";
 import { formatPrice } from "@/data/products";
+import { INDIAN_STATES, ORIGIN_STATE, GST_RATE, IndianState } from "@/data/india";
 
 const buyerSchema = z.object({
   email: z.string().trim().email("Enter a valid email").max(255),
-  firstName: z.string().trim().min(1, "Required").max(80),
-  lastName: z.string().trim().min(1, "Required").max(80),
+  fullName: z.string().trim().min(2, "Full name is required").max(120),
   phone: z
     .string()
     .trim()
-    .min(6, "Enter a valid phone")
-    .max(30)
-    .regex(/^[+0-9()\-\s]+$/, "Invalid phone"),
+    .regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit mobile number"),
   address: z.string().trim().min(3, "Required").max(160),
   address2: z.string().trim().max(160).optional().or(z.literal("")),
   city: z.string().trim().min(1, "Required").max(80),
-  postalCode: z.string().trim().min(2, "Required").max(20),
-  country: z.string().trim().min(2, "Required").max(80),
+  state: z.string().trim().refine((v) => (INDIAN_STATES as readonly string[]).includes(v), {
+    message: "Select a state",
+  }),
+  pincode: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, "Pincode must be 6 digits"),
   shipping: z.enum(["standard", "express", "overnight"]),
 });
 
@@ -35,20 +45,19 @@ type FormErrors = Partial<Record<keyof BuyerForm, string>>;
 
 const shippingOptions = [
   { id: "standard", label: "Standard · Insured", eta: "5–7 business days", price: 0 },
-  { id: "express", label: "Express · Signature required", eta: "2–3 business days", price: 25 },
-  { id: "overnight", label: "Overnight · White Glove", eta: "Next business day", price: 75 },
+  { id: "express", label: "Express · Signature required", eta: "2–3 business days", price: 250 },
+  { id: "overnight", label: "Overnight · White Glove", eta: "Next business day", price: 800 },
 ] as const;
 
 const initial: BuyerForm = {
   email: "",
-  firstName: "",
-  lastName: "",
+  fullName: "",
   phone: "",
   address: "",
   address2: "",
   city: "",
-  postalCode: "",
-  country: "",
+  state: "",
+  pincode: "",
   shipping: "standard",
 };
 
@@ -61,8 +70,15 @@ const Checkout = () => {
   const [success, setSuccess] = useState(false);
 
   const shippingCost = shippingOptions.find((s) => s.id === form.shipping)?.price ?? 0;
-  const taxes = Math.round(subtotal * 0.08);
-  const total = subtotal + shippingCost + taxes;
+
+  // Listed prices are inclusive of GST. Back out the taxable value, then re-split.
+  const taxableValue = Math.round(subtotal / (1 + GST_RATE));
+  const totalGst = subtotal - taxableValue;
+  const sameState = form.state === ORIGIN_STATE;
+  const cgst = sameState ? Math.round(totalGst / 2) : 0;
+  const sgst = sameState ? totalGst - cgst : 0;
+  const igst = sameState ? 0 : totalGst;
+  const total = subtotal + shippingCost;
 
   const update = <K extends keyof BuyerForm>(key: K, value: BuyerForm[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -87,7 +103,6 @@ const Checkout = () => {
       return;
     }
     setSubmitting(true);
-    // Placeholder until Stripe is wired up
     await new Promise((r) => setTimeout(r, 1200));
     setSubmitting(false);
     setSuccess(true);
@@ -139,7 +154,6 @@ const Checkout = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            {/* Forms */}
             <div className="lg:col-span-2 space-y-10">
               {/* Contact */}
               <section className="border border-border bg-surface-1 p-6 md:p-8">
@@ -157,34 +171,36 @@ const Checkout = () => {
                     autoComplete="email"
                   />
                 </Field>
-                <div className="grid grid-cols-2 gap-4 mt-5">
-                  <Field label="First Name *" error={errors.firstName}>
+                <div className="mt-5">
+                  <Field label="Full Name *" error={errors.fullName}>
                     <Input
-                      value={form.firstName}
-                      onChange={(e) => update("firstName", e.target.value)}
+                      value={form.fullName}
+                      onChange={(e) => update("fullName", e.target.value)}
+                      placeholder="As per government ID"
                       className="rounded-none bg-background border-border h-11"
-                      autoComplete="given-name"
-                    />
-                  </Field>
-                  <Field label="Last Name *" error={errors.lastName}>
-                    <Input
-                      value={form.lastName}
-                      onChange={(e) => update("lastName", e.target.value)}
-                      className="rounded-none bg-background border-border h-11"
-                      autoComplete="family-name"
+                      autoComplete="name"
                     />
                   </Field>
                 </div>
                 <div className="mt-5">
-                  <Field label="Phone *" error={errors.phone}>
-                    <Input
-                      type="tel"
-                      value={form.phone}
-                      onChange={(e) => update("phone", e.target.value)}
-                      placeholder="+1 555 000 0000"
-                      className="rounded-none bg-background border-border h-11"
-                      autoComplete="tel"
-                    />
+                  <Field label="Mobile Number *" error={errors.phone}>
+                    <div className="flex">
+                      <span className="inline-flex items-center px-3 h-11 border border-r-0 border-border bg-surface-2 text-sm font-mono text-muted-foreground">
+                        +91
+                      </span>
+                      <Input
+                        type="tel"
+                        inputMode="numeric"
+                        value={form.phone}
+                        onChange={(e) =>
+                          update("phone", e.target.value.replace(/\D/g, "").slice(0, 10))
+                        }
+                        placeholder="98765 43210"
+                        maxLength={10}
+                        className="rounded-none bg-background border-border h-11 flex-1"
+                        autoComplete="tel-national"
+                      />
+                    </div>
                   </Field>
                 </div>
               </section>
@@ -199,13 +215,13 @@ const Checkout = () => {
                   <Input
                     value={form.address}
                     onChange={(e) => update("address", e.target.value)}
-                    placeholder="Street address"
+                    placeholder="House no., building, street"
                     className="rounded-none bg-background border-border h-11"
                     autoComplete="address-line1"
                   />
                 </Field>
                 <div className="mt-5">
-                  <Field label="Apartment, suite, etc." error={errors.address2}>
+                  <Field label="Locality, landmark (optional)" error={errors.address2}>
                     <Input
                       value={form.address2 ?? ""}
                       onChange={(e) => update("address2", e.target.value)}
@@ -223,23 +239,43 @@ const Checkout = () => {
                       autoComplete="address-level2"
                     />
                   </Field>
-                  <Field label="Postal Code *" error={errors.postalCode}>
+                  <Field label="Pincode *" error={errors.pincode}>
                     <Input
-                      value={form.postalCode}
-                      onChange={(e) => update("postalCode", e.target.value)}
+                      inputMode="numeric"
+                      value={form.pincode}
+                      onChange={(e) =>
+                        update("pincode", e.target.value.replace(/\D/g, "").slice(0, 6))
+                      }
+                      placeholder="400001"
+                      maxLength={6}
                       className="rounded-none bg-background border-border h-11"
                       autoComplete="postal-code"
                     />
                   </Field>
                 </div>
-                <div className="mt-5">
-                  <Field label="Country *" error={errors.country}>
+                <div className="grid grid-cols-2 gap-4 mt-5">
+                  <Field label="State *" error={errors.state}>
+                    <Select
+                      value={form.state}
+                      onValueChange={(v) => update("state", v as IndianState)}
+                    >
+                      <SelectTrigger className="rounded-none bg-background border-border h-11">
+                        <SelectValue placeholder="Select state" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {INDIAN_STATES.map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="Country">
                     <Input
-                      value={form.country}
-                      onChange={(e) => update("country", e.target.value)}
-                      placeholder="United States"
+                      value="India"
+                      disabled
                       className="rounded-none bg-background border-border h-11"
-                      autoComplete="country-name"
                     />
                   </Field>
                 </div>
@@ -290,8 +326,8 @@ const Checkout = () => {
                 <div className="flex items-start gap-3 border border-dashed border-border p-4 text-xs text-muted-foreground">
                   <Lock size={14} className="mt-0.5 text-foreground/60" />
                   <p>
-                    Stripe-secured payment is wired up in the next step. For now you can submit to validate the
-                    flow — no card will be charged.
+                    UPI, cards, and net banking will be enabled in the next step via Razorpay/Stripe. Submit now
+                    to validate the flow — no payment will be charged.
                   </p>
                 </div>
               </section>
@@ -365,20 +401,34 @@ const Checkout = () => {
                     </ul>
 
                     <div className="border-t border-border pt-5 space-y-2.5 text-sm">
-                      <Row label="Subtotal" value={formatPrice(subtotal)} />
+                      <Row label="Base price (excl. GST)" value={formatPrice(taxableValue)} />
+                      {sameState ? (
+                        <>
+                          <Row label={`CGST @ ${(GST_RATE * 50).toFixed(0)}%`} value={formatPrice(cgst)} muted />
+                          <Row label={`SGST @ ${(GST_RATE * 50).toFixed(0)}%`} value={formatPrice(sgst)} muted />
+                        </>
+                      ) : (
+                        <Row
+                          label={`IGST @ ${(GST_RATE * 100).toFixed(0)}%${form.state ? "" : " (est.)"}`}
+                          value={formatPrice(igst || totalGst)}
+                          muted
+                        />
+                      )}
                       <Row
                         label="Shipping"
                         value={shippingCost === 0 ? "Free" : formatPrice(shippingCost)}
                       />
-                      <Row label="Estimated tax" value={formatPrice(taxes)} muted />
                     </div>
 
                     <div className="border-t border-border pt-5 flex items-baseline justify-between">
-                      <span className="text-sm text-foreground">Total</span>
+                      <span className="text-sm text-foreground">Total payable</span>
                       <span className="font-display text-2xl text-foreground tabular-nums">
                         {formatPrice(total)}
                       </span>
                     </div>
+                    <p className="text-[11px] font-mono tracking-wider text-muted-foreground -mt-2">
+                      Inclusive of all taxes · GSTIN 27AAACA1234F1Z5
+                    </p>
 
                     <Button
                       type="submit"
@@ -393,7 +443,7 @@ const Checkout = () => {
                         <ShieldCheck size={12} className="text-verified" /> ESCROW PROTECTED
                       </li>
                       <li className="flex items-center gap-2">
-                        <Truck size={12} className="text-verified" /> INSURED WHITE-GLOVE SHIPPING
+                        <Truck size={12} className="text-verified" /> INSURED PAN-INDIA SHIPPING
                       </li>
                       <li className="flex items-center gap-2">
                         <Lock size={12} className="text-verified" /> ENCRYPTED CHECKOUT
