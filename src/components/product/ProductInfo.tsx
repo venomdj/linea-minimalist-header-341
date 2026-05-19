@@ -60,6 +60,7 @@ const ProductInfo = () => {
           {product.name}
         </h1>
         <p className="text-sm text-muted-foreground">{product.set} · {product.edition}</p>
+        <p className="text-[11px] font-mono tracking-wider text-muted-foreground/80 uppercase">Inclusive of all taxes</p>
       </div>
 
       {/* Market panel */}
