@@ -77,7 +77,7 @@ const Footer = () => {
             <Link to="/privacy-policy" className="hover:text-foreground transition-colors">PRIVACY</Link>
             <Link to="/terms-of-service" className="hover:text-foreground transition-colors">TERMS</Link>
             <a href="#" className="hover:text-foreground transition-colors">COOKIES</a>
-            <a href="#" className="hover:text-foreground transition-colors">INSTAGRAM</a>
+            <a href="https://www.instagram.com/hakaii_690/" className="hover:text-foreground transition-colors">INSTAGRAM</a>
             <a href="#" className="hover:text-foreground transition-colors">X / TWITTER</a>
           </div>
         </div>
