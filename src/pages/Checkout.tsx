@@ -283,7 +283,7 @@ const Checkout = () => {
                 <h2 className="font-display text-lg text-foreground tracking-tight">
                   Order Tracking
                 </h2>
-                <span className="eyebrow text-warning flex items-center gap-1.5">
+                <span className="eyebrow text-[hsl(38,92%,60%)] flex items-center gap-1.5">
                   <Clock size={11} /> Verification Pending
                 </span>
               </div>
@@ -296,7 +296,7 @@ const Checkout = () => {
                           step.done
                             ? "bg-verified/20 border-verified text-verified"
                             : step.active
-                              ? "border-warning text-warning animate-pulse"
+                              ? "border-[hsl(38,92%,60%)] text-[hsl(38,92%,60%)] animate-pulse"
                               : "border-border text-muted-foreground"
                         }`}
                       >
