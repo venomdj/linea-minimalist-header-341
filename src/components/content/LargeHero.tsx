@@ -13,7 +13,7 @@ const LargeHero = () => {
   }, []);
 
   return (
-    <section className="relative w-full h-[92vh] min-h-[640px] overflow-hidden bg-background grain">
+    <section className="relative w-full min-h-[100svh] lg:min-h-[92vh] overflow-hidden bg-background grain flex flex-col">
       {/* Parallax bg */}
       <div
         className="absolute inset-0 will-change-transform"
