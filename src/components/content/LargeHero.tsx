@@ -30,15 +30,15 @@ const LargeHero = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 h-full flex flex-col justify-end px-6 lg:px-12 pb-16 lg:pb-24">
+      <div className="relative z-10 flex-1 flex flex-col justify-end px-6 lg:px-12 pt-28 pb-12 lg:pt-32 lg:pb-24">
         <div className="max-w-4xl">
-          <div className="flex items-center gap-3 mb-8 animate-fade-in">
+          <div className="flex items-center gap-3 mb-6 lg:mb-8 animate-fade-in">
             <span className="w-1.5 h-1.5 rounded-full bg-verified pulse-dot" />
-            <span className="eyebrow text-foreground/70">Series 03 — Eclipse Saga · Now Live</span>
+            <span className="eyebrow text-foreground/70 text-[10px] sm:text-xs">Series 03 — Eclipse Saga · Now Live</span>
           </div>
 
           <h1
-            className="font-display text-[clamp(2.75rem,8vw,7.5rem)] leading-[0.92] tracking-[-0.03em] font-light text-foreground animate-fade-up"
+            className="font-display text-[clamp(2rem,7vw,7.5rem)] leading-[1] tracking-[-0.03em] font-light text-foreground animate-fade-up"
             style={{ animationDelay: "0.1s" }}
           >
             The marketplace
@@ -49,9 +49,10 @@ const LargeHero = () => {
           </h1>
 
           <p
-            className="mt-8 max-w-xl text-base lg:text-lg text-foreground/70 leading-relaxed animate-fade-up"
+            className="mt-6 lg:mt-8 max-w-xl text-sm sm:text-base lg:text-lg text-foreground/70 leading-relaxed animate-fade-up"
             style={{ animationDelay: "0.25s" }}
           >
+
             Every listing graded, authenticated, and insured end-to-end. No fakes, no flippers, no fluff — just provenance you can trust and prices set by the market.
           </p>
 
