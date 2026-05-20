@@ -46,3 +46,9 @@ export const ORIGIN_STATE: IndianState = "Maharashtra";
 
 // 18% GST on collectibles
 export const GST_RATE = 0.18;
+
+// Manual UPI payment configuration
+export const UPI_ID = "animex@upi";
+export const UPI_MERCHANT_NAME = "ANIMEX Collectibles";
+export const WHATSAPP_NUMBER = "919876543210"; // intl format, no +
+
