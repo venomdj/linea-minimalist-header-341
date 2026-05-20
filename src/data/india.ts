@@ -48,7 +48,7 @@ export const ORIGIN_STATE: IndianState = "Maharashtra";
 export const GST_RATE = 0.18;
 
 // Manual UPI payment configuration
-export const UPI_ID = "animex@upi";
-export const UPI_MERCHANT_NAME = "ANIMEX Collectibles";
-export const WHATSAPP_NUMBER = "919876543210"; // intl format, no +
+export const UPI_ID = "jaigamerz069@oksbi";
+export const UPI_MERCHANT_NAME = "HAKAI";
+export const WHATSAPP_NUMBER = "918273512178"; // intl format, no +
 
