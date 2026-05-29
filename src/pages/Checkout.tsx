@@ -250,7 +250,6 @@ const Checkout = () => {
       email: form.email,
       fullName: form.fullName,
       phone: form.phone,
-      transactionId: form.transactionId,
     });
     clear();
     toast.success("Order received — verification pending");
