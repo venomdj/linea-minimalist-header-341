@@ -311,9 +311,9 @@ const Checkout = () => {
                   </div>
                 </div>
                 <div>
-                  <p className="eyebrow mb-2">UPI Txn ID</p>
+                  <p className="eyebrow mb-2">Mobile</p>
                   <p className="font-mono text-sm text-foreground tracking-wider truncate">
-                    {success.transactionId}
+                    +91 {success.phone}
                   </p>
                 </div>
                 <div>
