@@ -94,7 +94,7 @@ const initial: BuyerForm = {
 const generateOrderId = () => {
   const ts = Date.now().toString(36).toUpperCase();
   const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
-  return `ANX-${ts}-${rand}`;
+  return `MVLT-${ts}-${rand}`;
 };
 
 const Checkout = () => {
@@ -131,7 +131,7 @@ const Checkout = () => {
       pn: UPI_MERCHANT_NAME,
       am: total.toFixed(2),
       cu: "INR",
-      tn: `ANIMEX Order ${form.email || "checkout"}`,
+      tn: `MYTHICAL VAULT Order ${form.email || "checkout"}`,
     });
     return `upi://pay?${params.toString()}`;
   }, [total, form.email]);
@@ -209,7 +209,7 @@ const Checkout = () => {
 
   if (success) {
     const whatsappMsg = encodeURIComponent(
-      `Hi ANIMEX, I just placed an order.\n\nOrder ID: ${success.orderId}\nName: ${success.fullName}\nAmount: ₹${success.total.toLocaleString("en-IN")}\nUPI Txn ID: ${success.transactionId}\n\nPlease verify and confirm.`,
+      `Hi MYTHICAL VAULT, I just placed an order.\n\nOrder ID: ${success.orderId}\nName: ${success.fullName}\nAmount: ₹${success.total.toLocaleString("en-IN")}\nUPI Txn ID: ${success.transactionId}\n\nPlease verify and confirm.`,
     );
     const waLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMsg}`;
 

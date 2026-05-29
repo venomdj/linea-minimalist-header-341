@@ -24,7 +24,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="lg:col-span-5">
             <Link to="/" className="font-display text-3xl font-semibold tracking-[0.32em] text-foreground">
-              ANIMEX
+              MYTHICAL VAULT
             </Link>
             <p className="mt-6 text-sm text-muted-foreground max-w-md leading-relaxed">
               The trusted global marketplace for graded, authenticated anime collectibles. Verified provenance, secure escrow, and curated by collectors who care.
@@ -71,7 +71,7 @@ const Footer = () => {
 
         <div className="border-t border-border/60 pt-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground font-mono tracking-wider">
-            © 2026 ANIMEX MARKETPLACE INC · ALL RIGHTS RESERVED
+            © 2026 MYTHICAL VAULT MARKETPLACE INC · ALL RIGHTS RESERVED
           </p>
           <div className="flex gap-6 text-xs text-muted-foreground font-mono tracking-wider">
             <Link to="/privacy-policy" className="hover:text-foreground transition-colors">PRIVACY</Link>

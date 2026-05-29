@@ -11,7 +11,7 @@ const navItems = [
   { name: "Marketplace", href: "/category/all", sub: ["All Cards", "New Listings", "Trending", "Auctions Ending"] },
   { name: "Series", href: "/category/series", sub: ["Æther Order", "Silent Chronicle", "Eclipse Saga", "Hollow Vow", "Lantern Codex"] },
   { name: "Grades", href: "/category/grades", sub: ["PSA 10", "PSA 9", "BGS 9.5", "Ungraded", "Slabbed"] },
-  { name: "Vault", href: "/about/our-story", sub: ["About ANIMEX", "Authentication", "Grading Standards", "Sell With Us"] },
+  { name: "Vault", href: "/about/our-story", sub: ["About Mythical Vault", "Authentication", "Grading Standards", "Sell With Us"] },
 ];
 
 const Navigation = () => {
@@ -94,7 +94,7 @@ const Navigation = () => {
           {/* Center wordmark */}
           <Link to="/" className="absolute left-1/2 -translate-x-1/2 group">
             <span className="font-display text-lg font-semibold tracking-[0.32em] text-foreground">
-              ANIMEX
+              MYTHICAL VAULT
             </span>
           </Link>
 

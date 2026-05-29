@@ -22,7 +22,7 @@ interface CartContextValue {
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
-const STORAGE_KEY = "animex.cart.v1";
+const STORAGE_KEY = "mythicalvault.cart.v1";
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<CartLine[]>(() => {

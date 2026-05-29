@@ -21,7 +21,7 @@ const LargeHero = () => {
       >
         <img
           src={heroVault}
-          alt="The ANIMEX vault"
+          alt="The Mythical Vault vault"
           className="w-full h-full object-cover opacity-80"
           fetchPriority="high"
         />

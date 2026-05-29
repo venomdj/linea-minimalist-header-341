@@ -6,7 +6,7 @@ const features = [
   {
     icon: BadgeCheck,
     title: "Authenticated by experts",
-    body: "Every card is inspected, photographed in high resolution, and matched against population data before it ever appears on ANIMEX.",
+    body: "Every card is inspected, photographed in high resolution, and matched against population data before it ever appears on MYTHICAL VAULT.",
   },
   {
     icon: Lock,
@@ -31,7 +31,7 @@ const EditorialSection = () => {
             Built for collectors who care about <em className="not-italic text-foreground/60">what they own.</em>
           </h2>
           <p className="mt-8 text-base text-muted-foreground leading-relaxed max-w-md">
-            ANIMEX was founded on a simple idea — that the secondary market for high-grade anime collectibles deserves the same rigor as fine art, watches, and sneakers. We built the infrastructure to make that real.
+            MYTHICAL VAULT was founded on a simple idea — that the secondary market for high-grade anime collectibles deserves the same rigor as fine art, watches, and sneakers. We built the infrastructure to make that real.
           </p>
           <Link
             to="/about/our-story"

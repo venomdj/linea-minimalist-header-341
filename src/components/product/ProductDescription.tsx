@@ -38,7 +38,7 @@ const ProductDescription = () => {
     <div className="mt-12 border-t border-border">
       <Section title="Provenance" defaultOpen>
         <p>
-          {product.name} is a {product.edition.toLowerCase()} pull from {product.series} — {product.set}. This copy was graded {product.grade} and entered the ANIMEX vault following full visual authentication, edge-wear inspection, and population cross-reference.
+          {product.name} is a {product.edition.toLowerCase()} pull from {product.series} — {product.set}. This copy was graded {product.grade} and entered the Mythical Vault following full visual authentication, edge-wear inspection, and population cross-reference.
         </p>
         <p>
           Only {product.population} known copies exist at this grade. Chain-of-custody documentation accompanies every shipment.
