@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import {
@@ -16,6 +16,7 @@ import {
   Clock,
   PackageSearch,
   X,
+  BookmarkPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,10 +62,6 @@ const buyerSchema = z.object({
     .trim()
     .regex(/^\d{6}$/, "Pincode must be 6 digits"),
   shipping: z.enum(["standard", "express", "overnight"]),
-  transactionId: z
-    .string()
-    .trim()
-    .regex(/^[A-Za-z0-9]{8,22}$/, "Enter a valid UPI / UTR reference (8–22 chars)"),
   screenshotName: z.string().min(1, "Upload your payment screenshot"),
 });
 
@@ -87,9 +84,11 @@ const initial: BuyerForm = {
   state: "",
   pincode: "",
   shipping: "standard",
-  transactionId: "",
   screenshotName: "",
 };
+
+const SAVED_DETAILS_KEY = "mythicalvault.buyer.v1";
+type SavedDetails = Omit<BuyerForm, "shipping" | "screenshotName">;
 
 const generateOrderId = () => {
   const ts = Date.now().toString(36).toUpperCase();
@@ -109,9 +108,59 @@ const Checkout = () => {
     email: string;
     fullName: string;
     phone: string;
-    transactionId: string;
   }>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string>("");
+  const [hasSavedDetails, setHasSavedDetails] = useState(false);
+
+  // Auto-load saved buyer details on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SAVED_DETAILS_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Partial<SavedDetails>;
+      setForm((prev) => ({ ...prev, ...saved }));
+      setHasSavedDetails(true);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const saveDetails = () => {
+    const parsed = buyerSchema
+      .pick({
+        email: true,
+        fullName: true,
+        phone: true,
+        address: true,
+        address2: true,
+        city: true,
+        state: true,
+        pincode: true,
+      })
+      .safeParse(form);
+    if (!parsed.success) {
+      toast.error("Fill contact and address fields before saving");
+      return;
+    }
+    try {
+      localStorage.setItem(SAVED_DETAILS_KEY, JSON.stringify(parsed.data));
+      setHasSavedDetails(true);
+      toast.success("Address & details saved for next time");
+    } catch {
+      toast.error("Could not save details");
+    }
+  };
+
+  const clearSavedDetails = () => {
+    try {
+      localStorage.removeItem(SAVED_DETAILS_KEY);
+      setHasSavedDetails(false);
+      toast.success("Saved details cleared");
+    } catch {
+      /* ignore */
+    }
+  };
+
 
   const shippingCost = shippingOptions.find((s) => s.id === form.shipping)?.price ?? 0;
 
@@ -201,7 +250,6 @@ const Checkout = () => {
       email: form.email,
       fullName: form.fullName,
       phone: form.phone,
-      transactionId: form.transactionId,
     });
     clear();
     toast.success("Order received — verification pending");
@@ -209,7 +257,7 @@ const Checkout = () => {
 
   if (success) {
     const whatsappMsg = encodeURIComponent(
-      `Hi MYTHICAL VAULT, I just placed an order.\n\nOrder ID: ${success.orderId}\nName: ${success.fullName}\nAmount: ₹${success.total.toLocaleString("en-IN")}\nUPI Txn ID: ${success.transactionId}\n\nPlease verify and confirm.`,
+      `Hi MYTHICAL VAULT, I just placed an order.\n\nOrder ID: ${success.orderId}\nName: ${success.fullName}\nAmount: ₹${success.total.toLocaleString("en-IN")}\n\nPayment screenshot attached. Please verify and confirm.`,
     );
     const waLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMsg}`;
 
@@ -237,7 +285,7 @@ const Checkout = () => {
                 Your vault is being prepared.
               </h1>
               <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-                We've received your UPI payment reference. Our team will verify the transaction and
+                We've received your payment screenshot. Our team will verify the transaction and
                 send a confirmation to{" "}
                 <span className="text-foreground">{success.email}</span> shortly.
               </p>
@@ -263,9 +311,9 @@ const Checkout = () => {
                   </div>
                 </div>
                 <div>
-                  <p className="eyebrow mb-2">UPI Txn ID</p>
+                  <p className="eyebrow mb-2">Mobile</p>
                   <p className="font-mono text-sm text-foreground tracking-wider truncate">
-                    {success.transactionId}
+                    +91 {success.phone}
                   </p>
                 </div>
                 <div>
@@ -426,8 +474,24 @@ const Checkout = () => {
                   <h2 className="font-display text-lg text-foreground tracking-tight">
                     Shipping Address
                   </h2>
-                  <span className="eyebrow">Step 02</span>
+                  <div className="flex items-center gap-3">
+                    {hasSavedDetails && (
+                      <button
+                        type="button"
+                        onClick={clearSavedDetails}
+                        className="eyebrow text-muted-foreground hover:text-destructive transition-colors"
+                      >
+                        Clear saved
+                      </button>
+                    )}
+                    <span className="eyebrow">Step 02</span>
+                  </div>
                 </header>
+                {hasSavedDetails && (
+                  <div className="mb-5 flex items-center gap-2 border border-verified/30 bg-verified/5 px-3 py-2 text-[11px] font-mono tracking-wider text-verified">
+                    <Check size={12} /> SAVED DETAILS LOADED · EDIT FREELY
+                  </div>
+                )}
                 <Field label="Address *" error={errors.address}>
                   <Input
                     value={form.address}
@@ -495,6 +559,20 @@ const Checkout = () => {
                       className="rounded-none bg-background border-border h-11"
                     />
                   </Field>
+                </div>
+                <div className="mt-6 pt-5 border-t border-border flex items-center justify-between gap-4 flex-wrap">
+                  <p className="text-[11px] font-mono tracking-wider text-muted-foreground">
+                    SAVE THESE DETAILS LOCALLY FOR FASTER CHECKOUT NEXT TIME
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={saveDetails}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-none border-border hover:border-foreground/40 bg-transparent text-[11px] tracking-wider"
+                  >
+                    <BookmarkPlus size={12} /> {hasSavedDetails ? "UPDATE SAVED DETAILS" : "SAVE FOR NEXT TIME"}
+                  </Button>
                 </div>
               </section>
 
@@ -615,8 +693,8 @@ const Checkout = () => {
                       {[
                         "Open your UPI app and scan the QR or pay to the UPI ID above.",
                         `Enter the exact amount: ${formatPrice(total)}.`,
-                        "Complete the payment and copy the 12-digit UTR / transaction ID.",
-                        "Paste the transaction ID below and upload a payment screenshot.",
+                        "Complete the payment and take a screenshot of the success page.",
+                        "Upload the payment screenshot below to submit your order.",
                       ].map((step, i) => (
                         <li key={i} className="flex gap-3">
                           <span className="font-mono text-foreground/60 tabular-nums">
@@ -629,32 +707,20 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                {/* Confirmation inputs */}
-                <div className="mt-8 pt-8 border-t border-border grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <Field label="UPI Transaction ID / UTR *" error={errors.transactionId}>
-                    <Input
-                      value={form.transactionId}
-                      onChange={(e) =>
-                        update("transactionId", e.target.value.replace(/\s/g, "").toUpperCase())
-                      }
-                      placeholder="e.g. 412345678901"
-                      maxLength={22}
-                      className="rounded-none bg-background border-border h-11 font-mono tracking-wider"
-                    />
-                  </Field>
-
+                {/* Payment screenshot upload */}
+                <div className="mt-8 pt-8 border-t border-border">
                   <Field label="Payment Screenshot *" error={errors.screenshotName}>
                     {screenshotPreview ? (
-                      <div className="flex items-center gap-3 border border-border bg-background p-2">
+                      <div className="flex items-center gap-3 border border-border bg-background p-3">
                         <img
                           src={screenshotPreview}
                           alt="Payment screenshot preview"
-                          className="w-12 h-12 object-cover"
+                          className="w-16 h-16 object-cover"
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-foreground truncate">{form.screenshotName}</p>
-                          <p className="text-[10px] font-mono tracking-wider text-verified">
-                            UPLOADED
+                          <p className="text-[10px] font-mono tracking-wider text-verified mt-0.5">
+                            UPLOADED · READY FOR VERIFICATION
                           </p>
                         </div>
                         <button
@@ -667,9 +733,10 @@ const Checkout = () => {
                         </button>
                       </div>
                     ) : (
-                      <label className="flex items-center justify-center gap-2 h-11 border border-dashed border-border bg-background hover:border-foreground/40 cursor-pointer transition-colors text-xs text-muted-foreground">
-                        <Upload size={14} />
-                        <span className="font-mono tracking-wider">UPLOAD SCREENSHOT (PNG/JPG, ≤5 MB)</span>
+                      <label className="flex flex-col items-center justify-center gap-2 py-8 border border-dashed border-border bg-background hover:border-foreground/40 cursor-pointer transition-colors text-xs text-muted-foreground">
+                        <Upload size={20} />
+                        <span className="font-mono tracking-wider">UPLOAD PAYMENT SCREENSHOT</span>
+                        <span className="text-[10px] font-mono tracking-wider text-muted-foreground/70">PNG / JPG · MAX 5 MB</span>
                         <input
                           type="file"
                           accept="image/*"
