@@ -106,13 +106,24 @@ const ProductInfo = () => {
           )}
         </div>
 
-        <div className="flex gap-2">
-          <Button onClick={handleBuy} className="flex-1 h-12 bg-foreground text-background hover:bg-foreground/90 rounded-none font-medium tracking-wider text-xs">
-            {tab === "buy" ? `BUY NOW · ${formatPrice(product.price)}` : "PLACE A BID"}
-          </Button>
-          <Button variant="outline" size="icon" className="h-12 w-12 rounded-none border-border hover:border-foreground/40 bg-transparent">
-            <Heart size={16} strokeWidth={1.5} />
-          </Button>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <Button onClick={handleBuy} className="flex-1 h-12 bg-foreground text-background hover:bg-foreground/90 rounded-none font-medium tracking-wider text-xs">
+              {tab === "buy" ? `BUY NOW · ${formatPrice(product.price)}` : "PLACE A BID"}
+            </Button>
+            <Button variant="outline" size="icon" className="h-12 w-12 rounded-none border-border hover:border-foreground/40 bg-transparent">
+              <Heart size={16} strokeWidth={1.5} />
+            </Button>
+          </div>
+          {tab === "buy" && (
+            <Button
+              onClick={handleAddToCart}
+              variant="outline"
+              className="w-full h-12 rounded-none border-border hover:border-foreground/40 bg-transparent text-xs tracking-[0.18em] font-medium"
+            >
+              <ShoppingBag size={14} strokeWidth={1.5} /> ADD TO CART
+            </Button>
+          )}
         </div>
 
         <div className="flex items-center gap-3 text-[11px] font-mono tracking-wider text-muted-foreground pt-2 border-t border-border/50">
