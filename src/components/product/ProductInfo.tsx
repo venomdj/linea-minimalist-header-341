@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { BadgeCheck, Shield, TrendingUp, Heart } from "lucide-react";
+import { BadgeCheck, Shield, TrendingUp, Heart, ShoppingBag } from "lucide-react";
 import { getProduct, formatPrice, rarityClass } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
@@ -25,6 +25,15 @@ const ProductInfo = () => {
     add(product, 1);
     toast.success(`${product.name} added to bag`);
     navigate("/checkout");
+  };
+
+  const handleAddToCart = () => {
+    if (tab === "bid") {
+      toast.info("Bidding coming soon");
+      return;
+    }
+    add(product, 1);
+    toast.success(`${product.name} added to bag`);
   };
 
 
