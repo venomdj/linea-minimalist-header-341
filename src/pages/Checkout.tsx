@@ -62,10 +62,6 @@ const buyerSchema = z.object({
     .trim()
     .regex(/^\d{6}$/, "Pincode must be 6 digits"),
   shipping: z.enum(["standard", "express", "overnight"]),
-  transactionId: z
-    .string()
-    .trim()
-    .regex(/^[A-Za-z0-9]{8,22}$/, "Enter a valid UPI / UTR reference (8–22 chars)"),
   screenshotName: z.string().min(1, "Upload your payment screenshot"),
 });
 
@@ -88,9 +84,11 @@ const initial: BuyerForm = {
   state: "",
   pincode: "",
   shipping: "standard",
-  transactionId: "",
   screenshotName: "",
 };
+
+const SAVED_DETAILS_KEY = "mythicalvault.buyer.v1";
+type SavedDetails = Omit<BuyerForm, "shipping" | "screenshotName">;
 
 const generateOrderId = () => {
   const ts = Date.now().toString(36).toUpperCase();
