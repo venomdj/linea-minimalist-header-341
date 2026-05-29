@@ -257,7 +257,7 @@ const Checkout = () => {
 
   if (success) {
     const whatsappMsg = encodeURIComponent(
-      `Hi MYTHICAL VAULT, I just placed an order.\n\nOrder ID: ${success.orderId}\nName: ${success.fullName}\nAmount: ₹${success.total.toLocaleString("en-IN")}\nUPI Txn ID: ${success.transactionId}\n\nPlease verify and confirm.`,
+      `Hi MYTHICAL VAULT, I just placed an order.\n\nOrder ID: ${success.orderId}\nName: ${success.fullName}\nAmount: ₹${success.total.toLocaleString("en-IN")}\n\nPayment screenshot attached. Please verify and confirm.`,
     );
     const waLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMsg}`;
 
