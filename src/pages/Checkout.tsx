@@ -663,8 +663,8 @@ const Checkout = () => {
                       {[
                         "Open your UPI app and scan the QR or pay to the UPI ID above.",
                         `Enter the exact amount: ${formatPrice(total)}.`,
-                        "Complete the payment and copy the 12-digit UTR / transaction ID.",
-                        "Paste the transaction ID below and upload a payment screenshot.",
+                        "Complete the payment and take a screenshot of the success page.",
+                        "Upload the payment screenshot below to submit your order.",
                       ].map((step, i) => (
                         <li key={i} className="flex gap-3">
                           <span className="font-mono text-foreground/60 tabular-nums">
@@ -677,32 +677,20 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                {/* Confirmation inputs */}
-                <div className="mt-8 pt-8 border-t border-border grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <Field label="UPI Transaction ID / UTR *" error={errors.transactionId}>
-                    <Input
-                      value={form.transactionId}
-                      onChange={(e) =>
-                        update("transactionId", e.target.value.replace(/\s/g, "").toUpperCase())
-                      }
-                      placeholder="e.g. 412345678901"
-                      maxLength={22}
-                      className="rounded-none bg-background border-border h-11 font-mono tracking-wider"
-                    />
-                  </Field>
-
+                {/* Payment screenshot upload */}
+                <div className="mt-8 pt-8 border-t border-border">
                   <Field label="Payment Screenshot *" error={errors.screenshotName}>
                     {screenshotPreview ? (
-                      <div className="flex items-center gap-3 border border-border bg-background p-2">
+                      <div className="flex items-center gap-3 border border-border bg-background p-3">
                         <img
                           src={screenshotPreview}
                           alt="Payment screenshot preview"
-                          className="w-12 h-12 object-cover"
+                          className="w-16 h-16 object-cover"
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-foreground truncate">{form.screenshotName}</p>
-                          <p className="text-[10px] font-mono tracking-wider text-verified">
-                            UPLOADED
+                          <p className="text-[10px] font-mono tracking-wider text-verified mt-0.5">
+                            UPLOADED · READY FOR VERIFICATION
                           </p>
                         </div>
                         <button
@@ -715,9 +703,10 @@ const Checkout = () => {
                         </button>
                       </div>
                     ) : (
-                      <label className="flex items-center justify-center gap-2 h-11 border border-dashed border-border bg-background hover:border-foreground/40 cursor-pointer transition-colors text-xs text-muted-foreground">
-                        <Upload size={14} />
-                        <span className="font-mono tracking-wider">UPLOAD SCREENSHOT (PNG/JPG, ≤5 MB)</span>
+                      <label className="flex flex-col items-center justify-center gap-2 py-8 border border-dashed border-border bg-background hover:border-foreground/40 cursor-pointer transition-colors text-xs text-muted-foreground">
+                        <Upload size={20} />
+                        <span className="font-mono tracking-wider">UPLOAD PAYMENT SCREENSHOT</span>
+                        <span className="text-[10px] font-mono tracking-wider text-muted-foreground/70">PNG / JPG · MAX 5 MB</span>
                         <input
                           type="file"
                           accept="image/*"
