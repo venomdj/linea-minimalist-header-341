@@ -560,6 +560,20 @@ const Checkout = () => {
                     />
                   </Field>
                 </div>
+                <div className="mt-6 pt-5 border-t border-border flex items-center justify-between gap-4 flex-wrap">
+                  <p className="text-[11px] font-mono tracking-wider text-muted-foreground">
+                    SAVE THESE DETAILS LOCALLY FOR FASTER CHECKOUT NEXT TIME
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={saveDetails}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-none border-border hover:border-foreground/40 bg-transparent text-[11px] tracking-wider"
+                  >
+                    <BookmarkPlus size={12} /> {hasSavedDetails ? "UPDATE SAVED DETAILS" : "SAVE FOR NEXT TIME"}
+                  </Button>
+                </div>
               </section>
 
               {/* Shipping method */}
