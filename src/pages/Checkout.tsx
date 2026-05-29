@@ -285,7 +285,7 @@ const Checkout = () => {
                 Your vault is being prepared.
               </h1>
               <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-                We've received your UPI payment reference. Our team will verify the transaction and
+                We've received your payment screenshot. Our team will verify the transaction and
                 send a confirmation to{" "}
                 <span className="text-foreground">{success.email}</span> shortly.
               </p>
