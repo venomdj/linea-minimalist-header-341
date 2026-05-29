@@ -108,9 +108,59 @@ const Checkout = () => {
     email: string;
     fullName: string;
     phone: string;
-    transactionId: string;
   }>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string>("");
+  const [hasSavedDetails, setHasSavedDetails] = useState(false);
+
+  // Auto-load saved buyer details on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SAVED_DETAILS_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Partial<SavedDetails>;
+      setForm((prev) => ({ ...prev, ...saved }));
+      setHasSavedDetails(true);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const saveDetails = () => {
+    const parsed = buyerSchema
+      .pick({
+        email: true,
+        fullName: true,
+        phone: true,
+        address: true,
+        address2: true,
+        city: true,
+        state: true,
+        pincode: true,
+      })
+      .safeParse(form);
+    if (!parsed.success) {
+      toast.error("Fill contact and address fields before saving");
+      return;
+    }
+    try {
+      localStorage.setItem(SAVED_DETAILS_KEY, JSON.stringify(parsed.data));
+      setHasSavedDetails(true);
+      toast.success("Address & details saved for next time");
+    } catch {
+      toast.error("Could not save details");
+    }
+  };
+
+  const clearSavedDetails = () => {
+    try {
+      localStorage.removeItem(SAVED_DETAILS_KEY);
+      setHasSavedDetails(false);
+      toast.success("Saved details cleared");
+    } catch {
+      /* ignore */
+    }
+  };
+
 
   const shippingCost = shippingOptions.find((s) => s.id === form.shipping)?.price ?? 0;
 
