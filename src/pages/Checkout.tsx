@@ -474,8 +474,24 @@ const Checkout = () => {
                   <h2 className="font-display text-lg text-foreground tracking-tight">
                     Shipping Address
                   </h2>
-                  <span className="eyebrow">Step 02</span>
+                  <div className="flex items-center gap-3">
+                    {hasSavedDetails && (
+                      <button
+                        type="button"
+                        onClick={clearSavedDetails}
+                        className="eyebrow text-muted-foreground hover:text-destructive transition-colors"
+                      >
+                        Clear saved
+                      </button>
+                    )}
+                    <span className="eyebrow">Step 02</span>
+                  </div>
                 </header>
+                {hasSavedDetails && (
+                  <div className="mb-5 flex items-center gap-2 border border-verified/30 bg-verified/5 px-3 py-2 text-[11px] font-mono tracking-wider text-verified">
+                    <Check size={12} /> SAVED DETAILS LOADED · EDIT FREELY
+                  </div>
+                )}
                 <Field label="Address *" error={errors.address}>
                   <Input
                     value={form.address}
