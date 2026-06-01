@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, R
 import { Product } from "@/data/products";
 
 export interface CartLine {
-  id: number;
+  id: string | number;
   slug: string;
   name: string;
   series: string;
@@ -16,8 +16,8 @@ interface CartContextValue {
   count: number;
   subtotal: number;
   add: (product: Product, qty?: number) => void;
-  remove: (id: number) => void;
-  setQty: (id: number, qty: number) => void;
+  remove: (id: string | number) => void;
+  setQty: (id: string | number, qty: number) => void;
   clear: () => void;
 }
 
@@ -63,11 +63,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
-  const remove = useCallback((id: number) => {
+  const remove = useCallback((id: string | number) => {
     setItems((prev) => prev.filter((l) => l.id !== id));
   }, []);
 
-  const setQty = useCallback((id: number, qty: number) => {
+  const setQty = useCallback((id: string | number, qty: number) => {
     setItems((prev) =>
       qty <= 0 ? prev.filter((l) => l.id !== id) : prev.map((l) => (l.id === id ? { ...l, quantity: qty } : l))
     );

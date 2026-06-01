@@ -10,7 +10,7 @@ import handling from "@/assets/editorial-handling.jpg";
 export type Rarity = "Common" | "Rare" | "Epic" | "Legendary" | "Grail";
 
 export interface Product {
-  id: number;
+  id: string | number;
   slug: string;
   name: string;
   series: string;
@@ -52,6 +52,9 @@ export const products: Product[] = [
 ];
 
 export const getProduct = (id: number | string) => {
+  if (typeof id === "string" && !/^\d+$/.test(id)) {
+    return products.find((p) => String(p.id) === id) ?? products[0];
+  }
   const n = typeof id === "string" ? parseInt(id, 10) : id;
   return products.find((p) => p.id === n) ?? products[0];
 };
