@@ -1,16 +1,16 @@
 import { useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { BadgeCheck, Shield, TrendingUp, Heart, ShoppingBag } from "lucide-react";
-import { getProduct, formatPrice, rarityClass } from "@/data/products";
+import { formatPrice, rarityClass, type Product } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 
-const ProductInfo = () => {
-  const { productId } = useParams();
+interface Props { product: Product; }
+
+const ProductInfo = ({ product }: Props) => {
   const navigate = useNavigate();
-  const product = getProduct(productId ?? 1);
   const [tab, setTab] = useState<"buy" | "bid">("buy");
   const { add } = useCart();
 
@@ -18,24 +18,17 @@ const ProductInfo = () => {
   const trendPct = product.lastSale ? (trend / product.lastSale) * 100 : 0;
 
   const handleBuy = () => {
-    if (tab === "bid") {
-      toast.info("Bidding coming soon");
-      return;
-    }
+    if (tab === "bid") { toast.info("Bidding coming soon"); return; }
     add(product, 1);
     toast.success(`${product.name} added to bag`);
     navigate("/checkout");
   };
 
   const handleAddToCart = () => {
-    if (tab === "bid") {
-      toast.info("Bidding coming soon");
-      return;
-    }
+    if (tab === "bid") { toast.info("Bidding coming soon"); return; }
     add(product, 1);
     toast.success(`${product.name} added to bag`);
   };
-
 
   return (
     <div className="space-y-8">
@@ -51,7 +44,6 @@ const ProductInfo = () => {
         </Breadcrumb>
       </div>
 
-      {/* Title */}
       <div className="space-y-3">
         <div className="flex items-center gap-2 flex-wrap">
           <span className={`inline-flex items-center px-2 py-1 text-[10px] tracking-[0.18em] uppercase font-mono border ${rarityClass[product.rarity]}`}>
@@ -72,7 +64,6 @@ const ProductInfo = () => {
         <p className="text-[11px] font-mono tracking-wider text-muted-foreground/80 uppercase">Inclusive of all taxes</p>
       </div>
 
-      {/* Market panel */}
       <div className="border border-border bg-surface-1 p-6 space-y-5">
         <div className="flex border-b border-border">
           {(["buy", "bid"] as const).map((t) => (
@@ -132,7 +123,6 @@ const ProductInfo = () => {
         </div>
       </div>
 
-      {/* Stats grid */}
       <div className="grid grid-cols-3 gap-px bg-border">
         {[
           { l: "Population", v: product.population?.toString() ?? "—" },
