@@ -8,11 +8,39 @@ import ProductCarousel from "../components/content/ProductCarousel";
 import { getProduct } from "../data/products";
 import { useProducts } from "@/hooks/useProducts";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ProductDetail = () => {
   const { productId } = useParams();
-  useProducts(); // populate runtime registry so DB products resolve in getProduct
-  const product = getProduct(productId ?? 1);
+  const { loading } = useProducts(); // populate runtime registry, and give us loading state
+
+  // Only call getProduct once the registry is populated
+  const product = loading ? null : getProduct(productId ?? 1);
+
+  if (loading || !product) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-8 lg:pt-12">
+          <section className="w-full px-6 lg:px-12">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
+              <div className="lg:col-span-7 space-y-3">
+                <Skeleton className="w-full aspect-[4/5]" />
+                <Skeleton className="w-full aspect-[4/5]" />
+              </div>
+              <div className="lg:col-span-5 space-y-4 mt-8 lg:mt-0">
+                <Skeleton className="h-6 w-1/3" />
+                <Skeleton className="h-12 w-2/3" />
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            </div>
+          </section>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
