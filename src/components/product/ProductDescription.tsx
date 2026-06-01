@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
-import { getProduct } from "@/data/products";
+import type { Product } from "@/data/products";
+
+interface Props { product: Product; }
 
 const Section = ({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) => {
   const [open, setOpen] = useState(defaultOpen);
@@ -30,46 +31,38 @@ const Row = ({ k, v }: { k: string; v: string }) => (
   </div>
 );
 
-const ProductDescription = () => {
-  const { productId } = useParams();
-  const product = getProduct(productId ?? 1);
-
-  return (
-    <div className="mt-12 border-t border-border">
-      <Section title="Provenance" defaultOpen>
-        <p>
-          {product.name} is a {product.edition.toLowerCase()} pull from {product.series} — {product.set}. This copy was graded {product.grade} and entered the Mythical Vault following full visual authentication, edge-wear inspection, and population cross-reference.
-        </p>
-        <p>
-          Only {product.population} known copies exist at this grade. Chain-of-custody documentation accompanies every shipment.
-        </p>
-      </Section>
-
-      <Section title="Specification">
-        <Row k="Series" v={product.series} />
-        <Row k="Set" v={product.set} />
-        <Row k="Edition" v={product.edition} />
-        <Row k="Grade" v={product.grade} />
-        <Row k="Rarity" v={product.rarity} />
-        <Row k="Population" v={product.population?.toString() ?? "—"} />
-      </Section>
-
-      <Section title="Authentication & Escrow">
-        <ul className="space-y-2 list-none">
-          <li>— Multi-point physical inspection on intake and dispatch.</li>
-          <li>— Tamper-evident slab serial cross-checked against grading registry.</li>
-          <li>— Buyer funds held in escrow until verified delivery and 48-hour inspection window closes.</li>
-          <li>— Full insurance, signature-required courier, real-time tracking.</li>
-        </ul>
-      </Section>
-
-      <Section title="Returns & Buyer Protection">
-        <p>
-          If the card does not match the listing in grade, edition, or population data, the sale is reversed and funds are returned in full within 48 hours of inspection.
-        </p>
-      </Section>
-    </div>
-  );
-};
+const ProductDescription = ({ product }: Props) => (
+  <div className="mt-12 border-t border-border">
+    <Section title="Provenance" defaultOpen>
+      <p>
+        {product.name} is a {product.edition.toLowerCase()} pull from {product.series} — {product.set}. This copy was graded {product.grade} and entered the Mythical Vault following full visual authentication, edge-wear inspection, and population cross-reference.
+      </p>
+      <p>
+        Only {product.population ?? "—"} known copies exist at this grade. Chain-of-custody documentation accompanies every shipment.
+      </p>
+    </Section>
+    <Section title="Specification">
+      <Row k="Series" v={product.series} />
+      <Row k="Set" v={product.set} />
+      <Row k="Edition" v={product.edition} />
+      <Row k="Grade" v={product.grade} />
+      <Row k="Rarity" v={product.rarity} />
+      <Row k="Population" v={product.population?.toString() ?? "—"} />
+    </Section>
+    <Section title="Authentication & Escrow">
+      <ul className="space-y-2 list-none">
+        <li>— Multi-point physical inspection on intake and dispatch.</li>
+        <li>— Tamper-evident slab serial cross-checked against grading registry.</li>
+        <li>— Buyer funds held in escrow until verified delivery and 48-hour inspection window closes.</li>
+        <li>— Full insurance, signature-required courier, real-time tracking.</li>
+      </ul>
+    </Section>
+    <Section title="Returns & Buyer Protection">
+      <p>
+        If the card does not match the listing in grade, edition, or population data, the sale is reversed and funds are returned in full within 48 hours of inspection.
+      </p>
+    </Section>
+  </div>
+);
 
 export default ProductDescription;
