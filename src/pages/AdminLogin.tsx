@@ -23,7 +23,11 @@ const AdminLogin = () => {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && user && isAdmin) navigate("/admin", { replace: true });
+    console.log("[AdminLogin] auth state — loading:", loading, "user:", user?.id ?? "none", "isAdmin:", isAdmin);
+    if (!loading && user && isAdmin) {
+      console.log("[AdminLogin] ✓ Admin confirmed — navigating to /admin");
+      navigate("/admin", { replace: true });
+    }
   }, [loading, user, isAdmin, navigate]);
 
   const submit = async (e: React.FormEvent) => {
@@ -44,14 +48,19 @@ const AdminLogin = () => {
         if (error) throw error;
         toast.success("Account created. An existing admin must promote you to the admin role.");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        console.log("[AdminLogin] Attempting sign in for", parsed.data.email);
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: parsed.data.email,
           password: parsed.data.password,
         });
         if (error) throw error;
-        toast.success("Signed in");
+        console.log("[AdminLogin] Sign in success — user id:", data.user?.id);
+        toast.success("Signed in — verifying admin role…");
+        // Navigation is handled by the useEffect watching isAdmin/loading.
+        // No manual navigate here — wait for useAuth to confirm the role.
       }
     } catch (err: any) {
+      console.error("[AdminLogin] Auth error:", err);
       toast.error(err.message ?? "Auth failed");
     } finally {
       setBusy(false);
@@ -96,7 +105,7 @@ const AdminLogin = () => {
           )}
         </div>
 
-        {user && !isAdmin && (
+        {user && !isAdmin && !loading && (
           <div className="text-[11px] font-mono text-amber-400/90 border border-amber-500/30 bg-amber-500/5 p-3">
             Signed in as <span className="text-foreground">{user.email}</span> but this account is not an admin.
             Promote it from the backend dashboard (user_roles table → add row with role: admin).
