@@ -5,42 +5,42 @@ import ProductImageGallery from "../components/product/ProductImageGallery";
 import ProductInfo from "../components/product/ProductInfo";
 import ProductDescription from "../components/product/ProductDescription";
 import ProductCarousel from "../components/content/ProductCarousel";
-import { getProduct } from "../data/products";
+import { getProduct, type Product } from "../data/products";
 import { useProducts } from "@/hooks/useProducts";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const ProductDetailSkeleton = () => (
+  <div className="min-h-screen bg-background">
+    <Header />
+    <main className="pt-8 lg:pt-12">
+      <section className="w-full px-6 lg:px-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
+          <div className="lg:col-span-7 space-y-3">
+            <Skeleton className="w-full aspect-[4/5]" />
+            <Skeleton className="w-full aspect-[4/5]" />
+          </div>
+          <div className="lg:col-span-5 space-y-4 mt-8 lg:mt-0">
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-10 w-2/3" />
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        </div>
+      </section>
+    </main>
+    <Footer />
+  </div>
+);
+
 const ProductDetail = () => {
   const { productId } = useParams();
-  const { loading } = useProducts(); // populate runtime registry, and give us loading state
+  const { loading } = useProducts();
 
-  // Only call getProduct once the registry is populated
-  const product = loading ? null : getProduct(productId ?? 1);
+  if (loading) return <ProductDetailSkeleton />;
 
-  if (loading || !product) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="pt-8 lg:pt-12">
-          <section className="w-full px-6 lg:px-12">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
-              <div className="lg:col-span-7 space-y-3">
-                <Skeleton className="w-full aspect-[4/5]" />
-                <Skeleton className="w-full aspect-[4/5]" />
-              </div>
-              <div className="lg:col-span-5 space-y-4 mt-8 lg:mt-0">
-                <Skeleton className="h-6 w-1/3" />
-                <Skeleton className="h-12 w-2/3" />
-                <Skeleton className="h-48 w-full" />
-                <Skeleton className="h-12 w-full" />
-              </div>
-            </div>
-          </section>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+  const product: Product = getProduct(productId ?? 1);
 
   return (
     <div className="min-h-screen bg-background">
@@ -50,20 +50,28 @@ const ProductDetail = () => {
           <div className="lg:hidden mb-6">
             <Breadcrumb>
               <BreadcrumbList className="text-muted-foreground">
-                <BreadcrumbItem><BreadcrumbLink asChild><Link to="/" className="text-xs font-mono tracking-wider">HOME</Link></BreadcrumbLink></BreadcrumbItem>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link to="/" className="text-xs font-mono tracking-wider">HOME</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
                 <BreadcrumbSeparator />
-                <BreadcrumbItem><BreadcrumbPage className="text-xs font-mono tracking-wider text-foreground uppercase">{product.name}</BreadcrumbPage></BreadcrumbItem>
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="text-xs font-mono tracking-wider text-foreground uppercase">
+                    {product.name}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
             <div className="lg:col-span-7">
-              <ProductImageGallery />
+              <ProductImageGallery product={product} />
             </div>
             <div className="lg:col-span-5 mt-8 lg:mt-0 lg:sticky lg:top-28 lg:h-fit">
-              <ProductInfo />
-              <ProductDescription />
+              <ProductInfo product={product} />
+              <ProductDescription product={product} />
             </div>
           </div>
         </section>
