@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Product, Rarity } from "@/data/products";
+import { registerProducts, type Product, type Rarity } from "@/data/products";
 
 const RARITIES: Rarity[] = ["Common", "Rare", "Epic", "Legendary", "Grail"];
 const FALLBACK_IMG = "/placeholder.svg";
@@ -70,7 +70,9 @@ export function useProducts() {
     } else {
       const list = (data as DbProduct[]) ?? [];
       setRows(list);
-      setProducts(list.map(mapDbToProduct));
+      const mapped = list.map(mapDbToProduct);
+      registerProducts(mapped);
+      setProducts(mapped);
       setError(null);
     }
     setLoading(false);
