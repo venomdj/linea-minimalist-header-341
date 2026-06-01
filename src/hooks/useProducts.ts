@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { registerProducts, type Product, type Rarity } from "@/data/products";
 
@@ -51,47 +51,74 @@ export const mapDbToProduct = (p: DbProduct): Product => {
   };
 };
 
-export function useProducts() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [rows, setRows] = useState<DbProduct[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// Shared fetch cache so multiple hook instances don't each fire a separate query
+let sharedProducts: Product[] = [];
+let sharedRows: DbProduct[] = [];
+let sharedLoading = true;
+let sharedError: string | null = null;
+const listeners = new Set<() => void>();
+let channelCreated = false;
 
-  const load = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) {
-      setError(error.message);
-      setProducts([]);
-      setRows([]);
-    } else {
-      const list = (data as DbProduct[]) ?? [];
-      setRows(list);
-      const mapped = list.map(mapDbToProduct);
-      registerProducts(mapped);
-      setProducts(mapped);
-      setError(null);
-    }
-    setLoading(false);
-  };
+const notify = () => listeners.forEach((fn) => fn());
+
+const load = async () => {
+  sharedLoading = true;
+  notify();
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) {
+    sharedError = error.message;
+    sharedProducts = [];
+    sharedRows = [];
+  } else {
+    const list = (data as DbProduct[]) ?? [];
+    sharedRows = list;
+    const mapped = list.map(mapDbToProduct);
+    registerProducts(mapped);
+    sharedProducts = mapped;
+    sharedError = null;
+  }
+  sharedLoading = false;
+  notify();
+};
+
+const ensureChannel = () => {
+  if (channelCreated) return;
+  channelCreated = true;
+  supabase
+    .channel("products-realtime-shared")
+    .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => load())
+    .subscribe();
+};
+
+export function useProducts() {
+  const [, rerender] = useState(0);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    load();
-    const channel = supabase
-      .channel("products-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "products" },
-        () => load(),
-      )
-      .subscribe();
+    mountedRef.current = true;
+    const trigger = () => { if (mountedRef.current) rerender((n) => n + 1); };
+    listeners.add(trigger);
+
+    // Kick off initial load only once across all instances
+    if (sharedLoading && sharedProducts.length === 0 && sharedError === null) {
+      load();
+    }
+    ensureChannel();
+
     return () => {
-      supabase.removeChannel(channel);
+      mountedRef.current = false;
+      listeners.delete(trigger);
     };
   }, []);
 
-  return { products, rows, loading, error, reload: load };
+  return {
+    products: sharedProducts,
+    rows: sharedRows,
+    loading: sharedLoading,
+    error: sharedError,
+    reload: load,
+  };
 }
