@@ -2,11 +2,14 @@ import { Link } from "react-router-dom";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import ProductCard from "@/components/product/ProductCard";
-import { products } from "@/data/products";
+import { products as seedProducts } from "@/data/products";
+import { useProducts } from "@/hooks/useProducts";
 
 const ProductCarousel = () => {
   const ref = useScrollReveal();
-  const featured = products.slice(0, 8);
+  const { products } = useProducts();
+  const source = products.length > 0 ? products : seedProducts;
+  const featured = source.slice(0, 8);
 
   return (
     <section ref={ref} className="reveal w-full py-20 lg:py-28">
@@ -29,7 +32,7 @@ const ProductCarousel = () => {
         <div className="relative">
           <CarouselContent className="px-6 lg:px-12 -ml-3">
             {featured.map((p) => (
-              <CarouselItem key={p.id} className="pl-3 basis-[70%] sm:basis-[45%] md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
+              <CarouselItem key={String(p.id)} className="pl-3 basis-[70%] sm:basis-[45%] md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
                 <ProductCard product={p} />
               </CarouselItem>
             ))}

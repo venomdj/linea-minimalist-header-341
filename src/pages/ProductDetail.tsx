@@ -6,10 +6,12 @@ import ProductInfo from "../components/product/ProductInfo";
 import ProductDescription from "../components/product/ProductDescription";
 import ProductCarousel from "../components/content/ProductCarousel";
 import { getProduct } from "../data/products";
+import { useProducts } from "@/hooks/useProducts";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 
 const ProductDetail = () => {
   const { productId } = useParams();
+  useProducts(); // populate runtime registry so DB products resolve in getProduct
   const product = getProduct(productId ?? 1);
 
   return (

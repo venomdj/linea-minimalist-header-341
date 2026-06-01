@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
 interface CartItem {
-  id: number;
+  id: string | number;
   name: string;
   price: string;
   image: string;
@@ -15,7 +15,7 @@ interface ShoppingBagProps {
   isOpen: boolean;
   onClose: () => void;
   cartItems: CartItem[];
-  updateQuantity: (id: number, newQuantity: number) => void;
+  updateQuantity: (id: string | number, newQuantity: number) => void;
   onViewFavorites?: () => void;
 }
 

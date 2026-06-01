@@ -10,7 +10,7 @@ import handling from "@/assets/editorial-handling.jpg";
 export type Rarity = "Common" | "Rare" | "Epic" | "Legendary" | "Grail";
 
 export interface Product {
-  id: number;
+  id: string | number;
   slug: string;
   name: string;
   series: string;
@@ -51,7 +51,19 @@ export const products: Product[] = [
   { id: 12, slug: "celestine-pact-12", name: "Celestine Pact", series: "Æther Order", set: "Series 02", edition: "Unlimited", grade: "PSA 10", rarity: "Common", price: 5400, lastSale: 5750, image: card03, hoverImage: card04, verified: false, population: 1240 },
 ];
 
+// Runtime registry so DB-fetched products can be resolved by getProduct(id)
+const runtimeProducts = new Map<string, Product>();
+export const registerProducts = (list: Product[]) => {
+  for (const p of list) runtimeProducts.set(String(p.id), p);
+};
+
 export const getProduct = (id: number | string) => {
+  const key = String(id);
+  const fromRuntime = runtimeProducts.get(key);
+  if (fromRuntime) return fromRuntime;
+  if (typeof id === "string" && !/^\d+$/.test(id)) {
+    return products.find((p) => String(p.id) === id) ?? products[0];
+  }
   const n = typeof id === "string" ? parseInt(id, 10) : id;
   return products.find((p) => p.id === n) ?? products[0];
 };
