@@ -1,15 +1,14 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
 import ImageZoom from "./ImageZoom";
-import { getProduct } from "@/data/products";
+import type { Product } from "@/data/products";
 import card01 from "@/assets/card-product-01.jpg";
 import card02 from "@/assets/card-product-02.jpg";
 import card03 from "@/assets/card-product-03.jpg";
 import card04 from "@/assets/card-product-04.jpg";
 
-const ProductImageGallery = () => {
-  const { productId } = useParams();
-  const product = getProduct(productId ?? 1);
+interface Props { product: Product; }
+
+const ProductImageGallery = ({ product }: Props) => {
   const images = [product.image, product.hoverImage ?? card02, card03, card04, card01].filter(Boolean) as string[];
 
   const [current, setCurrent] = useState(0);
