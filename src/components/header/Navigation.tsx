@@ -2,16 +2,13 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Search, Heart, ShoppingBag as BagIcon, X, Menu } from "lucide-react";
 import ShoppingBag from "./ShoppingBag";
-import card01 from "@/assets/card-product-01.jpg";
-import card02 from "@/assets/card-product-02.jpg";
-import card03 from "@/assets/card-product-03.jpg";
 import { useCart } from "@/context/CartContext";
 
 const navItems = [
   { name: "Marketplace", href: "/category/all", sub: ["All Cards", "New Listings", "Trending", "Auctions Ending"] },
   { name: "Series", href: "/category/series", sub: ["Æther Order", "Silent Chronicle", "Eclipse Saga", "Hollow Vow", "Lantern Codex"] },
   { name: "Grades", href: "/category/grades", sub: ["PSA 10", "PSA 9", "BGS 9.5", "Ungraded", "Slabbed"] },
-  { name: "Vault", href: "/about/our-story", sub: ["About Mythical Vault", "Authentication", "Grading Standards", "Sell With Us"] },
+  { name: "Vault", href: "/", sub: ["About Mythical Vault", "Authentication", "Grading Standards", "Sell With Us"] },
 ];
 
 const Navigation = () => {
