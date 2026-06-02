@@ -168,7 +168,7 @@ const Navigation = () => {
               </div>
               <p className="eyebrow mt-6 mb-3">Trending searches</p>
               <div className="flex flex-wrap gap-2">
-                {["Obsidian Vanguard PSA 10", "Æther Order 1st Edition", "Silent Chronicle Holofoil", "Eclipse Saga Promo", "Grail Tier"].map((s) => (
+                {["PSA 10", "1st Edition", "Holofoil", "Promo", "Grail Tier"].map((s) => (
                   <button key={s} className="text-xs text-foreground/80 hover:text-foreground border border-border hover:border-foreground/40 px-3 py-1.5 rounded-full transition-colors font-mono tracking-wider">
                     {s}
                   </button>

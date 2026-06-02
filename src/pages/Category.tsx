@@ -5,11 +5,13 @@ import Footer from "../components/footer/Footer";
 import CategoryHeader from "../components/category/CategoryHeader";
 import FilterSortBar from "../components/category/FilterSortBar";
 import ProductGrid from "../components/category/ProductGrid";
+import { useProducts } from "@/hooks/useProducts";
 
 const Category = () => {
   const { category } = useParams();
   const [searchParams] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const { products } = useProducts();
 
   return (
     <div className="min-h-screen bg-background">
@@ -23,7 +25,7 @@ const Category = () => {
         <FilterSortBar 
           filtersOpen={filtersOpen}
           setFiltersOpen={setFiltersOpen}
-          itemCount={24}
+          itemCount={products.length}
         />
         
         <ProductGrid />
