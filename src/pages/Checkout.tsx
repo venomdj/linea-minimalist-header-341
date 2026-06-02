@@ -609,7 +609,7 @@ const Checkout = () => {
                         </div>
                       </div>
                       <span className="text-sm text-foreground font-mono tabular-nums">
-                        {opt.price === 0 ? "120-150" : formatPrice(opt.price)}
+                        {opt.price === 0 ? "150" : formatPrice(opt.price)}
                       </span>
                     </label>
                   ))}
