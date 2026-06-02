@@ -71,7 +71,7 @@ type FormErrors = Partial<Record<keyof BuyerForm, string>>;
 const shippingOptions = [
   { id: "standard", label: "Standard · Insured", eta: "5–7 business days", price: 0 },
   { id: "express", label: "Express · Signature required", eta: "2–3 business days", price: 250 },
-  { id: "overnight", label: "Overnight · White Glove", eta: "Next business day", price: 800 },
+  
 ] as const;
 
 const initial: BuyerForm = {
