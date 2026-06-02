@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Search, Heart, ShoppingBag as BagIcon, X, Menu } from "lucide-react";
+import { Search, Heart, ShoppingBag as BagIcon, X, Menu, LogIn } from "lucide-react";
 import ShoppingBag from "./ShoppingBag";
 import { useCart } from "@/context/CartContext";
 
@@ -39,7 +39,6 @@ const Navigation = () => {
     category: i.series,
   }));
 
-
   return (
     <>
       {/* Status / announcement bar */}
@@ -57,18 +56,12 @@ const Navigation = () => {
       </div>
 
       <nav
-        <button 
-  onClick={() => navigate("/login")} 
-  className="text-xs font-mono uppercase tracking-wider text-zinc-400 hover:text-white transition duration-200"
->
-  Login
-</button>
         className={`sticky top-0 z-50 transition-all duration-500 ${
           scrolled ? "glass-strong" : "bg-background"
         }`}
       >
         <div className="flex items-center justify-between h-16 px-6">
-          {/* Mobile menu */}
+          {/* Mobile menu trigger */}
           <button
             onClick={() => setMobile(!mobile)}
             className="lg:hidden p-2 text-nav-foreground hover:text-nav-hover transition-colors"
@@ -77,7 +70,7 @@ const Navigation = () => {
             {mobile ? <X size={20} /> : <Menu size={20} />}
           </button>
 
-          {/* Left nav */}
+          {/* Left nav desktop links */}
           <div className="hidden lg:flex items-center gap-8">
             {navItems.map((item) => (
               <div
@@ -96,15 +89,15 @@ const Navigation = () => {
             ))}
           </div>
 
-          {/* Center wordmark */}
+          {/* Center brand title */}
           <Link to="/" className="absolute left-1/2 -translate-x-1/2 group">
             <span className="font-display text-lg font-semibold tracking-[0.32em] text-foreground">
               MYTHICAL VAULT
             </span>
           </Link>
 
-          {/* Right */}
-          <div className="flex items-center gap-1">
+          {/* Right side icon actions panel */}
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setSearch(!search)}
               className="p-2 text-nav-foreground hover:text-nav-hover transition-colors"
@@ -130,10 +123,20 @@ const Navigation = () => {
                 </span>
               )}
             </button>
+
+            {/* Clean minimalist login hook right in action bar */}
+            <button 
+              onClick={() => navigate("/login")} 
+              className="ml-2 flex items-center gap-1.5 px-3 py-1.5 border border-zinc-900 bg-zinc-950/40 text-[10px] font-mono uppercase tracking-widest text-zinc-400 hover:text-white hover:border-zinc-700 transition duration-200"
+              title="Sign In"
+            >
+              <LogIn size={12} strokeWidth={2} />
+              <span className="hidden sm:inline">Login</span>
+            </button>
           </div>
         </div>
 
-        {/* Dropdown */}
+        {/* Dropdown contents */}
         {open && (
           <div
             className="absolute top-full left-0 right-0 glass-strong border-t border-border/40 animate-fade-in"
@@ -161,7 +164,7 @@ const Navigation = () => {
           </div>
         )}
 
-        {/* Search */}
+        {/* Search Modal */}
         {search && (
           <div className="absolute top-full left-0 right-0 glass-strong border-t border-border/40 animate-fade-in">
             <div className="px-6 py-10 max-w-3xl mx-auto">
@@ -186,7 +189,7 @@ const Navigation = () => {
           </div>
         )}
 
-        {/* Mobile menu */}
+        {/* Mobile slide menu container */}
         {mobile && (
           <div className="lg:hidden absolute top-full left-0 right-0 glass-strong border-t border-border/40 animate-fade-in">
             <div className="px-6 py-8 space-y-6">
