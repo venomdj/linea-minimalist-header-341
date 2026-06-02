@@ -12,14 +12,11 @@ import ProductDetail from "./pages/ProductDetail";
 import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 import TrackOrder from './pages/TrackOrder';
-// ...
-<Route path="/track-order" element={<TrackOrder />} />
 import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
+import TermsOfService from "./services/TermsOfService";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
-
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -36,6 +33,7 @@ const App = () => (
               <Route path="/category/:category" element={<Category />} />
               <Route path="/product/:productId" element={<ProductDetail />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/track-order" element={<TrackOrder />} />
               <Route path="/about/our-story" element={<NotFound />} />
               <Route path="/about/size-guide" element={<NotFound />} />
               <Route path="/about/customer-care" element={<NotFound />} />
