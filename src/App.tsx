@@ -13,7 +13,7 @@ import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 import TrackOrder from './pages/TrackOrder';
 import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./services/TermsOfService";
+import TermsOfService from "./pages/TermsOfService";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
