@@ -4,7 +4,7 @@
 // about using service_role key for production admin security.
 
 import { useState, useCallback } from 'react';
-import { supabase } from '../lib/supabase'; // adjust path to your supabase client
+import { supabase } from '../integrations/supabase/client';
 import type { Order, OrderInsert, OrderUpdate } from '../types/order';
 
 export function useOrders() {
