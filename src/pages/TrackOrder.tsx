@@ -1,8 +1,11 @@
 // src/pages/TrackOrder.tsx
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { lookupOrder } from '../hooks/useOrders';
 import type { Order } from '../types/order';
-import { TRACKING_STAGES, getStageIndex } from '../types/order';
+import { ORDER_STAGES, CANCELLED_STAGE, getStageIndex } from '../types/order';
+import Header from '../components/header/Header';
+import Footer from '../components/footer/Footer';
 
 export default function TrackOrder() {
   const [orderNumber, setOrderNumber] = useState('');
@@ -28,430 +31,172 @@ export default function TrackOrder() {
     setLoading(false);
   }
 
-  const stageIndex = order ? getStageIndex(order.tracking_status) : -1;
+  const stageIndex = order ? (order.status === 'cancelled' ? -1 : getStageIndex(order.status)) : -1;
+  const isCancelled = order?.status === 'cancelled';
 
   return (
-    <div style={styles.page}>
-      {/* Background texture */}
-      <div style={styles.bgNoise} />
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header />
+      <main className="flex-1 py-16 px-4">
+        <div className="max-w-xl mx-auto">
 
-      <div style={styles.container}>
-        {/* Header */}
-        <div style={styles.header}>
-          <div style={styles.badgeRow}>
-            <span style={styles.badge}>ORDER TRACKING</span>
+          {/* Header */}
+          <div className="text-center mb-10">
+            <p className="text-[10px] font-mono tracking-[0.25em] text-zinc-500 uppercase mb-3">Order Tracking</p>
+            <h1 className="font-display text-3xl md:text-4xl text-white tracking-tight">Track Your Order</h1>
+            <p className="text-sm text-zinc-500 mt-3 font-mono">Enter your Order ID and the email used at checkout.</p>
           </div>
-          <h1 style={styles.title}>Track Your Order</h1>
-          <p style={styles.subtitle}>
-            Enter your Order ID and the email address used at checkout.
-          </p>
-        </div>
 
-        {/* Search form */}
-        <form onSubmit={handleTrack} style={styles.form}>
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Order ID</label>
-            <input
-              type="text"
-              value={orderNumber}
-              onChange={e => setOrderNumber(e.target.value)}
-              placeholder="e.g. MV-20240601-001"
-              style={styles.input}
-              required
-            />
-          </div>
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Email Address</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              style={styles.input}
-              required
-            />
-          </div>
-          <button type="submit" style={styles.btn} disabled={loading}>
-            {loading ? (
-              <span style={styles.spinner}>⟳</span>
-            ) : (
-              'Track Order →'
-            )}
-          </button>
-        </form>
-
-        {/* Error */}
-        {error && !loading && (
-          <div style={styles.errorBox}>
-            <span style={{ fontSize: '1.2rem' }}>⚠️</span> {error}
-          </div>
-        )}
-
-        {/* No result empty state */}
-        {searched && !loading && !order && !error && (
-          <div style={styles.emptyState}>No results yet.</div>
-        )}
-
-        {/* Order card */}
-        {order && (
-          <div style={styles.card}>
-            {/* Order meta */}
-            <div style={styles.cardHeader}>
-              <div>
-                <div style={styles.orderNumLabel}>ORDER</div>
-                <div style={styles.orderNum}>#{order.order_number}</div>
-              </div>
-              <div style={styles.statusPill}>
-                {TRACKING_STAGES[stageIndex]?.icon}{' '}
-                {TRACKING_STAGES[stageIndex]?.label}
-              </div>
+          {/* Search form */}
+          <form onSubmit={handleTrack} className="border border-zinc-800 bg-zinc-950 p-6 space-y-4 mb-6">
+            <div>
+              <label className="block text-[10px] font-mono tracking-widest text-zinc-500 uppercase mb-2">Order ID</label>
+              <input
+                type="text"
+                value={orderNumber}
+                onChange={e => setOrderNumber(e.target.value.toUpperCase())}
+                placeholder="e.g. MVLT-ABC123-XY9Z"
+                required
+                className="w-full h-10 bg-zinc-900 border border-zinc-700 text-white text-sm font-mono px-3 focus:outline-none focus:border-zinc-500 transition-colors placeholder:text-zinc-700"
+              />
             </div>
+            <div>
+              <label className="block text-[10px] font-mono tracking-widest text-zinc-500 uppercase mb-2">Email Address</label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+                className="w-full h-10 bg-zinc-900 border border-zinc-700 text-white text-sm font-mono px-3 focus:outline-none focus:border-zinc-500 transition-colors placeholder:text-zinc-700"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-10 bg-white text-black text-[11px] font-mono tracking-widest uppercase hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {loading ? 'Searching…' : 'Track Order →'}
+            </button>
+          </form>
 
-            {/* Progress bar */}
-            <div style={styles.progressWrap}>
-              {TRACKING_STAGES.map((stage, i) => {
-                const done    = i <= stageIndex;
-                const current = i === stageIndex;
-                return (
-                  <div key={stage.status} style={styles.stageItem}>
-                    <div style={{ position: 'relative' }}>
-                      {/* connector line left */}
-                      {i > 0 && (
-                        <div style={{
-                          ...styles.connector,
-                          background: i <= stageIndex ? '#c9a96e' : '#2a2a2a',
-                        }} />
-                      )}
-                      <div style={{
-                        ...styles.dot,
-                        background: done ? '#c9a96e' : '#1a1a1a',
-                        border: `2px solid ${done ? '#c9a96e' : '#3a3a3a'}`,
-                        boxShadow: current ? '0 0 12px #c9a96e88' : 'none',
-                        transform: current ? 'scale(1.25)' : 'scale(1)',
-                      }}>
-                        {done && <span style={{ fontSize: '0.6rem' }}>✓</span>}
-                      </div>
-                    </div>
-                    <span style={{
-                      ...styles.stageLabel,
-                      color: done ? '#c9a96e' : '#555',
-                      fontWeight: current ? 700 : 400,
-                    }}>
-                      {stage.label}
-                    </span>
+          {/* Error */}
+          {error && !loading && (
+            <div className="border border-red-900/50 bg-zinc-950 px-4 py-3 text-[12px] font-mono text-red-400 mb-4">
+              ⚠ {error}
+            </div>
+          )}
+
+          {/* Order card */}
+          {order && (
+            <div className="border border-zinc-800 bg-zinc-950">
+              {/* Header */}
+              <div className="flex items-start justify-between p-5 border-b border-zinc-800 gap-4 flex-wrap">
+                <div>
+                  <p className="text-[10px] font-mono tracking-widest text-zinc-500 uppercase mb-1">Order</p>
+                  <p className="font-mono text-white text-base">{order.order_number}</p>
+                  <p className="text-[11px] font-mono text-zinc-500 mt-1">
+                    {new Date(order.order_date).toLocaleDateString('en-IN', { dateStyle: 'long' })}
+                  </p>
+                </div>
+                <span className={`px-3 py-1 text-[10px] font-mono tracking-widest uppercase border ${
+                  isCancelled ? 'border-red-400/30 bg-red-400/10 text-red-400'
+                  : stageIndex === ORDER_STAGES.length - 1 ? 'border-green-400/30 bg-green-400/10 text-green-400'
+                  : 'border-yellow-400/30 bg-yellow-400/10 text-yellow-400'
+                }`}>
+                  {order.status.replace(/_/g, ' ')}
+                </span>
+              </div>
+
+              {/* Timeline */}
+              <div className="p-5 border-b border-zinc-800">
+                <p className="text-[10px] font-mono tracking-widest text-zinc-500 uppercase mb-5">Tracking</p>
+
+                {isCancelled ? (
+                  <div className="flex items-center gap-2 text-[12px] font-mono text-red-400">
+                    <span>{CANCELLED_STAGE.icon}</span>
+                    <span>{CANCELLED_STAGE.description}</span>
                   </div>
-                );
-              })}
-            </div>
-
-            {/* Status message */}
-            {order.tracking_message && (
-              <div style={styles.messageBox}>
-                <span style={{ color: '#c9a96e', marginRight: '0.5rem' }}>📣</span>
-                {order.tracking_message}
+                ) : (
+                  <div>
+                    {ORDER_STAGES.map((stage, i) => {
+                      const done    = i < stageIndex;
+                      const current = i === stageIndex;
+                      return (
+                        <div key={stage.status} className="flex gap-4">
+                          <div className="flex flex-col items-center">
+                            <div className={`w-7 h-7 rounded-full border flex items-center justify-center text-xs flex-shrink-0 ${
+                              done    ? 'border-zinc-500 bg-zinc-800 text-zinc-300'
+                              : current ? 'border-zinc-300 bg-zinc-900 text-white ring-2 ring-zinc-700 ring-offset-1 ring-offset-zinc-950'
+                              : 'border-zinc-800 bg-zinc-950 text-zinc-700'
+                            }`}>
+                              {done ? '✓' : stage.icon}
+                            </div>
+                            {i < ORDER_STAGES.length - 1 && (
+                              <div className={`w-px flex-1 mt-1 mb-1 min-h-[24px] ${done ? 'bg-zinc-600' : 'bg-zinc-800'}`} />
+                            )}
+                          </div>
+                          <div className="pb-4">
+                            <p className={`text-[12px] font-mono tracking-wider mt-1 ${
+                              done ? 'text-zinc-500' : current ? 'text-white' : 'text-zinc-700'
+                            }`}>{stage.label}</p>
+                            {current && <p className="text-[11px] text-zinc-500 mt-0.5">{stage.description}</p>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            )}
 
-            {/* Details grid */}
-            <div style={styles.detailsGrid}>
-              <DetailRow label="Customer"         value={order.customer_name} />
-              <DetailRow label="Product"          value={`${order.product_name} × ${order.quantity}`} />
-              <DetailRow label="Order Date"       value={fmtDate(order.order_date)} />
-              {order.estimated_delivery && (
-                <DetailRow label="Est. Delivery"  value={fmtDate(order.estimated_delivery)} highlight />
-              )}
-              {order.courier_name && (
-                <DetailRow label="Courier"        value={order.courier_name} />
-              )}
+              {/* Courier info */}
               {order.tracking_number && (
-                <DetailRow label="Tracking No."   value={order.tracking_number} mono />
+                <div className="p-5 border-b border-zinc-800">
+                  <p className="text-[10px] font-mono tracking-widest text-zinc-500 uppercase mb-3">Courier</p>
+                  <div className="space-y-1.5">
+                    {order.courier_name && <p className="text-[13px] font-mono text-zinc-300">{order.courier_name}</p>}
+                    <p className="text-[12px] font-mono text-zinc-400">{order.tracking_number}</p>
+                    {order.estimated_delivery && (
+                      <p className="text-[11px] font-mono text-zinc-500">
+                        Est. delivery: {new Date(order.estimated_delivery).toLocaleDateString('en-IN', { dateStyle: 'long' })}
+                      </p>
+                    )}
+                  </div>
+                </div>
               )}
-            </div>
 
-            {/* Product image */}
-            {order.product_image && (
-              <div style={styles.imgWrap}>
-                <img src={order.product_image} alt={order.product_name} style={styles.img} />
+              {/* Items */}
+              {(order.line_items as unknown[]).length > 0 && (
+                <div className="p-5 border-b border-zinc-800">
+                  <p className="text-[10px] font-mono tracking-widest text-zinc-500 uppercase mb-3">Items</p>
+                  <div className="space-y-2">
+                    {(order.line_items as { title: string; image_url: string | null; quantity: number; price: number }[]).map((item, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        {item.image_url && <img src={item.image_url} alt={item.title} className="w-10 h-10 object-cover border border-zinc-800 flex-shrink-0" />}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12px] text-zinc-300 truncate">{item.title}</p>
+                          <p className="text-[10px] font-mono text-zinc-600">×{item.quantity} · ₹{(item.price * item.quantity).toLocaleString('en-IN')}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* CTA for logged in users */}
+              <div className="p-5">
+                <p className="text-[11px] font-mono text-zinc-600">
+                  For full order history and real-time updates,{' '}
+                  <Link to="/account/orders" className="text-zinc-400 hover:text-white transition-colors underline underline-offset-2">
+                    view in My Account →
+                  </Link>
+                </p>
               </div>
-            )}
-          </div>
-        )}
-      </div>
+            </div>
+          )}
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 }
-
-function DetailRow({
-  label, value, highlight, mono,
-}: { label: string; value: string; highlight?: boolean; mono?: boolean }) {
-  return (
-    <div style={styles.detailRow}>
-      <span style={styles.detailLabel}>{label}</span>
-      <span style={{
-        ...styles.detailValue,
-        color: highlight ? '#c9a96e' : '#e0d9cc',
-        fontFamily: mono ? "'Courier New', monospace" : 'inherit',
-        letterSpacing: mono ? '0.05em' : 'normal',
-      }}>
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString('en-IN', {
-    day: 'numeric', month: 'long', year: 'numeric',
-  });
-}
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    minHeight: '100vh',
-    background: '#0a0a0a',
-    color: '#e0d9cc',
-    fontFamily: "'Cormorant Garamond', Georgia, serif",
-    position: 'relative',
-    overflow: 'hidden',
-    paddingBottom: '4rem',
-  },
-  bgNoise: {
-    position: 'fixed',
-    inset: 0,
-    backgroundImage: 'radial-gradient(ellipse at 20% 50%, #1a1208 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, #0d1a1a 0%, transparent 50%)',
-    pointerEvents: 'none',
-    zIndex: 0,
-  },
-  container: {
-    position: 'relative',
-    zIndex: 1,
-    maxWidth: '680px',
-    margin: '0 auto',
-    padding: '4rem 1.5rem 2rem',
-  },
-  header: { textAlign: 'center', marginBottom: '3rem' },
-  badgeRow: { marginBottom: '1rem' },
-  badge: {
-    background: 'linear-gradient(135deg, #c9a96e22, #c9a96e44)',
-    border: '1px solid #c9a96e55',
-    color: '#c9a96e',
-    fontSize: '0.65rem',
-    letterSpacing: '0.25em',
-    padding: '0.35rem 1rem',
-    borderRadius: '2px',
-  },
-  title: {
-    fontSize: 'clamp(2rem, 5vw, 3.2rem)',
-    fontWeight: 400,
-    color: '#f0e8d8',
-    letterSpacing: '-0.02em',
-    margin: '0.75rem 0 0.5rem',
-    lineHeight: 1.1,
-  },
-  subtitle: {
-    fontSize: '0.95rem',
-    color: '#666',
-    letterSpacing: '0.02em',
-    fontFamily: "'Inter', sans-serif",
-  },
-  form: {
-    background: '#111',
-    border: '1px solid #222',
-    borderRadius: '4px',
-    padding: '2rem',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.25rem',
-    marginBottom: '1.5rem',
-  },
-  inputGroup: { display: 'flex', flexDirection: 'column', gap: '0.4rem' },
-  label: {
-    fontSize: '0.7rem',
-    letterSpacing: '0.15em',
-    color: '#888',
-    textTransform: 'uppercase',
-    fontFamily: "'Inter', sans-serif",
-  },
-  input: {
-    background: '#0d0d0d',
-    border: '1px solid #2a2a2a',
-    borderRadius: '3px',
-    color: '#e0d9cc',
-    fontSize: '1rem',
-    padding: '0.75rem 1rem',
-    outline: 'none',
-    fontFamily: "'Inter', sans-serif",
-    transition: 'border-color 0.2s',
-  },
-  btn: {
-    background: 'linear-gradient(135deg, #c9a96e, #a07848)',
-    color: '#0a0a0a',
-    border: 'none',
-    borderRadius: '3px',
-    fontSize: '0.8rem',
-    letterSpacing: '0.12em',
-    fontWeight: 700,
-    padding: '0.85rem 2rem',
-    cursor: 'pointer',
-    textTransform: 'uppercase',
-    fontFamily: "'Inter', sans-serif",
-    marginTop: '0.25rem',
-  },
-  spinner: {
-    display: 'inline-block',
-    animation: 'spin 1s linear infinite',
-    fontSize: '1.2rem',
-  },
-  errorBox: {
-    background: '#1a0f0f',
-    border: '1px solid #3a1a1a',
-    borderRadius: '3px',
-    padding: '1rem 1.25rem',
-    color: '#cc7777',
-    fontSize: '0.9rem',
-    fontFamily: "'Inter', sans-serif",
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
-    marginBottom: '1.5rem',
-  },
-  emptyState: {
-    textAlign: 'center',
-    color: '#444',
-    padding: '2rem',
-    fontFamily: "'Inter', sans-serif",
-  },
-  card: {
-    background: '#111',
-    border: '1px solid #222',
-    borderRadius: '4px',
-    padding: '2rem',
-    marginTop: '1.5rem',
-  },
-  cardHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '2rem',
-    flexWrap: 'wrap',
-    gap: '1rem',
-  },
-  orderNumLabel: {
-    fontSize: '0.65rem',
-    letterSpacing: '0.2em',
-    color: '#555',
-    fontFamily: "'Inter', sans-serif",
-  },
-  orderNum: {
-    fontSize: '1.4rem',
-    color: '#f0e8d8',
-    letterSpacing: '0.05em',
-    fontWeight: 500,
-  },
-  statusPill: {
-    background: '#c9a96e22',
-    border: '1px solid #c9a96e44',
-    color: '#c9a96e',
-    fontSize: '0.75rem',
-    letterSpacing: '0.08em',
-    padding: '0.4rem 1rem',
-    borderRadius: '2px',
-    fontFamily: "'Inter', sans-serif",
-  },
-  progressWrap: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '2rem',
-    overflowX: 'auto',
-    paddingBottom: '0.5rem',
-  },
-  stageItem: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '0.5rem',
-    flex: 1,
-    minWidth: '60px',
-  },
-  connector: {
-    position: 'absolute',
-    top: '50%',
-    right: '100%',
-    width: '100%',
-    height: '2px',
-    transform: 'translateY(-50%)',
-  },
-  dot: {
-    width: '24px',
-    height: '24px',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.3s',
-    position: 'relative',
-    zIndex: 1,
-  },
-  stageLabel: {
-    fontSize: '0.62rem',
-    textAlign: 'center',
-    fontFamily: "'Inter', sans-serif",
-    lineHeight: 1.3,
-  },
-  messageBox: {
-    background: '#0d0d0d',
-    border: '1px solid #1e1e1e',
-    borderLeft: '3px solid #c9a96e',
-    borderRadius: '0 3px 3px 0',
-    padding: '0.75rem 1rem',
-    fontSize: '0.9rem',
-    color: '#ccc',
-    marginBottom: '1.5rem',
-    fontFamily: "'Inter', sans-serif",
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '0.5rem',
-  },
-  detailsGrid: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0',
-    borderTop: '1px solid #1e1e1e',
-    marginBottom: '1.5rem',
-  },
-  detailRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '0.75rem 0',
-    borderBottom: '1px solid #1a1a1a',
-  },
-  detailLabel: {
-    fontSize: '0.7rem',
-    letterSpacing: '0.1em',
-    color: '#555',
-    textTransform: 'uppercase',
-    fontFamily: "'Inter', sans-serif",
-  },
-  detailValue: {
-    fontSize: '0.9rem',
-    textAlign: 'right',
-    maxWidth: '60%',
-    fontFamily: "'Inter', sans-serif",
-  },
-  imgWrap: {
-    marginTop: '1rem',
-    borderRadius: '3px',
-    overflow: 'hidden',
-    border: '1px solid #222',
-    height: '200px',
-  },
-  img: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-    display: 'block',
-  },
-};
