@@ -50,5 +50,5 @@ export const GST_RATE = 0.18;
 // Manual UPI payment configuration
 export const UPI_ID = "jaigamerz069@oksbi";
 export const UPI_MERCHANT_NAME = "HAKAI";
-export const WHATSAPP_NUMBER = "918273512178"; // intl format, no +
+export const WHATSAPP_NUMBER = "919241857475"; // intl format, no +
 
