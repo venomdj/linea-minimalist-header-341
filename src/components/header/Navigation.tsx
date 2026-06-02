@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Search, Heart, ShoppingBag as BagIcon, X, Menu } from "lucide-react";
@@ -12,6 +13,7 @@ const navItems = [
 ];
 
 const Navigation = () => {
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const [search, setSearch] = useState(false);
@@ -55,6 +57,12 @@ const Navigation = () => {
       </div>
 
       <nav
+        <button 
+  onClick={() => navigate("/login")} 
+  className="text-xs font-mono uppercase tracking-wider text-zinc-400 hover:text-white transition duration-200"
+>
+  Login
+</button>
         className={`sticky top-0 z-50 transition-all duration-500 ${
           scrolled ? "glass-strong" : "bg-background"
         }`}
