@@ -2,14 +2,14 @@ import { Link } from "react-router-dom";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import ProductCard from "@/components/product/ProductCard";
-import { products as seedProducts } from "@/data/products";
 import { useProducts } from "@/hooks/useProducts";
 
 const ProductCarousel = () => {
   const ref = useScrollReveal();
   const { products } = useProducts();
-  const source = products.length > 0 ? products : seedProducts;
-  const featured = source.slice(0, 8);
+  const featured = products.slice(0, 8);
+
+  if (featured.length === 0) return null;
 
   return (
     <section ref={ref} className="reveal w-full py-20 lg:py-28">
