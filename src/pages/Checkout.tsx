@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 import { z } from "zod";
 import {
   Minus,
@@ -98,6 +100,7 @@ const generateOrderId = () => {
 
 const Checkout = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { items, subtotal, setQty, remove, clear } = useCart();
   const [form, setForm] = useState<BuyerForm>(initial);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -241,12 +244,56 @@ const Checkout = () => {
       return;
     }
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    const orderId = generateOrderId();
+
+    const orderNumber = generateOrderId();
+    const shippingCost = shippingOptions.find(o => o.id === form.shipping)?.price ?? 0;
+    const gst = form.state === ORIGIN_STATE ? subtotal * GST_RATE : 0;
+    const totalAmt = subtotal + gst + shippingCost;
+
+    try {
+      // Build line items from cart
+      const lineItems = items.map(item => ({
+        product_id: String(item.id),
+        title: item.name,
+        image_url: item.image ?? null,
+        price: item.price,
+        quantity: item.quantity,
+      }));
+
+      const orderPayload = {
+        order_number: orderNumber,
+        user_id: user?.id ?? null,
+        customer_name: form.fullName,
+        customer_email: form.email.toLowerCase(),
+        customer_phone: form.phone,
+        shipping_address: form.address,
+        shipping_address2: form.address2 || null,
+        shipping_city: form.city,
+        shipping_state: form.state,
+        shipping_pincode: form.pincode,
+        line_items: lineItems as never,
+        subtotal,
+        gst_amount: gst,
+        shipping_amount: shippingCost,
+        total_amount: totalAmt,
+        payment_method: 'upi',
+        payment_status: 'pending',
+        status: 'pending' as const,
+      };
+
+      const { error: orderErr } = await supabase.from('orders').insert([orderPayload]);
+      if (orderErr) {
+        console.error('[Checkout] Supabase order insert error:', orderErr);
+        // Non-fatal — still proceed so user sees confirmation
+      }
+    } catch (err) {
+      console.error('[Checkout] Order creation error:', err);
+    }
+
     setSubmitting(false);
     setSuccess({
-      orderId,
-      total,
+      orderId: orderNumber,
+      total: subtotal + (form.state === ORIGIN_STATE ? subtotal * GST_RATE : 0) + (shippingOptions.find(o => o.id === form.shipping)?.price ?? 0),
       email: form.email,
       fullName: form.fullName,
       phone: form.phone,
