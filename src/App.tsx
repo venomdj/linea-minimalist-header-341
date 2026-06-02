@@ -34,10 +34,10 @@ const App = () => (
               <Route path="/category/:category" element={<Category />} />
               <Route path="/product/:productId" element={<ProductDetail />} />
               <Route path="/checkout" element={<Checkout />} />
-              <Route path="/about/our-story" element={<OurStory />} />
-              <Route path="/about/size-guide" element={<SizeGuide />} />
-              <Route path="/about/customer-care" element={<CustomerCare />} />
-              <Route path="/about/store-locator" element={<StoreLocator />} />
+              <Route path="/about/our-story" element={<NotFound />} />
+              <Route path="/about/size-guide" element={<NotFound />} />
+              <Route path="/about/customer-care" element={<NotFound />} />
+              <Route path="/about/store-locator" element={<NotFound />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms-of-service" element={<TermsOfService />} />
               <Route path="/admin/login" element={<AdminLogin />} />

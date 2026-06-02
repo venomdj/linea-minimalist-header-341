@@ -37,15 +37,15 @@ export const registerProducts = (list: Product[]) => {
   for (const p of list) runtimeProducts.set(String(p.id), p);
 };
 
-export const getProduct = (id: number | string) => {
+export const getProduct = (id: number | string): Product | undefined => {
   const key = String(id);
   const fromRuntime = runtimeProducts.get(key);
   if (fromRuntime) return fromRuntime;
   if (typeof id === "string" && !/^\d+$/.test(id)) {
-    return products.find((p) => String(p.id) === id) ?? products[0];
+    return products.find((p) => String(p.id) === id);
   }
   const n = typeof id === "string" ? parseInt(id, 10) : id;
-  return products.find((p) => p.id === n) ?? products[0];
+  return products.find((p) => p.id === n);
 };
 
 export const rarityClass: Record<Rarity, string> = {
