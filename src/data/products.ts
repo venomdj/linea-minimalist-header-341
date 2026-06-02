@@ -1,11 +1,4 @@
-import card01 from "@/assets/card-product-01.jpg";
-import card02 from "@/assets/card-product-02.jpg";
-import card03 from "@/assets/card-product-03.jpg";
-import card04 from "@/assets/card-product-04.jpg";
-import hero01 from "@/assets/hero-card-01.jpg";
-import hero02 from "@/assets/hero-card-02.jpg";
-import hero03 from "@/assets/hero-card-03.jpg";
-import handling from "@/assets/editorial-handling.jpg";
+// Product images are managed via the admin dashboard and Supabase Storage.
 
 export type Rarity = "Common" | "Rare" | "Epic" | "Legendary" | "Grail";
 
