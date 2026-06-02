@@ -3,6 +3,10 @@
 // Usage: import AdminOrders from '../components/order/AdminOrders';
 //        Then render <AdminOrders /> inside your admin dashboard tab/section.
 
+import { useState } from 'react';
+
+// Inside the component function:
+const [activeTab, setActiveTab] = useState('all');
 import { useState, useEffect, useCallback } from 'react';
 import { useOrders } from '../../hooks/useOrders';
 import type { Order, OrderInsert, OrderUpdate, TrackingStatus } from '../../types/order';
