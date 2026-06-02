@@ -1,3 +1,4 @@
+import Login from "./pages/Login";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,6 +30,7 @@ const App = () => (
           <BrowserRouter basename={import.meta.env.BASE_URL}>
             <ScrollToTop />
             <Routes>
+              <Route path="/login" element={<Login />} />
               <Route path="/" element={<Index />} />
               <Route path="/category/:category" element={<Category />} />
               <Route path="/product/:productId" element={<ProductDetail />} />
