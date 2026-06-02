@@ -149,22 +149,6 @@ const Navigation = () => {
                   ))}
                 </ul>
               </div>
-              <div className="col-span-9 grid grid-cols-3 gap-4">
-                {[card01, card02, card03].map((src, i) => (
-                  <Link key={i} to="/category/all" className="block group">
-                    <div className="aspect-[4/5] overflow-hidden bg-surface-1">
-                      <img
-                        src={src}
-                        alt=""
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-expo-out"
-                      />
-                    </div>
-                    <p className="mt-3 text-xs text-muted-foreground font-mono tracking-wider">
-                      {["FEATURED DROP", "TRENDING", "GRAILS"][i]}
-                    </p>
-                  </Link>
-                ))}
-              </div>
             </div>
           </div>
         )}
