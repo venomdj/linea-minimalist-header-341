@@ -1,16 +1,29 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../integrations/supabase/client';
 import Header from "../components/header/Header";
 import Footer from "../components/footer/Footer";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Login() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/account';
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      navigate(redirect, { replace: true });
+    }
+  }, [user, loading, navigate, redirect]);
+
   const handleGoogleLogin = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          // Redirects your users safely back to your home page after logging in
-          redirectTo: window.location.origin, 
+          redirectTo: `${window.location.origin}${redirect}`,
         },
       });
       if (error) throw error;
@@ -30,7 +43,7 @@ export default function Login() {
               Access The Vault
             </h1>
             <p className="text-xs text-zinc-500 font-mono tracking-wider">
-              AUTHENTICATE TO VIEW AND MANAGE YOUR LISTINGS
+              AUTHENTICATE TO VIEW YOUR ORDERS AND ACCOUNT
             </p>
           </div>
 
@@ -38,7 +51,6 @@ export default function Login() {
             onClick={handleGoogleLogin}
             className="flex items-center justify-center gap-3 w-full bg-white text-black font-medium py-3 px-4 rounded-none hover:bg-zinc-200 transition duration-200 tracking-widest text-[11px] uppercase"
           >
-            {/* Google Vector Icon Asset */}
             <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
               <path fill="#EA4335" d="M5.266 9.765A7.077 7.077 0 0112 4.909c1.69 0 3.218.6 4.418 1.582l3.51-3.51C17.642 1.052 14.914 0 12 0 7.354 0 3.307 2.657 1.277 6.538l3.99 3.227z" />
               <path fill="#4285F4" d="M23.75 12.273c0-.818-.074-1.609-.21-2.373H12v4.509h6.586a5.64 5.64 0 01-2.441 3.7l3.864 3.003c2.26-2.083 3.741-5.145 3.741-8.839z" />
@@ -49,7 +61,7 @@ export default function Login() {
           </button>
           
           <p className="text-[10px] text-zinc-600 max-w-xs mx-auto font-sans leading-relaxed">
-            By signing in, you agree to secure provenance authentication parameters.
+            By signing in, you agree to our Terms of Service and Privacy Policy.
           </p>
         </div>
       </main>
