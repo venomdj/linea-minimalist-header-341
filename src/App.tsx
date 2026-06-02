@@ -24,9 +24,9 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <AuthProvider>
-          <CartProvider>
+      <AuthProvider>
+        <CartProvider>
+          <BrowserRouter basename={import.meta.env.BASE_URL}>
             <ScrollToTop />
             <Routes>
               <Route path="/" element={<Index />} />
@@ -45,11 +45,10 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </CartProvider>
-        </AuthProvider>
-      </BrowserRouter>
+          </BrowserRouter>
+        </CartProvider>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
-
 export default App;
