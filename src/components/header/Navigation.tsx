@@ -1,9 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Search, Heart, ShoppingBag as BagIcon, X, Menu, LogIn } from "lucide-react";
+import { Search, Heart, ShoppingBag as BagIcon, X, Menu, LogIn, User } from "lucide-react";
 import ShoppingBag from "./ShoppingBag";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
   { name: "Marketplace", href: "/category/all", sub: ["All Cards", "New Listings", "Trending", "Auctions Ending"] },
@@ -20,6 +21,7 @@ const Navigation = () => {
   const [mobile, setMobile] = useState(false);
   const [bagOpen, setBagOpen] = useState(false);
   const { items, count, setQty } = useCart();
+  const { user } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -124,15 +126,26 @@ const Navigation = () => {
               )}
             </button>
 
-            {/* Clean minimalist login hook right in action bar */}
-            <button 
-              onClick={() => navigate("/login")} 
-              className="ml-2 flex items-center gap-1.5 px-3 py-1.5 border border-zinc-900 bg-zinc-950/40 text-[10px] font-mono uppercase tracking-widest text-zinc-400 hover:text-white hover:border-zinc-700 transition duration-200"
-              title="Sign In"
-            >
-              <LogIn size={12} strokeWidth={2} />
-              <span className="hidden sm:inline">Login</span>
-            </button>
+            {/* Account / Login button */}
+            {user ? (
+              <button
+                onClick={() => navigate("/account")}
+                className="ml-2 flex items-center gap-1.5 px-3 py-1.5 border border-zinc-800 bg-zinc-900/60 text-[10px] font-mono uppercase tracking-widest text-zinc-400 hover:text-white hover:border-zinc-600 transition duration-200"
+                title="My Account"
+              >
+                <User size={12} strokeWidth={2} />
+                <span className="hidden sm:inline">Account</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate("/login")}
+                className="ml-2 flex items-center gap-1.5 px-3 py-1.5 border border-zinc-900 bg-zinc-950/40 text-[10px] font-mono uppercase tracking-widest text-zinc-400 hover:text-white hover:border-zinc-700 transition duration-200"
+                title="Sign In"
+              >
+                <LogIn size={12} strokeWidth={2} />
+                <span className="hidden sm:inline">Login</span>
+              </button>
+            )}
           </div>
         </div>
 
