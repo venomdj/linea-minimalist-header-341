@@ -18,6 +18,14 @@ import TermsOfService from "./pages/TermsOfService";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
+
+// Account pages
+import Dashboard from "./pages/account/Dashboard";
+import Profile from "./pages/account/Profile";
+import MyOrders from "./pages/account/MyOrders";
+import OrderDetail from "./pages/account/OrderDetail";
+import AccountSettings from "./pages/account/AccountSettings";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -30,6 +38,7 @@ const App = () => (
           <BrowserRouter basename={import.meta.env.BASE_URL}>
             <ScrollToTop />
             <Routes>
+              {/* Public routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/" element={<Index />} />
               <Route path="/category/:category" element={<Category />} />
@@ -42,9 +51,19 @@ const App = () => (
               <Route path="/about/store-locator" element={<NotFound />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms-of-service" element={<TermsOfService />} />
+
+              {/* My Account — protected by AccountLayout (redirects to /login if not authed) */}
+              <Route path="/account" element={<Dashboard />} />
+              <Route path="/account/profile" element={<Profile />} />
+              <Route path="/account/orders" element={<MyOrders />} />
+              <Route path="/account/orders/:orderId" element={<OrderDetail />} />
+              <Route path="/account/settings" element={<AccountSettings />} />
+
+              {/* Admin */}
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+
+              {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
