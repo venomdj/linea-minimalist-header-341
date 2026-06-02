@@ -11,7 +11,9 @@ import Category from "./pages/Category";
 import ProductDetail from "./pages/ProductDetail";
 import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
-
+import TrackOrder from './pages/TrackOrder';
+// ...
+<Route path="/track-order" element={<TrackOrder />} />
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import Admin from "./pages/Admin";
