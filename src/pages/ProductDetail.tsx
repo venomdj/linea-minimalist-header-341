@@ -40,7 +40,32 @@ const ProductDetail = () => {
 
   if (loading) return <ProductDetailSkeleton />;
 
-  const product: Product = getProduct(productId ?? 1);
+  const product = getProduct(productId ?? 1);
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-8 lg:pt-12 px-6 lg:px-12">
+          <div className="max-w-xl mx-auto text-center py-24">
+            <p className="font-display text-3xl text-foreground tracking-tight mb-4">
+              Listing unavailable
+            </p>
+            <p className="text-sm text-muted-foreground mb-8">
+              This collectible is no longer available or has been moved.
+            </p>
+            <Link
+              to="/category/all"
+              className="inline-flex items-center gap-2 text-sm text-foreground border-b border-foreground/30 hover:border-foreground transition-colors pb-1"
+            >
+              Browse the marketplace
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

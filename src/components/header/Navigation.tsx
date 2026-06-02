@@ -2,16 +2,13 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Search, Heart, ShoppingBag as BagIcon, X, Menu } from "lucide-react";
 import ShoppingBag from "./ShoppingBag";
-import card01 from "@/assets/card-product-01.jpg";
-import card02 from "@/assets/card-product-02.jpg";
-import card03 from "@/assets/card-product-03.jpg";
 import { useCart } from "@/context/CartContext";
 
 const navItems = [
   { name: "Marketplace", href: "/category/all", sub: ["All Cards", "New Listings", "Trending", "Auctions Ending"] },
   { name: "Series", href: "/category/series", sub: ["Æther Order", "Silent Chronicle", "Eclipse Saga", "Hollow Vow", "Lantern Codex"] },
   { name: "Grades", href: "/category/grades", sub: ["PSA 10", "PSA 9", "BGS 9.5", "Ungraded", "Slabbed"] },
-  { name: "Vault", href: "/about/our-story", sub: ["About Mythical Vault", "Authentication", "Grading Standards", "Sell With Us"] },
+  { name: "Vault", href: "/", sub: ["About Mythical Vault", "Authentication", "Grading Standards", "Sell With Us"] },
 ];
 
 const Navigation = () => {
@@ -152,22 +149,6 @@ const Navigation = () => {
                   ))}
                 </ul>
               </div>
-              <div className="col-span-9 grid grid-cols-3 gap-4">
-                {[card01, card02, card03].map((src, i) => (
-                  <Link key={i} to="/category/all" className="block group">
-                    <div className="aspect-[4/5] overflow-hidden bg-surface-1">
-                      <img
-                        src={src}
-                        alt=""
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-expo-out"
-                      />
-                    </div>
-                    <p className="mt-3 text-xs text-muted-foreground font-mono tracking-wider">
-                      {["FEATURED DROP", "TRENDING", "GRAILS"][i]}
-                    </p>
-                  </Link>
-                ))}
-              </div>
             </div>
           </div>
         )}
@@ -187,7 +168,7 @@ const Navigation = () => {
               </div>
               <p className="eyebrow mt-6 mb-3">Trending searches</p>
               <div className="flex flex-wrap gap-2">
-                {["Obsidian Vanguard PSA 10", "Æther Order 1st Edition", "Silent Chronicle Holofoil", "Eclipse Saga Promo", "Grail Tier"].map((s) => (
+                {["PSA 10", "1st Edition", "Holofoil", "Promo", "Grail Tier"].map((s) => (
                   <button key={s} className="text-xs text-foreground/80 hover:text-foreground border border-border hover:border-foreground/40 px-3 py-1.5 rounded-full transition-colors font-mono tracking-wider">
                     {s}
                   </button>
