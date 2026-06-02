@@ -1,12 +1,9 @@
 // src/hooks/useOrders.ts
-// Admin hook — full CRUD on the orders table.
-// Uses the standard Supabase client (anon key) — see migration notes
-// about using service_role key for production admin security.
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import type { Order, OrderInsert, OrderUpdate } from '@/types/order';
 
-import { useState, useCallback } from 'react';
-import { supabase } from '../integrations/supabase/client';
-import type { Order, OrderInsert, OrderUpdate } from '../types/order';
-
+// ─── Admin hook — full CRUD + realtime ────────────────────────────────────────
 export function useOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
@@ -29,7 +26,7 @@ export function useOrders() {
 
       const { data, error: err } = await query;
       if (err) throw err;
-      setOrders(data ?? []);
+      setOrders((data ?? []) as Order[]);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to fetch orders');
     } finally {
@@ -42,12 +39,12 @@ export function useOrders() {
     try {
       const { data, error: err } = await supabase
         .from('orders')
-        .insert([order])
+        .insert([order as never])
         .select()
         .single();
       if (err) throw err;
-      setOrders(prev => [data, ...prev]);
-      return data;
+      setOrders(prev => [data as Order, ...prev]);
+      return data as Order;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to create order');
       return null;
@@ -59,12 +56,12 @@ export function useOrders() {
     try {
       const { data, error: err } = await supabase
         .from('orders')
-        .update(updates)
+        .update(updates as never)
         .eq('id', id)
         .select()
         .single();
       if (err) throw err;
-      setOrders(prev => prev.map(o => (o.id === id ? data : o)));
+      setOrders(prev => prev.map(o => (o.id === id ? (data as Order) : o)));
       return true;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to update order');
@@ -88,7 +85,62 @@ export function useOrders() {
   return { orders, loading, error, fetchAllOrders, createOrder, updateOrder, deleteOrder };
 }
 
-// Customer lookup — matches order_number + email (no auth required)
+// ─── User-scoped hook — my orders with realtime subscription ─────────────────
+export function useMyOrders(userId: string | null) {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  const fetchOrders = useCallback(async () => {
+    if (!userId) { setOrders([]); return; }
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: err } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (err) throw err;
+      setOrders((data ?? []) as Order[]);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to fetch orders');
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  // Realtime subscription — updates My Orders page live when admin changes status
+  useEffect(() => {
+    if (!userId) return;
+    fetchOrders();
+
+    const channel = supabase
+      .channel(`user-orders-${userId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setOrders(prev => [payload.new as Order, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setOrders(prev => prev.map(o => o.id === payload.new.id ? payload.new as Order : o));
+          } else if (payload.eventType === 'DELETE') {
+            setOrders(prev => prev.filter(o => o.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+    return () => { channel.unsubscribe(); };
+  }, [userId, fetchOrders]);
+
+  return { orders, loading, error, refetch: fetchOrders };
+}
+
+// ─── Public lookup — for TrackOrder page (no auth) ───────────────────────────
 export async function lookupOrder(orderNumber: string, email: string): Promise<Order | null> {
   const { data, error } = await supabase
     .from('orders')
@@ -98,5 +150,5 @@ export async function lookupOrder(orderNumber: string, email: string): Promise<O
     .maybeSingle();
 
   if (error || !data) return null;
-  return data;
+  return data as Order;
 }
