@@ -26,7 +26,7 @@ export function useOrders() {
 
       const { data, error: err } = await query;
       if (err) throw err;
-      setOrders((data ?? []) as Order[]);
+      setOrders((data ?? []) as unknown as Order[]);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to fetch orders');
     } finally {
@@ -43,8 +43,8 @@ export function useOrders() {
         .select()
         .single();
       if (err) throw err;
-      setOrders(prev => [data as Order, ...prev]);
-      return data as Order;
+      setOrders(prev => [data as unknown as Order, ...prev]);
+      return data as unknown as Order;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to create order');
       return null;
@@ -61,7 +61,7 @@ export function useOrders() {
         .select()
         .single();
       if (err) throw err;
-      setOrders(prev => prev.map(o => (o.id === id ? (data as Order) : o)));
+      setOrders(prev => prev.map(o => (o.id === id ? (data as unknown as Order) : o)));
       return true;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to update order');
@@ -103,7 +103,7 @@ export function useMyOrders(userId: string | null) {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       if (err) throw err;
-      setOrders((data ?? []) as Order[]);
+      setOrders((data ?? []) as unknown as Order[]);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to fetch orders');
     } finally {
@@ -123,9 +123,9 @@ export function useMyOrders(userId: string | null) {
         { event: '*', schema: 'public', table: 'orders', filter: `user_id=eq.${userId}` },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setOrders(prev => [payload.new as Order, ...prev]);
+            setOrders(prev => [payload.new as unknown as Order, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
-            setOrders(prev => prev.map(o => o.id === payload.new.id ? payload.new as Order : o));
+            setOrders(prev => prev.map(o => o.id === payload.new.id ? payload.new as unknown as Order : o));
           } else if (payload.eventType === 'DELETE') {
             setOrders(prev => prev.filter(o => o.id !== payload.old.id));
           }
@@ -141,14 +141,18 @@ export function useMyOrders(userId: string | null) {
 }
 
 // ─── Public lookup — for TrackOrder page (no auth) ───────────────────────────
+// Uses the lookup_order_public RPC so anonymous users can look up their own
+// order with order_number + email without exposing other orders via RLS.
 export async function lookupOrder(orderNumber: string, email: string): Promise<Order | null> {
-  const { data, error } = await supabase
-    .from('orders')
-    .select('*')
-    .eq('order_number', orderNumber.trim().toUpperCase())
-    .eq('customer_email', email.trim().toLowerCase())
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return data as Order;
+  const { data, error } = await supabase.rpc('lookup_order_public', {
+    p_order_number: orderNumber.trim().toUpperCase(),
+    p_email: email.trim().toLowerCase(),
+  });
+  if (error) {
+    console.error('[lookupOrder] RPC error:', error);
+    return null;
+  }
+  const row = Array.isArray(data) ? data[0] : data;
+  return (row ?? null) as unknown as Order | null;
 }
+

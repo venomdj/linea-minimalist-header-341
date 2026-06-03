@@ -29,7 +29,7 @@ export default function OrderDetail() {
       .maybeSingle()
       .then(({ data, error: err }) => {
         if (err || !data) setError("Order not found");
-        else setOrder(data as Order);
+        else setOrder(data as unknown as Order);
         setLoading(false);
       });
 
@@ -37,7 +37,7 @@ export default function OrderDetail() {
     const channel = supabase
       .channel(`order-detail-${orderId}`)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${orderId}` }, payload => {
-        setOrder(payload.new as Order);
+        setOrder(payload.new as unknown as Order);
         toast.info("Order status updated");
       })
       .subscribe();
