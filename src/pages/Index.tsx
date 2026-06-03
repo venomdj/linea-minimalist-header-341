@@ -1,34 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { supabase } from '../integrations/supabase/client';
-import { formatPrice, type Product } from '../data/products';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { formatPrice } from '../data/products';
+import { useProducts } from '../hooks/useProducts';
 import Header from "../components/header/Header";
 import Footer from "../components/footer/Footer";
 import LargeHero from "../components/content/LargeHero";
 import EditorialSection from "../components/content/EditorialSection";
 const Index = () => {
-  const [liveProducts, setLiveProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { products: liveProducts, loading } = useProducts();
 
-  useEffect(() => {
-    async function fetchInventory() {
-      try {
-        setLoading(true);
-        // Fetches your items directly from your Supabase 'products' table
-        const { data, error } = await supabase
-          .from('products')
-          .select('*');
-
-        if (error) throw error;
-        if (data) setLiveProducts(data as Product[]);
-      } catch (err) {
-        console.error("Error loading vault feed:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchInventory();
-  }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
