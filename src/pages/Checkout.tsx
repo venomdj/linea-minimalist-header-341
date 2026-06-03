@@ -46,6 +46,7 @@ import {
   WHATSAPP_NUMBER,
 } from "@/data/india";
 
+// ─── Validation schema ────────────────────────────────────────────────────────
 const buyerSchema = z.object({
   email: z.string().trim().email("Enter a valid email").max(255),
   fullName: z.string().trim().min(2, "Full name is required").max(120),
@@ -63,19 +64,57 @@ const buyerSchema = z.object({
     .string()
     .trim()
     .regex(/^\d{6}$/, "Pincode must be 6 digits"),
-  shipping: z.enum(["standard", "express", "overnight"]),
+  shipping: z.enum(["standard", "express"]),
   screenshotName: z.string().min(1, "Upload your payment screenshot"),
 });
 
 type BuyerForm = z.infer<typeof buyerSchema>;
 type FormErrors = Partial<Record<keyof BuyerForm, string>>;
 
-const shippingOptions = [
-  { id: "standard", label: "Standard · Insured", eta: "5–7 business days", price: 0 },
-  { id: "express", label: "Express · Signature required", eta: "2–3 business days", price: 250 },
-  
+// ─── Shipping options — single source of truth ────────────────────────────────
+// All prices in INR. price:0 = free shipping.
+export const shippingOptions = [
+  { id: "standard", label: "Standard · Insured",             eta: "5–7 business days", price: 0   },
+  { id: "express",  label: "Express · Signature required",   eta: "2–3 business days", price: 250 },
 ] as const;
 
+type ShippingId = (typeof shippingOptions)[number]["id"];
+
+// ─── Pricing calculator — THE SINGLE SOURCE OF TRUTH ─────────────────────────
+// All checkout, UPI, DB, and confirmation values derive from this function.
+// Formula: total = subtotal (GST-inclusive) + shippingCost
+// GST is already baked into product prices; we just split it for display.
+// The database stores: subtotal (product prices), gst_amount, shipping_amount, total_amount.
+export function calcPricing(subtotal: number, shippingId: ShippingId, state: string) {
+  const shippingCost = shippingOptions.find((s) => s.id === shippingId)?.price ?? 0;
+
+  // GST is embedded in listed prices — extract for display only
+  const taxableValue = Math.round(subtotal / (1 + GST_RATE));
+  const totalGst     = subtotal - taxableValue;
+
+  const sameState = state === ORIGIN_STATE;
+  const cgst = sameState ? Math.round(totalGst / 2) : 0;
+  const sgst = sameState ? totalGst - cgst : 0;
+  const igst = sameState ? 0 : totalGst;
+
+  // ✅ total always includes shipping
+  const total = subtotal + shippingCost;
+
+  return {
+    shippingCost,
+    taxableValue,
+    totalGst,
+    sameState,
+    cgst,
+    sgst,
+    igst,
+    total,           // ← used for UPI amount, DB total_amount, confirmation display
+    subtotal,        // ← stored in DB as subtotal (GST-inclusive product prices)
+    gstAmount: totalGst, // ← stored in DB as gst_amount
+  };
+}
+
+// ─── Form state ───────────────────────────────────────────────────────────────
 const initial: BuyerForm = {
   email: "",
   fullName: "",
@@ -93,19 +132,21 @@ const SAVED_DETAILS_KEY = "mythicalvault.buyer.v1";
 type SavedDetails = Omit<BuyerForm, "shipping" | "screenshotName">;
 
 const generateOrderId = () => {
-  const ts = Date.now().toString(36).toUpperCase();
+  const ts   = Date.now().toString(36).toUpperCase();
   const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
   return `MVLT-${ts}-${rand}`;
 };
 
+// ─── Component ────────────────────────────────────────────────────────────────
 const Checkout = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
+  const navigate  = useNavigate();
+  const { user }  = useAuth();
   const { items, subtotal, setQty, remove, clear } = useCart();
-  const [form, setForm] = useState<BuyerForm>(initial);
-  const [errors, setErrors] = useState<FormErrors>({});
+
+  const [form,      setForm]      = useState<BuyerForm>(initial);
+  const [errors,    setErrors]    = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState<null | {
+  const [success,   setSuccess]   = useState<null | {
     orderId: string;
     total: number;
     email: string;
@@ -113,9 +154,9 @@ const Checkout = () => {
     phone: string;
   }>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string>("");
-  const [hasSavedDetails, setHasSavedDetails] = useState(false);
+  const [hasSavedDetails,   setHasSavedDetails]   = useState(false);
 
-  // Auto-load saved buyer details on mount
+  // Auto-load saved buyer details
   useEffect(() => {
     try {
       const raw = localStorage.getItem(SAVED_DETAILS_KEY);
@@ -123,35 +164,19 @@ const Checkout = () => {
       const saved = JSON.parse(raw) as Partial<SavedDetails>;
       setForm((prev) => ({ ...prev, ...saved }));
       setHasSavedDetails(true);
-    } catch {
-      /* ignore */
-    }
+    } catch { /* ignore */ }
   }, []);
 
   const saveDetails = () => {
     const parsed = buyerSchema
-      .pick({
-        email: true,
-        fullName: true,
-        phone: true,
-        address: true,
-        address2: true,
-        city: true,
-        state: true,
-        pincode: true,
-      })
+      .pick({ email: true, fullName: true, phone: true, address: true, address2: true, city: true, state: true, pincode: true })
       .safeParse(form);
-    if (!parsed.success) {
-      toast.error("Fill contact and address fields before saving");
-      return;
-    }
+    if (!parsed.success) { toast.error("Fill contact and address fields before saving"); return; }
     try {
       localStorage.setItem(SAVED_DETAILS_KEY, JSON.stringify(parsed.data));
       setHasSavedDetails(true);
       toast.success("Address & details saved for next time");
-    } catch {
-      toast.error("Could not save details");
-    }
+    } catch { toast.error("Could not save details"); }
   };
 
   const clearSavedDetails = () => {
@@ -159,38 +184,29 @@ const Checkout = () => {
       localStorage.removeItem(SAVED_DETAILS_KEY);
       setHasSavedDetails(false);
       toast.success("Saved details cleared");
-    } catch {
-      /* ignore */
-    }
+    } catch { /* ignore */ }
   };
 
+  // ── Pricing — derived from single calcPricing() call, recomputes on every
+  //    relevant state change (shipping method, state, cart contents).
+  const pricing = useMemo(
+    () => calcPricing(subtotal, form.shipping as ShippingId, form.state),
+    [subtotal, form.shipping, form.state]
+  );
 
-  const shippingCost = shippingOptions.find((s) => s.id === form.shipping)?.price ?? 0;
-
-  // Listed prices are inclusive of GST. Back out the taxable value, then re-split.
-  const taxableValue = Math.round(subtotal / (1 + GST_RATE));
-  const totalGst = subtotal - taxableValue;
-  const sameState = form.state === ORIGIN_STATE;
-  const cgst = sameState ? Math.round(totalGst / 2) : 0;
-  const sgst = sameState ? totalGst - cgst : 0;
-  const igst = sameState ? 0 : totalGst;
-  const total = subtotal + shippingCost;
-
-  // Build UPI deep-link + QR
+  // ── UPI deep-link uses pricing.total — always in sync
   const upiLink = useMemo(() => {
     const params = new URLSearchParams({
       pa: UPI_ID,
       pn: UPI_MERCHANT_NAME,
-      am: total.toFixed(2),
+      am: pricing.total.toFixed(2),
       cu: "INR",
       tn: `MYTHICAL VAULT Order ${form.email || "checkout"}`,
     });
     return `upi://pay?${params.toString()}`;
-  }, [total, form.email]);
+  }, [pricing.total, form.email]);
 
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=8&data=${encodeURIComponent(
-    upiLink,
-  )}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=8&data=${encodeURIComponent(upiLink)}`;
 
   const update = <K extends keyof BuyerForm>(key: K, value: BuyerForm[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -198,28 +214,14 @@ const Checkout = () => {
   };
 
   const copy = async (value: string, label: string) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      toast.success(`${label} copied`);
-    } catch {
-      toast.error("Copy failed");
-    }
+    try { await navigator.clipboard.writeText(value); toast.success(`${label} copied`); }
+    catch { toast.error("Copy failed"); }
   };
 
   const onScreenshotChange = (file: File | null) => {
-    if (!file) {
-      setScreenshotPreview("");
-      update("screenshotName", "");
-      return;
-    }
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Max file size is 5 MB");
-      return;
-    }
+    if (!file) { setScreenshotPreview(""); update("screenshotName", ""); return; }
+    if (!file.type.startsWith("image/")) { toast.error("Please upload an image file"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Max file size is 5 MB"); return; }
     const reader = new FileReader();
     reader.onload = () => setScreenshotPreview(typeof reader.result === "string" ? reader.result : "");
     reader.readAsDataURL(file);
@@ -228,10 +230,8 @@ const Checkout = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (items.length === 0) {
-      toast.error("Your bag is empty");
-      return;
-    }
+    if (items.length === 0) { toast.error("Your bag is empty"); return; }
+
     const parsed = buyerSchema.safeParse(form);
     if (!parsed.success) {
       const next: FormErrors = {};
@@ -243,65 +243,77 @@ const Checkout = () => {
       toast.error("Please correct the highlighted fields");
       return;
     }
+
     setSubmitting(true);
 
+    // ── Use calcPricing at submit time — same function, same result as UI ──
+    // This is the validation guard: if somehow the numbers differ, abort.
+    const finalPricing = calcPricing(subtotal, form.shipping as ShippingId, form.state);
+
+    // Sanity check: UI total must match submit-time total
+    if (finalPricing.total !== pricing.total) {
+      toast.error("Pricing changed during checkout. Please review your order.");
+      setSubmitting(false);
+      return;
+    }
+
     const orderNumber = generateOrderId();
-    const shippingCost = shippingOptions.find(o => o.id === form.shipping)?.price ?? 0;
-    const gst = form.state === ORIGIN_STATE ? subtotal * GST_RATE : 0;
-    const totalAmt = subtotal + gst + shippingCost;
 
     try {
-      // Build line items from cart
-      const lineItems = items.map(item => ({
+      const lineItems = items.map((item) => ({
         product_id: String(item.id),
-        title: item.name,
-        image_url: item.image ?? null,
-        price: item.price,
-        quantity: item.quantity,
+        title:      item.name,
+        image_url:  item.image ?? null,
+        price:      item.price,
+        quantity:   item.quantity,
       }));
 
       const orderPayload = {
-        order_number: orderNumber,
-        user_id: user?.id ?? null,
-        customer_name: form.fullName,
-        customer_email: form.email.toLowerCase(),
-        customer_phone: form.phone,
-        shipping_address: form.address,
-        shipping_address2: form.address2 || null,
-        shipping_city: form.city,
-        shipping_state: form.state,
-        shipping_pincode: form.pincode,
-        line_items: lineItems as never,
-        subtotal,
-        gst_amount: gst,
-        shipping_amount: shippingCost,
-        total_amount: totalAmt,
-        payment_method: 'upi',
-        payment_status: 'pending',
-        status: 'pending' as const,
+        order_number:       orderNumber,
+        user_id:            user?.id ?? null,
+        customer_name:      form.fullName,
+        customer_email:     form.email.toLowerCase(),
+        customer_phone:     form.phone,
+        shipping_address:   form.address,
+        shipping_address2:  form.address2 || null,
+        shipping_city:      form.city,
+        shipping_state:     form.state,
+        shipping_pincode:   form.pincode,
+        line_items:         lineItems as never,
+        // ── All three DB pricing fields come from calcPricing — never duplicated ──
+        subtotal:           finalPricing.subtotal,
+        gst_amount:         finalPricing.gstAmount,
+        shipping_amount:    finalPricing.shippingCost,
+        total_amount:       finalPricing.total,       // ✅ includes shipping
+        payment_method:     "upi",
+        payment_status:     "pending",
+        status:             "pending" as const,
+        order_date:         new Date().toISOString(),
       };
 
-      const { error: orderErr } = await supabase.from('orders').insert([orderPayload]);
+      const { error: orderErr } = await supabase.from("orders").insert([orderPayload]);
       if (orderErr) {
-        console.error('[Checkout] Supabase order insert error:', orderErr);
-        // Non-fatal — still proceed so user sees confirmation
+        console.error("[Checkout] Supabase order insert error:", orderErr);
+        // Non-fatal — still show confirmation
       }
     } catch (err) {
-      console.error('[Checkout] Order creation error:', err);
+      console.error("[Checkout] Order creation error:", err);
     }
 
     setSubmitting(false);
+    // ── Confirmation total sourced from finalPricing — same value as UI & DB ──
     setSuccess({
-      orderId: orderNumber,
-      total: subtotal + (form.state === ORIGIN_STATE ? subtotal * GST_RATE : 0) + (shippingOptions.find(o => o.id === form.shipping)?.price ?? 0),
-      email: form.email,
+      orderId:  orderNumber,
+      total:    finalPricing.total,
+      email:    form.email,
       fullName: form.fullName,
-      phone: form.phone,
+      phone:    form.phone,
     });
     clear();
     toast.success("Order received — verification pending");
   };
 
+  // ─── Order confirmation screen ────────────────────────────────────────────
   if (success) {
     const whatsappMsg = encodeURIComponent(
       `Hi MYTHICAL VAULT, I just placed an order.\n\nOrder ID: ${success.orderId}\nName: ${success.fullName}\nAmount: ₹${success.total.toLocaleString("en-IN")}\n\nPayment screenshot attached. Please verify and confirm.`,
@@ -309,10 +321,10 @@ const Checkout = () => {
     const waLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMsg}`;
 
     const timeline = [
-      { label: "Order Placed", done: true, time: "Just now" },
-      { label: "Verification Pending", done: false, active: true, time: "Within 2 hours" },
-      { label: "Authentication & Packing", done: false, time: "24–48 hours" },
-      { label: "Insured Dispatch", done: false, time: "Pan-India" },
+      { label: "Order Placed",                done: true,  active: false, time: "Just now" },
+      { label: "Verification Pending",        done: false, active: true,  time: "Within 2 hours" },
+      { label: "Authentication & Packing",    done: false, active: false, time: "24–48 hours" },
+      { label: "Insured Dispatch",            done: false, active: false, time: "Pan-India" },
     ];
 
     return (
@@ -359,12 +371,13 @@ const Checkout = () => {
                 </div>
                 <div>
                   <p className="eyebrow mb-2">Mobile</p>
-                  <p className="font-mono text-sm text-foreground tracking-wider truncate">
+                  <p className="font-mono text-sm text-foreground tracking-wider">
                     +91 {success.phone}
                   </p>
                 </div>
                 <div>
                   <p className="eyebrow mb-2">Amount Paid</p>
+                  {/* ✅ Same total as UPI QR and DB record */}
                   <p className="font-display text-2xl text-foreground tabular-nums">
                     {formatPrice(success.total)}
                   </p>
@@ -405,11 +418,7 @@ const Checkout = () => {
                       )}
                     </div>
                     <div className="pb-2">
-                      <p
-                        className={`text-sm ${
-                          step.done || step.active ? "text-foreground" : "text-muted-foreground"
-                        }`}
-                      >
+                      <p className={`text-sm ${step.done || step.active ? "text-foreground" : "text-muted-foreground"}`}>
                         {step.label}
                       </p>
                       <p className="text-[11px] font-mono tracking-wider text-muted-foreground mt-0.5">
@@ -441,7 +450,8 @@ const Checkout = () => {
             </div>
 
             <p className="text-[11px] font-mono tracking-wider text-muted-foreground text-center mt-8">
-              Need help? Reach us on WhatsApp +91 {WHATSAPP_NUMBER.slice(2, 7)} {WHATSAPP_NUMBER.slice(7)}
+              Need help? Reach us on WhatsApp +91 {WHATSAPP_NUMBER.slice(2, 7)}{" "}
+              {WHATSAPP_NUMBER.slice(7)}
             </p>
           </div>
         </main>
@@ -450,6 +460,7 @@ const Checkout = () => {
     );
   }
 
+  // ─── Main checkout form ───────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <CheckoutHeader />
@@ -465,7 +476,8 @@ const Checkout = () => {
 
           <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             <div className="lg:col-span-2 space-y-10">
-              {/* Contact */}
+
+              {/* ── Contact ── */}
               <section className="border border-border bg-surface-1 p-6 md:p-8">
                 <header className="flex items-baseline justify-between mb-6">
                   <h2 className="font-display text-lg text-foreground tracking-tight">Contact</h2>
@@ -515,7 +527,7 @@ const Checkout = () => {
                 </div>
               </section>
 
-              {/* Shipping address */}
+              {/* ── Shipping address ── */}
               <section className="border border-border bg-surface-1 p-6 md:p-8">
                 <header className="flex items-baseline justify-between mb-6">
                   <h2 className="font-display text-lg text-foreground tracking-tight">
@@ -618,12 +630,13 @@ const Checkout = () => {
                     size="sm"
                     className="rounded-none border-border hover:border-foreground/40 bg-transparent text-[11px] tracking-wider"
                   >
-                    <BookmarkPlus size={12} /> {hasSavedDetails ? "UPDATE SAVED DETAILS" : "SAVE FOR NEXT TIME"}
+                    <BookmarkPlus size={12} />{" "}
+                    {hasSavedDetails ? "UPDATE SAVED DETAILS" : "SAVE FOR NEXT TIME"}
                   </Button>
                 </div>
               </section>
 
-              {/* Shipping method */}
+              {/* ── Shipping method ── */}
               <section className="border border-border bg-surface-1 p-6 md:p-8">
                 <header className="flex items-baseline justify-between mb-6">
                   <h2 className="font-display text-lg text-foreground tracking-tight">
@@ -655,15 +668,16 @@ const Checkout = () => {
                           </p>
                         </div>
                       </div>
+                      {/* ✅ Shows actual price — no hardcoded "₹150" for free shipping */}
                       <span className="text-sm text-foreground font-mono tabular-nums">
-                        {opt.price === 0 ? "₹150" : formatPrice(opt.price)}
+                        {opt.price === 0 ? "Free" : formatPrice(opt.price)}
                       </span>
                     </label>
                   ))}
                 </RadioGroup>
               </section>
 
-              {/* UPI Payment */}
+              {/* ── UPI Payment ── */}
               <section className="border border-border bg-surface-1 p-6 md:p-8">
                 <header className="flex items-baseline justify-between mb-6">
                   <h2 className="font-display text-lg text-foreground tracking-tight">
@@ -673,7 +687,7 @@ const Checkout = () => {
                 </header>
 
                 <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-8">
-                  {/* QR */}
+                  {/* QR — amount updates when shipping changes */}
                   <div className="flex flex-col items-center gap-3">
                     <div className="bg-white p-3 border border-border">
                       <img
@@ -720,15 +734,16 @@ const Checkout = () => {
                       <div className="mt-3 flex items-center justify-between gap-3 border-t border-border pt-3">
                         <div>
                           <p className="eyebrow mb-1">Amount</p>
+                          {/* ✅ Always equals Order Summary total */}
                           <p className="font-display text-xl text-foreground tabular-nums">
-                            {formatPrice(total)}
+                            {formatPrice(pricing.total)}
                           </p>
                         </div>
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => copy(total.toString(), "Amount")}
+                          onClick={() => copy(pricing.total.toString(), "Amount")}
                           className="rounded-none border-border bg-transparent text-[10px] tracking-wider"
                         >
                           <Copy size={11} /> COPY
@@ -739,14 +754,12 @@ const Checkout = () => {
                     <ol className="space-y-2.5 text-xs text-muted-foreground">
                       {[
                         "Open your UPI app and scan the QR or pay to the UPI ID above.",
-                        `Enter the exact amount: ${formatPrice(total)}.`,
+                        `Enter the exact amount: ${formatPrice(pricing.total)}.`,
                         "Complete the payment and take a screenshot of the success page.",
                         "Upload the payment screenshot below to submit your order.",
                       ].map((step, i) => (
                         <li key={i} className="flex gap-3">
-                          <span className="font-mono text-foreground/60 tabular-nums">
-                            0{i + 1}
-                          </span>
+                          <span className="font-mono text-foreground/60 tabular-nums">0{i + 1}</span>
                           <span className="leading-relaxed">{step}</span>
                         </li>
                       ))}
@@ -754,7 +767,7 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                {/* Payment screenshot upload */}
+                {/* Screenshot upload */}
                 <div className="mt-8 pt-8 border-t border-border">
                   <Field label="Payment Screenshot *" error={errors.screenshotName}>
                     {screenshotPreview ? (
@@ -783,7 +796,9 @@ const Checkout = () => {
                       <label className="flex flex-col items-center justify-center gap-2 py-8 border border-dashed border-border bg-background hover:border-foreground/40 cursor-pointer transition-colors text-xs text-muted-foreground">
                         <Upload size={20} />
                         <span className="font-mono tracking-wider">UPLOAD PAYMENT SCREENSHOT</span>
-                        <span className="text-[10px] font-mono tracking-wider text-muted-foreground/70">PNG / JPG · MAX 5 MB</span>
+                        <span className="text-[10px] font-mono tracking-wider text-muted-foreground/70">
+                          PNG / JPG · MAX 5 MB
+                        </span>
                         <input
                           type="file"
                           accept="image/*"
@@ -799,13 +814,13 @@ const Checkout = () => {
                   <ShieldCheck size={14} className="mt-0.5 text-verified shrink-0" />
                   <p className="leading-relaxed">
                     PAYMENTS ARE MANUALLY VERIFIED WITHIN 2 HOURS. ORDER STATUS WILL REMAIN
-                    “VERIFICATION PENDING” UNTIL OUR TEAM CONFIRMS THE UPI TRANSACTION.
+                    "VERIFICATION PENDING" UNTIL OUR TEAM CONFIRMS THE UPI TRANSACTION.
                   </p>
                 </div>
               </section>
             </div>
 
-            {/* Order Summary */}
+            {/* ── Order Summary sidebar ── */}
             <aside className="lg:col-span-1">
               <div className="border border-border bg-surface-1 p-6 md:p-8 sticky top-24 space-y-6">
                 <div className="flex items-baseline justify-between">
@@ -876,42 +891,46 @@ const Checkout = () => {
                       ))}
                     </ul>
 
+                    {/* Price breakdown — all values from pricing object */}
                     <div className="border-t border-border pt-5 space-y-2.5 text-sm">
-                      <Row label="Base price (excl. GST)" value={formatPrice(taxableValue)} />
-                      {sameState ? (
+                      <Row label="Base price (excl. GST)" value={formatPrice(pricing.taxableValue)} />
+                      {pricing.sameState ? (
                         <>
-                          <Row label={`CGST @ ${(GST_RATE * 50).toFixed(0)}%`} value={formatPrice(cgst)} muted />
-                          <Row label={`SGST @ ${(GST_RATE * 50).toFixed(0)}%`} value={formatPrice(sgst)} muted />
+                          <Row label={`CGST @ ${(GST_RATE * 50).toFixed(0)}%`} value={formatPrice(pricing.cgst)} muted />
+                          <Row label={`SGST @ ${(GST_RATE * 50).toFixed(0)}%`} value={formatPrice(pricing.sgst)} muted />
                         </>
                       ) : (
                         <Row
                           label={`IGST @ ${(GST_RATE * 100).toFixed(0)}%${form.state ? "" : " (est.)"}`}
-                          value={formatPrice(igst || totalGst)}
+                          value={formatPrice(pricing.igst || pricing.totalGst)}
                           muted
                         />
                       )}
+                      {/* ✅ Shipping row shows "Free" for ₹0, actual price otherwise */}
                       <Row
                         label="Shipping"
-                        value={shippingCost === 0 ? "Free" : formatPrice(shippingCost)}
+                        value={pricing.shippingCost === 0 ? "Free" : formatPrice(pricing.shippingCost)}
                       />
                     </div>
 
+                    {/* Total — always subtotal + shipping */}
                     <div className="border-t border-border pt-5 flex items-baseline justify-between">
                       <span className="text-sm text-foreground">Total payable</span>
                       <span className="font-display text-2xl text-foreground tabular-nums">
-                        {formatPrice(total)}
+                        {formatPrice(pricing.total)}
                       </span>
                     </div>
                     <p className="text-[11px] font-mono tracking-wider text-muted-foreground -mt-2">
                       Inclusive of all taxes · GSTIN 27AAACA1234F1Z5
                     </p>
 
+                    {/* Submit button shows the exact total the user will pay */}
                     <Button
                       type="submit"
                       disabled={submitting}
                       className="w-full h-12 rounded-none bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.18em]"
                     >
-                      {submitting ? "PROCESSING…" : `SUBMIT PAYMENT · ${formatPrice(total)}`}
+                      {submitting ? "PROCESSING…" : `SUBMIT PAYMENT · ${formatPrice(pricing.total)}`}
                     </Button>
 
                     <ul className="space-y-2 pt-2 text-[11px] font-mono tracking-wider text-muted-foreground">
@@ -938,6 +957,7 @@ const Checkout = () => {
   );
 };
 
+// ─── Sub-components ───────────────────────────────────────────────────────────
 const Field = ({
   label,
   error,
@@ -956,7 +976,7 @@ const Field = ({
 
 const Row = ({ label, value, muted }: { label: string; value: string; muted?: boolean }) => (
   <div className="flex justify-between">
-    <span className={muted ? "text-muted-foreground" : "text-muted-foreground"}>{label}</span>
+    <span className="text-muted-foreground">{label}</span>
     <span className={`tabular-nums font-mono ${muted ? "text-muted-foreground" : "text-foreground"}`}>
       {value}
     </span>
