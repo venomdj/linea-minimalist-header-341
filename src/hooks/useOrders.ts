@@ -43,7 +43,7 @@ export function useOrders() {
         .select()
         .single();
       if (err) throw err;
-      setOrders(prev => [data as Order, ...prev]);
+      setOrders(prev => [data as unknown as Order, ...prev]);
       return data as unknown as Order;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to create order');
