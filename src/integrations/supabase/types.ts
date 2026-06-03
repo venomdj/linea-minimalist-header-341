@@ -8,11 +8,108 @@ export type Json =
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
+      orders: {
+        Row: {
+          admin_notes: string | null
+          cancelled_at: string | null
+          confirmed_at: string | null
+          courier_partner: string | null
+          created_at: string
+          delivered_at: string | null
+          id: string
+          items: Json
+          payment_id: string | null
+          payment_method: string
+          payment_status: string
+          processing_at: string | null
+          shipped_at: string | null
+          shipping_address_line1: string
+          shipping_address_line2: string | null
+          shipping_city: string
+          shipping_country: string
+          shipping_email: string
+          shipping_fee: number
+          shipping_name: string
+          shipping_phone: string
+          shipping_postal_code: string
+          shipping_state: string
+          status: Database["public"]["Enums"]["order_status"]
+          subtotal: number
+          tax: number
+          total: number
+          tracking_number: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          courier_partner?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          items?: Json
+          payment_id?: string | null
+          payment_method: string
+          payment_status?: string
+          processing_at?: string | null
+          shipped_at?: string | null
+          shipping_address_line1: string
+          shipping_address_line2?: string | null
+          shipping_city: string
+          shipping_country?: string
+          shipping_email: string
+          shipping_fee?: number
+          shipping_name: string
+          shipping_phone: string
+          shipping_postal_code: string
+          shipping_state: string
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal?: number
+          tax?: number
+          total?: number
+          tracking_number?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          courier_partner?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          items?: Json
+          payment_id?: string | null
+          payment_method?: string
+          payment_status?: string
+          processing_at?: string | null
+          shipped_at?: string | null
+          shipping_address_line1?: string
+          shipping_address_line2?: string | null
+          shipping_city?: string
+          shipping_country?: string
+          shipping_email?: string
+          shipping_fee?: number
+          shipping_name?: string
+          shipping_phone?: string
+          shipping_postal_code?: string
+          shipping_state?: string
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal?: number
+          tax?: number
+          total?: number
+          tracking_number?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category: string | null
@@ -79,147 +176,6 @@ export type Database = {
         }
         Relationships: []
       }
-      profiles: {
-        Row: {
-          id: string
-          email: string | null
-          full_name: string | null
-          phone: string | null
-          avatar_url: string | null
-          address: string | null
-          address2: string | null
-          city: string | null
-          state: string | null
-          pincode: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id: string
-          email?: string | null
-          full_name?: string | null
-          phone?: string | null
-          avatar_url?: string | null
-          address?: string | null
-          address2?: string | null
-          city?: string | null
-          state?: string | null
-          pincode?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          email?: string | null
-          full_name?: string | null
-          phone?: string | null
-          avatar_url?: string | null
-          address?: string | null
-          address2?: string | null
-          city?: string | null
-          state?: string | null
-          pincode?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      orders: {
-        Row: {
-          id: string
-          order_number: string
-          user_id: string | null
-          customer_name: string
-          customer_email: string
-          customer_phone: string | null
-          shipping_address: string | null
-          shipping_address2: string | null
-          shipping_city: string | null
-          shipping_state: string | null
-          shipping_pincode: string | null
-          line_items: Json
-          subtotal: number
-          gst_amount: number
-          shipping_amount: number
-          total_amount: number
-          payment_method: string | null
-          payment_status: string | null
-          status: Database["public"]["Enums"]["order_status"]
-          courier_name: string | null
-          tracking_number: string | null
-          estimated_delivery: string | null
-          notes: string | null
-          order_date: string
-          confirmed_at: string | null
-          shipped_at: string | null
-          delivered_at: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          order_number: string
-          user_id?: string | null
-          customer_name: string
-          customer_email: string
-          customer_phone?: string | null
-          shipping_address?: string | null
-          shipping_address2?: string | null
-          shipping_city?: string | null
-          shipping_state?: string | null
-          shipping_pincode?: string | null
-          line_items?: Json
-          subtotal?: number
-          gst_amount?: number
-          shipping_amount?: number
-          total_amount?: number
-          payment_method?: string | null
-          payment_status?: string | null
-          status?: Database["public"]["Enums"]["order_status"]
-          courier_name?: string | null
-          tracking_number?: string | null
-          estimated_delivery?: string | null
-          notes?: string | null
-          order_date?: string
-          confirmed_at?: string | null
-          shipped_at?: string | null
-          delivered_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          order_number?: string
-          user_id?: string | null
-          customer_name?: string
-          customer_email?: string
-          customer_phone?: string | null
-          shipping_address?: string | null
-          shipping_address2?: string | null
-          shipping_city?: string | null
-          shipping_state?: string | null
-          shipping_pincode?: string | null
-          line_items?: Json
-          subtotal?: number
-          gst_amount?: number
-          shipping_amount?: number
-          total_amount?: number
-          payment_method?: string | null
-          payment_status?: string | null
-          status?: Database["public"]["Enums"]["order_status"]
-          courier_name?: string | null
-          tracking_number?: string | null
-          estimated_delivery?: string | null
-          notes?: string | null
-          order_date?: string
-          confirmed_at?: string | null
-          shipped_at?: string | null
-          delivered_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       user_roles: {
         Row: {
           created_at: string
@@ -253,22 +209,18 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
     }
     Enums: {
       app_role: "admin" | "user"
       order_status:
-        | "pending"
-        | "confirmed"
-        | "processing"
-        | "packed"
-        | "shipped"
-        | "out_for_delivery"
-        | "delivered"
-        | "cancelled"
+        | "Pending"
+        | "Confirmed"
+        | "Processing"
+        | "Packed"
+        | "Shipped"
+        | "Out for Delivery"
+        | "Delivered"
+        | "Cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -398,14 +350,14 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       order_status: [
-        "pending",
-        "confirmed",
-        "processing",
-        "packed",
-        "shipped",
-        "out_for_delivery",
-        "delivered",
-        "cancelled",
+        "Pending",
+        "Confirmed",
+        "Processing",
+        "Packed",
+        "Shipped",
+        "Out for Delivery",
+        "Delivered",
+        "Cancelled",
       ],
     },
   },
