@@ -37,10 +37,10 @@ export default function Login() {
       setIsLoading(true);
       setErrorMessage(null);
 
-      // The redirectTo MUST point to our /auth/callback route, not the final
-      // destination. Supabase exchanges the code here, sets the session, then
-      // we bounce the user to `redirect` (via the `next` query param).
-      const callbackUrl = `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirect)}`;
+      // Always redirect to production domain so users land on mythicalvault.vercel.app
+      // regardless of whether they clicked login from the Lovable preview URL.
+      const PRODUCTION_URL = 'https://mythicalvault.vercel.app';
+      const callbackUrl = `${PRODUCTION_URL}/auth/callback?next=${encodeURIComponent(redirect)}`;
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
