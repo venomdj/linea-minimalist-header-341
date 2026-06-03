@@ -141,14 +141,18 @@ export function useMyOrders(userId: string | null) {
 }
 
 // ─── Public lookup — for TrackOrder page (no auth) ───────────────────────────
+// Uses the lookup_order_public RPC so anonymous users can look up their own
+// order with order_number + email without exposing other orders via RLS.
 export async function lookupOrder(orderNumber: string, email: string): Promise<Order | null> {
-  const { data, error } = await supabase
-    .from('orders')
-    .select('*')
-    .eq('order_number', orderNumber.trim().toUpperCase())
-    .eq('customer_email', email.trim().toLowerCase())
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return data as unknown as Order;
+  const { data, error } = await supabase.rpc('lookup_order_public', {
+    p_order_number: orderNumber.trim().toUpperCase(),
+    p_email: email.trim().toLowerCase(),
+  });
+  if (error) {
+    console.error('[lookupOrder] RPC error:', error);
+    return null;
+  }
+  const row = Array.isArray(data) ? data[0] : data;
+  return (row ?? null) as unknown as Order | null;
 }
+
