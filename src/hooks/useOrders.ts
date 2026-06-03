@@ -26,7 +26,7 @@ export function useOrders() {
 
       const { data, error: err } = await query;
       if (err) throw err;
-      setOrders((data ?? []) as Order[]);
+      setOrders((data ?? []) as unknown as Order[]);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to fetch orders');
     } finally {
@@ -44,7 +44,7 @@ export function useOrders() {
         .single();
       if (err) throw err;
       setOrders(prev => [data as Order, ...prev]);
-      return data as Order;
+      return data as unknown as Order;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to create order');
       return null;
@@ -61,7 +61,7 @@ export function useOrders() {
         .select()
         .single();
       if (err) throw err;
-      setOrders(prev => prev.map(o => (o.id === id ? (data as Order) : o)));
+      setOrders(prev => prev.map(o => (o.id === id ? (data as unknown as Order) : o)));
       return true;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to update order');
@@ -103,7 +103,7 @@ export function useMyOrders(userId: string | null) {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       if (err) throw err;
-      setOrders((data ?? []) as Order[]);
+      setOrders((data ?? []) as unknown as Order[]);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to fetch orders');
     } finally {
@@ -123,9 +123,9 @@ export function useMyOrders(userId: string | null) {
         { event: '*', schema: 'public', table: 'orders', filter: `user_id=eq.${userId}` },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setOrders(prev => [payload.new as Order, ...prev]);
+            setOrders(prev => [payload.new as unknown as Order, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
-            setOrders(prev => prev.map(o => o.id === payload.new.id ? payload.new as Order : o));
+            setOrders(prev => prev.map(o => o.id === payload.new.id ? payload.new as unknown as Order : o));
           } else if (payload.eventType === 'DELETE') {
             setOrders(prev => prev.filter(o => o.id !== payload.old.id));
           }
@@ -150,5 +150,5 @@ export async function lookupOrder(orderNumber: string, email: string): Promise<O
     .maybeSingle();
 
   if (error || !data) return null;
-  return data as Order;
+  return data as unknown as Order;
 }
