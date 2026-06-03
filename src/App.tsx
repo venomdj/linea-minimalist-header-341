@@ -1,4 +1,5 @@
 import Login from "./pages/Login";
+import AuthCallback from "./pages/AuthCallback";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -38,6 +39,9 @@ const App = () => (
           <BrowserRouter basename={import.meta.env.BASE_URL}>
             <ScrollToTop />
             <Routes>
+              {/* OAuth callback — MUST be registered in Google Cloud Console & Supabase */}
+              <Route path="/auth/callback" element={<AuthCallback />} />
+
               {/* Public routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/" element={<Index />} />
