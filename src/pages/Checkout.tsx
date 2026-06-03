@@ -74,7 +74,7 @@ type FormErrors = Partial<Record<keyof BuyerForm, string>>;
 // ─── Shipping options — single source of truth ────────────────────────────────
 // All prices in INR. price:0 = free shipping.
 export const shippingOptions = [
-  { id: "standard", label: "Standard · Insured",             eta: "5–7 business days", price: 0   },
+  { id: "standard", label: "Standard · Insured",             eta: "5–7 business days", price: 150   },
   { id: "express",  label: "Express · Signature required",   eta: "2–3 business days", price: 250 },
 ] as const;
 
@@ -670,7 +670,7 @@ const Checkout = () => {
                       </div>
                       {/* ✅ Shows actual price — no hardcoded "₹150" for free shipping */}
                       <span className="text-sm text-foreground font-mono tabular-nums">
-                        {opt.price === 0 ? "Free" : formatPrice(opt.price)}
+                        {formatPrice(opt.price)}
                       </span>
                     </label>
                   ))}
