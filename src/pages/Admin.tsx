@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { LogOut, Plus, Pencil, Trash2, Package, Search, ClipboardList } from "lucide-react";
+import { LogOut, Plus, Pencil, Trash2, Package, Search, ClipboardList, Bell } from "lucide-react";
 
 const inr = (n: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
