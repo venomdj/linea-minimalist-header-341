@@ -441,22 +441,38 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Missing order_id or event" }), { status: 400 });
     }
 
-    // ── Fetch order with items ───────────────────────────────────────────────
-    const { data: order, error: orderErr } = await supabase
+    // ── Fetch order (mapped from MV schema) ──────────────────────────────────
+    const { data: raw, error: orderErr } = await supabase
       .from("orders")
-      .select(`
-        id, order_number, created_at, total_amount, subtotal, shipping_cost,
-        payment_status, payment_method, shipping_method, discount_amount,
-        full_name, phone, email,
-        address_line1, address_line2, city, state, pincode,
-        order_items ( product_name, quantity, unit_price, variant )
-      `)
+      .select("*")
       .eq("id", order_id)
       .single();
 
-    if (orderErr || !order) {
+    if (orderErr || !raw) {
       return new Response(JSON.stringify({ error: `Order not found: ${orderErr?.message}` }), { status: 404 });
     }
+
+    const lineItems = Array.isArray(raw.line_items) ? raw.line_items : [];
+    const order: any = {
+      ...raw,
+      full_name: raw.customer_name,
+      email: raw.customer_email,
+      phone: raw.customer_phone,
+      address_line1: raw.shipping_address,
+      address_line2: raw.shipping_address2,
+      shipping_cost: Number(raw.shipping_amount ?? 0),
+      shipping_method: raw.shipping_method ?? "Standard",
+      discount_amount: Number(raw.discount_amount ?? 0),
+      subtotal: Number(raw.subtotal ?? 0),
+      total_amount: Number(raw.total_amount ?? 0),
+      order_items: lineItems.map((i: any) => ({
+        product_name: i.title ?? i.product_name ?? "Item",
+        quantity: Number(i.quantity ?? 1),
+        unit_price: Number(i.price ?? i.unit_price ?? 0),
+        variant: i.variant ?? null,
+      })),
+    };
+
 
     const results: Record<string, unknown> = {};
 
