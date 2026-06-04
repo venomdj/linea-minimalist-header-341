@@ -292,23 +292,32 @@ const Checkout = () => {
       };
 
       const { error: orderErr } = await supabase.from("orders").insert([orderPayload]);
-if (orderErr) {
-  console.error("[Checkout] Supabase order insert error:", orderErr);
-  toast.error("Failed to save order. Please try again or contact support.");
-  setSubmitting(false);
-  return; // ← stop, don't show fake success
-}
-    setSubmitting(false);
-    setSuccess({
-      orderId:  orderNumber,
-      total:    finalPricing.total,
-      email:    form.email,
-      fullName: form.fullName,
-      phone:    form.phone,
-    });
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    clear();
-    toast.success("Order received — verification pending");
+
+      if (orderErr) {
+        console.error("[Checkout] Supabase order insert error:", JSON.stringify(orderErr, null, 2));
+        // Surface a human-readable error so the customer knows what happened
+        const msg =
+          orderErr.code === "42501"
+            ? "Permission denied. Please refresh and try again."
+            : orderErr.message
+            ? `Order failed: ${orderErr.message}`
+            : "Failed to save order. Please try again or contact support.";
+        toast.error(msg);
+        setSubmitting(false);
+        return; // ← stop, don't show fake success
+      }
+
+      setSubmitting(false);
+      setSuccess({
+        orderId:  orderNumber,
+        total:    finalPricing.total,
+        email:    form.email,
+        fullName: form.fullName,
+        phone:    form.phone,
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      clear();
+      toast.success("Order received — verification pending");
 
   } catch (err) {
     console.error("[Checkout] Order creation error:", err);
