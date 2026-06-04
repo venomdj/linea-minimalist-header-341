@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ProductForm from "@/components/admin/ProductForm";
 import AdminOrders from '../components/order/AdminOrders';
+import AdminNotifications from '@/components/admin/AdminNotifications';
+import { useAdminNotificationsCount } from '@/hooks/useAdminNotificationsCount';
 import {
   AlertDialog,
   AlertDialogAction,
