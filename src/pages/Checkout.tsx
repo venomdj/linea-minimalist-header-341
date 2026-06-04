@@ -45,6 +45,7 @@ import {
   UPI_MERCHANT_NAME,
   WHATSAPP_NUMBER,
 } from "@/data/india";
+import { sendNewOrderEmails } from "@/lib/emailService";
 
 // ─── Validation schema ────────────────────────────────────────────────────────
 const buyerSchema = z.object({
@@ -313,7 +314,11 @@ const Checkout = () => {
         order_date:         new Date().toISOString(),
       };
 
-      const { error: orderErr } = await supabase.from("orders").insert([orderPayload]);
+      const { data: newOrder, error: orderErr } = await supabase
+        .from("orders")
+        .insert([orderPayload])
+        .select("id")
+        .single();
 
       if (orderErr) {
         console.error("[Checkout] Supabase order insert error:", JSON.stringify(orderErr, null, 2));
@@ -330,6 +335,12 @@ const Checkout = () => {
       }
 
       setSubmitting(false);
+      // ✅ Fire confirmation + admin notification emails (non-blocking)
+      if (newOrder?.id) {
+        sendNewOrderEmails(newOrder.id).catch((err) =>
+          console.error("[Checkout] email error:", err)
+        );
+      }
       setSuccess({
         orderId:  orderNumber,
         total:    finalPricing.total,
