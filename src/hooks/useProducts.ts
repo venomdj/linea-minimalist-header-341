@@ -16,6 +16,7 @@ export type DbProduct = {
   image_url: string | null;
   category: string | null;
   stock: number;
+  in_stock: boolean;
   featured: boolean;
   series: string | null;
   set_name: string | null;
@@ -48,6 +49,8 @@ export const mapDbToProduct = (p: DbProduct): Product => {
     verified: p.verified,
     isNew: p.is_new,
     population: p.population ?? undefined,
+    stock: p.stock,
+    inStock: p.in_stock,
   };
 };
 
