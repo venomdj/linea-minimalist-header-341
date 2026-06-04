@@ -541,11 +541,9 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ success: true, results }), {
-      headers: { "Content-Type": "application/json" },
-    });
+    return json(200, { success: true, results });
   } catch (err: any) {
     console.error("[send-order-email] Fatal:", err.message);
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    return json(500, { error: err.message });
   }
 });
