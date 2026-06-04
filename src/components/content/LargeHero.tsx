@@ -76,8 +76,8 @@ const LargeHero = () => {
           {/* Trust strip */}
           <div className="mt-10 lg:mt-16 flex flex-wrap items-center gap-x-6 sm:gap-x-10 gap-y-3 sm:gap-y-4 text-[10px] sm:text-xs font-mono tracking-wider text-muted-foreground animate-fade-up" style={{ animationDelay: "0.55s" }}>
             <span className="flex items-center gap-2"><BadgeCheck size={14} className="text-verified" strokeWidth={1.8} /> PSA & BGS PARTNER</span>
-            <span>1.2M+ LISTINGS</span>
-            <span>₹680Cr GMV</span>
+            <span>VERIFIED</span>
+            <span>LATEST</span>
             <span>28 STATES · 8 UTs</span>
           </div>
 
