@@ -16,23 +16,24 @@ export interface EmailOrderPayload {
   trackingUrl?: string;
 }
 
-/**
- * Calls the `send-order-email` Supabase Edge Function.
- * Returns true on success, false on failure (errors are logged, not thrown,
- * so a failed email never breaks the checkout flow).
- */
 export async function sendOrderEmail(payload: EmailOrderPayload): Promise<boolean> {
   try {
-    const { data, error } = await supabase.functions.invoke("send-order-email", {
-      body: payload,
+    const { data: { session } } = await supabase.auth.getSession();
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const res = await fetch(`${supabaseUrl}/functions/v1/send-order-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify(payload),
     });
 
-    if (error) {
-      console.error("[emailService] Edge function error:", error.message);
-      return false;
-    }
+    const data = await res.json();
 
-    if (data?.success === false) {
+    if (!res.ok || data?.success === false) {
       console.error("[emailService] Email send failed:", data?.error);
       return false;
     }
@@ -45,10 +46,6 @@ export async function sendOrderEmail(payload: EmailOrderPayload): Promise<boolea
   }
 }
 
-/**
- * Fires both the customer confirmation and the admin notification emails
- * immediately after a new order is saved. Runs in parallel.
- */
 export async function sendNewOrderEmails(orderId: string): Promise<void> {
   await Promise.allSettled([
     sendOrderEmail({ orderId, emailType: "order_confirmation" }),
@@ -56,10 +53,6 @@ export async function sendNewOrderEmails(orderId: string): Promise<void> {
   ]);
 }
 
-/**
- * Maps an order status string to the corresponding email type.
- * Returns null for statuses that don't trigger an email (e.g. "Pending").
- */
 export function statusToEmailType(status: string): OrderEmailType | null {
   const map: Record<string, OrderEmailType> = {
     Processing: "status_processing",
