@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -157,37 +157,39 @@ function ctaButton(text: string, url: string) {
 
 interface OrderData {
   id: string;
+  order_number?: string;
   created_at: string;
   status: string;
-  total: number;
+  total_amount: number;
   subtotal?: number;
   shipping_cost?: number;
+  shipping_amount?: number;
+  gst_amount?: number;
   payment_status?: string;
   payment_method?: string;
   shipping_method?: string;
+  courier_name?: string;
   tracking_number?: string;
   tracking_url?: string;
   notes?: string;
-  profiles?: { full_name?: string; email?: string } | null;
-  order_items?: Array<{
+  customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
+  shipping_address?: string;
+  shipping_address2?: string;
+  shipping_city?: string;
+  shipping_state?: string;
+  shipping_pincode?: string;
+  line_items?: Array<{
+    name?: string;
     quantity: number;
     price: number;
-    products?: { name?: string; image_url?: string } | null;
+    image_url?: string;
   }>;
-  shipping_addresses?: {
-    full_name?: string;
-    address_line1?: string;
-    address_line2?: string;
-    city?: string;
-    state?: string;
-    postal_code?: string;
-    country?: string;
-    phone?: string;
-  } | null;
 }
 
-function renderOrderItems(items: OrderData["order_items"] = []) {
-  if (!items.length) return "";
+function renderOrderItems(items: OrderData["line_items"] = []) {
+  if (!items || !items.length) return "";
   const rows = items
     .map(
       (item) => `
@@ -195,13 +197,13 @@ function renderOrderItems(items: OrderData["order_items"] = []) {
         <td style="padding:10px 0;border-bottom:1px solid ${BRAND.border};">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
             <tr>
-              <td style="font-size:14px;color:${BRAND.text};font-weight:500;">${item.products?.name ?? "Product"}</td>
+              <td style="font-size:14px;color:${BRAND.text};font-weight:500;">${item.name ?? "Product"}</td>
               <td class="price-cell" align="right" style="font-size:14px;color:${BRAND.text};white-space:nowrap;">
-                ${item.quantity} × $${item.price.toFixed(2)}
+                ${item.quantity} × $${Number(item.price).toFixed(2)}
               </td>
             </tr>
             <tr>
-              <td colspan="2" style="font-size:12px;color:${BRAND.muted};padding-top:2px;">Subtotal: $${(item.quantity * item.price).toFixed(2)}</td>
+              <td colspan="2" style="font-size:12px;color:${BRAND.muted};padding-top:2px;">Subtotal: $${(item.quantity * Number(item.price)).toFixed(2)}</td>
             </tr>
           </table>
         </td>
@@ -212,29 +214,27 @@ function renderOrderItems(items: OrderData["order_items"] = []) {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">${rows}</table>`;
 }
 
-function renderShippingAddress(addr: OrderData["shipping_addresses"]) {
-  if (!addr) return "—";
+function renderShippingAddress(order: OrderData) {
   const parts = [
-    addr.full_name,
-    addr.address_line1,
-    addr.address_line2,
-    [addr.city, addr.state, addr.postal_code].filter(Boolean).join(", "),
-    addr.country,
-    addr.phone ? `📞 ${addr.phone}` : null,
+    order.customer_name,
+    order.shipping_address,
+    order.shipping_address2,
+    [order.shipping_city, order.shipping_state, order.shipping_pincode].filter(Boolean).join(", "),
+    order.customer_phone ? `📞 ${order.customer_phone}` : null,
   ].filter(Boolean);
-  return parts.join("<br/>");
+  return parts.length ? parts.join("<br/>") : "—";
 }
 
-// ── Customer: order confirmation ──────────────────────────────────────────────
 function buildOrderConfirmation(order: OrderData): { subject: string; html: string } {
-  const name = order.profiles?.full_name?.split(" ")[0] ?? "Adventurer";
+  const name = order.customer_name?.split(" ")[0] ?? "Adventurer";
+  const orderId = `#${(order.order_number ?? order.id.slice(0, 8)).toUpperCase()}`;
   const content = `
     ${heading(`Order Confirmed, ${name}! 🎉`)}
     ${subtext("Your order has been received and is being prepared for fulfillment.")}
     ${badge("Order Confirmed", BRAND.success)}
     ${divider()}
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-      ${infoRow("Order ID", `#${order.id.slice(0, 8).toUpperCase()}`)}
+      ${infoRow("Order ID", orderId)}
       ${infoRow("Order Date", new Date(order.created_at).toLocaleDateString("en-US", { dateStyle: "long" }))}
       ${infoRow("Payment Status", order.payment_status ?? "Paid")}
       ${infoRow("Payment Method", order.payment_method ?? "—")}
@@ -242,56 +242,59 @@ function buildOrderConfirmation(order: OrderData): { subject: string; html: stri
     </table>
     ${divider()}
     <h3 style="margin:0 0 8px;font-size:15px;font-weight:600;color:${BRAND.text};">Items Ordered</h3>
-    ${renderOrderItems(order.order_items)}
+    ${renderOrderItems(order.line_items)}
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
-      ${order.subtotal != null ? infoRow("Subtotal", `$${order.subtotal.toFixed(2)}`) : ""}
-      ${order.shipping_cost != null ? infoRow("Shipping", `$${order.shipping_cost.toFixed(2)}`) : ""}
+      ${order.subtotal != null ? infoRow("Subtotal", `$${Number(order.subtotal).toFixed(2)}`) : ""}
+      ${order.shipping_cost != null ? infoRow("Shipping", `$${Number(order.shipping_cost).toFixed(2)}`) : (order.shipping_amount != null ? infoRow("Shipping", `$${Number(order.shipping_amount).toFixed(2)}`) : "")}
+      ${order.gst_amount != null ? infoRow("GST", `$${Number(order.gst_amount).toFixed(2)}`) : ""}
       <tr>
         <td style="padding:8px 0 4px;font-size:15px;font-weight:700;color:${BRAND.accent};">Total</td>
-        <td style="padding:8px 0 4px;font-size:15px;font-weight:700;color:${BRAND.accent};">$${order.total.toFixed(2)}</td>
+        <td style="padding:8px 0 4px;font-size:15px;font-weight:700;color:${BRAND.accent};">$${Number(order.total_amount).toFixed(2)}</td>
       </tr>
     </table>
     ${divider()}
     <h3 style="margin:0 0 8px;font-size:15px;font-weight:600;color:${BRAND.text};">Shipping To</h3>
-    <p style="margin:0;font-size:13px;color:${BRAND.muted};line-height:1.8;">${renderShippingAddress(order.shipping_addresses)}</p>
+    <p style="margin:0;font-size:13px;color:${BRAND.muted};line-height:1.8;">${renderShippingAddress(order)}</p>
     ${divider()}
     <p style="margin:0;font-size:13px;color:${BRAND.muted};">You'll receive another email when your order ships. Thank you for choosing Mythical Vault!</p>
   `;
   return {
-    subject: `Order Confirmed #${order.id.slice(0, 8).toUpperCase()} — Mythical Vault`,
-    html: baseLayout(content, `Your order #${order.id.slice(0, 8).toUpperCase()} is confirmed!`),
+    subject: `Order Confirmed ${orderId} — Mythical Vault`,
+    html: baseLayout(content, `Your order ${orderId} is confirmed!`),
   };
 }
 
 // ── Admin: new order notification ─────────────────────────────────────────────
 function buildAdminNotification(order: OrderData): { subject: string; html: string } {
+  const orderId = `#${(order.order_number ?? order.id.slice(0, 8)).toUpperCase()}`;
   const content = `
     ${heading("🛒 New Order Received")}
     ${subtext("A customer just placed an order on Mythical Vault.")}
     ${badge("Action Required", BRAND.accent)}
     ${divider()}
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-      ${infoRow("Order ID", `#${order.id.slice(0, 8).toUpperCase()}`)}
+      ${infoRow("Order ID", orderId)}
       ${infoRow("Full ID", order.id)}
-      ${infoRow("Customer", order.profiles?.full_name ?? "—")}
-      ${infoRow("Email", order.profiles?.email ?? "—")}
+      ${infoRow("Customer", order.customer_name ?? "—")}
+      ${infoRow("Email", order.customer_email ?? "—")}
+      ${infoRow("Phone", order.customer_phone ?? "—")}
       ${infoRow("Date", new Date(order.created_at).toLocaleString())}
       ${infoRow("Payment Status", order.payment_status ?? "—")}
       ${infoRow("Payment Method", order.payment_method ?? "—")}
       ${infoRow("Shipping Method", order.shipping_method ?? "Standard")}
-      ${infoRow("Order Total", `$${order.total.toFixed(2)}`)}
+      ${infoRow("Order Total", `$${Number(order.total_amount).toFixed(2)}`)}
     </table>
     ${divider()}
     <h3 style="margin:0 0 8px;font-size:15px;font-weight:600;color:${BRAND.text};">Items</h3>
-    ${renderOrderItems(order.order_items)}
+    ${renderOrderItems(order.line_items)}
     ${divider()}
     <h3 style="margin:0 0 8px;font-size:15px;font-weight:600;color:${BRAND.text};">Shipping Address</h3>
-    <p style="margin:0;font-size:13px;color:${BRAND.muted};line-height:1.8;">${renderShippingAddress(order.shipping_addresses)}</p>
+    <p style="margin:0;font-size:13px;color:${BRAND.muted};line-height:1.8;">${renderShippingAddress(order)}</p>
     ${order.notes ? `${divider()}<h3 style="margin:0 0 8px;font-size:15px;font-weight:600;color:${BRAND.text};">Customer Notes</h3><p style="margin:0;font-size:13px;color:${BRAND.muted};">${order.notes}</p>` : ""}
   `;
   return {
-    subject: `New Order #${order.id.slice(0, 8).toUpperCase()} — $${order.total.toFixed(2)} from ${order.profiles?.full_name ?? "Customer"}`,
-    html: baseLayout(content, `New order from ${order.profiles?.full_name ?? "a customer"}`),
+    subject: `New Order ${orderId} — $${Number(order.total_amount).toFixed(2)} from ${order.customer_name ?? "Customer"}`,
+    html: baseLayout(content, `New order from ${order.customer_name ?? "a customer"}`),
   };
 }
 
@@ -300,8 +303,8 @@ function buildStatusEmail(
   order: OrderData,
   emailType: EmailType,
 ): { subject: string; html: string } {
-  const name = order.profiles?.full_name?.split(" ")[0] ?? "Adventurer";
-  const orderId = `#${order.id.slice(0, 8).toUpperCase()}`;
+  const name = order.customer_name?.split(" ")[0] ?? "Adventurer";
+  const orderId = `#${(order.order_number ?? order.id.slice(0, 8)).toUpperCase()}`;
 
   const statusConfig: Record<
     string,
@@ -360,7 +363,7 @@ function buildStatusEmail(
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       ${infoRow("Order ID", orderId)}
       ${infoRow("Order Date", new Date(order.created_at).toLocaleDateString("en-US", { dateStyle: "long" }))}
-      ${infoRow("Total", `$${order.total.toFixed(2)}`)}
+      ${infoRow("Total", `$${Number(order.total_amount).toFixed(2)}`)}
       ${order.tracking_number ? infoRow("Tracking #", order.tracking_number) : ""}
     </table>
     ${divider()}
@@ -422,17 +425,13 @@ serve(async (req) => {
   const { data: order, error: orderError } = await supabase
     .from("orders")
     .select(`
-      id, created_at, status, total, subtotal, shipping_cost,
-      payment_status, payment_method, shipping_method, notes,
-      profiles ( full_name, email ),
-      order_items (
-        quantity, price,
-        products ( name, image_url )
-      ),
-      shipping_addresses (
-        full_name, address_line1, address_line2,
-        city, state, postal_code, country, phone
-      )
+      id, order_number, created_at, status, total_amount, subtotal,
+      shipping_cost, shipping_amount, gst_amount,
+      payment_status, payment_method, shipping_method,
+      courier_name, tracking_number, tracking_url, notes,
+      customer_name, customer_email, customer_phone,
+      shipping_address, shipping_address2, shipping_city,
+      shipping_state, shipping_pincode, line_items
     `)
     .eq("id", orderId)
     .single();
@@ -458,10 +457,10 @@ serve(async (req) => {
     toEmail = ADMIN_EMAIL;
   } else if (emailType === "order_confirmation") {
     ({ subject, html } = buildOrderConfirmation(enrichedOrder));
-    toEmail = order.profiles?.email ?? "";
+    toEmail = order.customer_email ?? "";
   } else {
     ({ subject, html } = buildStatusEmail(enrichedOrder, emailType));
-    toEmail = order.profiles?.email ?? "";
+    toEmail = order.customer_email ?? "";
   }
 
   if (!toEmail) {
