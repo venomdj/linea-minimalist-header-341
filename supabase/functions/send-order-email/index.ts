@@ -453,7 +453,7 @@ serve(async (req) => {
       .single();
 
     if (orderErr || !raw) {
-      return new Response(JSON.stringify({ error: `Order not found: ${orderErr?.message}` }), { status: 404 });
+      return json(404, { error: `Order not found: ${orderErr?.message}` });
     }
 
     const lineItems = Array.isArray(raw.line_items) ? raw.line_items : [];
