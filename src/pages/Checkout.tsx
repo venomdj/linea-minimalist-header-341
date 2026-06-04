@@ -141,7 +141,7 @@ const generateOrderId = () => {
 const Checkout = () => {
   const navigate  = useNavigate();
   const { user }  = useAuth();
-  const { items, subtotal, setQty, remove, clear } = useCart();
+  const { items, subtotal, setQty, remove, clear, hasOutOfStockItems } = useCart();
 
   const [form,      setForm]      = useState<BuyerForm>(initial);
   const [errors,    setErrors]    = useState<FormErrors>({});
@@ -255,6 +255,28 @@ const Checkout = () => {
       toast.error("Pricing changed during checkout. Please review your order.");
       setSubmitting(false);
       return;
+    }
+
+    // ── Stock validation — check all cart items are still available ──
+    try {
+      const cartPayload = items.map((item) => ({
+        product_id: String(item.id),
+        quantity: item.quantity,
+      }));
+      const { data: oosItems, error: stockErr } = await supabase.rpc(
+        "check_cart_stock",
+        { cart: cartPayload }
+      );
+      if (!stockErr && oosItems && oosItems.length > 0) {
+        const names = (oosItems as { title: string; available: number }[])
+          .map((i) => `"${i.title}" (${i.available > 0 ? `only ${i.available} left` : "out of stock"})`)
+          .join(", ");
+        toast.error(`Some items are no longer available: ${names}. Please remove them before placing your order.`);
+        setSubmitting(false);
+        return;
+      }
+    } catch (stockCheckErr) {
+      console.warn("[Checkout] Stock check threw:", stockCheckErr);
     }
 
     const orderNumber = generateOrderId();
@@ -937,10 +959,18 @@ const Checkout = () => {
                       Inclusive of all taxes · GSTIN 27AAACA1234F1Z5
                     </p>
 
+                    {/* OOS warning */}
+                    {hasOutOfStockItems && (
+                      <div className="flex items-start gap-2 border border-destructive/40 bg-destructive/5 p-3 text-[11px] font-mono tracking-wider text-destructive">
+                        <span>⚠</span>
+                        <span>Some items in your cart are out of stock. Remove them before placing your order.</span>
+                      </div>
+                    )}
+
                     {/* Submit button shows the exact total the user will pay */}
                     <Button
                       type="submit"
-                      disabled={submitting}
+                      disabled={submitting || hasOutOfStockItems}
                       className="w-full h-12 rounded-none bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.18em]"
                     >
                       {submitting ? "PROCESSING…" : `SUBMIT PAYMENT · ${formatPrice(pricing.total)}`}
