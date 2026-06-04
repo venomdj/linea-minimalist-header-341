@@ -465,6 +465,9 @@ serve(async (req) => {
       discount_amount: Number(raw.discount_amount ?? 0),
       subtotal: Number(raw.subtotal ?? 0),
       total_amount: Number(raw.total_amount ?? 0),
+      city: raw.shipping_city,
+      state: raw.shipping_state,
+      pincode: raw.shipping_pincode,
       order_items: lineItems.map((i: any) => ({
         product_name: i.title ?? i.product_name ?? "Item",
         quantity: Number(i.quantity ?? 1),
