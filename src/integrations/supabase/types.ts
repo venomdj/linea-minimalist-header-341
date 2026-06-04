@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      email_log: {
+        Row: {
+          created_at: string
+          error: string | null
+          event: string
+          id: string
+          idempotency_key: string
+          order_id: string | null
+          recipient: string
+          recipient_type: string
+          resend_id: string | null
+          status: string
+          subject: string | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          event: string
+          id?: string
+          idempotency_key: string
+          order_id?: string | null
+          recipient: string
+          recipient_type: string
+          resend_id?: string | null
+          status: string
+          subject?: string | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          event?: string
+          id?: string
+          idempotency_key?: string
+          order_id?: string | null
+          recipient?: string
+          recipient_type?: string
+          resend_id?: string | null
+          status?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_log_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
