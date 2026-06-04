@@ -298,9 +298,7 @@ if (orderErr) {
   setSubmitting(false);
   return; // ← stop, don't show fake success
 }
-
     setSubmitting(false);
-    // ── Confirmation total sourced from finalPricing — same value as UI & DB ──
     setSuccess({
       orderId:  orderNumber,
       total:    finalPricing.total,
@@ -311,7 +309,13 @@ if (orderErr) {
     window.scrollTo({ top: 0, behavior: "smooth" });
     clear();
     toast.success("Order received — verification pending");
-  };
+
+  } catch (err) {
+    console.error("[Checkout] Order creation error:", err);
+    toast.error("Failed to save order. Please try again.");
+    setSubmitting(false);
+  }
+};
 
   // ─── Order confirmation screen ────────────────────────────────────────────
   if (success) {
