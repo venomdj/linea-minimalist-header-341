@@ -48,11 +48,11 @@ const Navigation = () => {
         <div className="px-6 h-8 flex items-center justify-between text-[11px] font-mono tracking-wider text-muted-foreground/80">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-verified pulse-dot" />
-            LIVE — 12,408 LISTINGS · 1,204 AUCTIONS ENDING TODAY
+            LIVE 
           </div>
           <div className="flex items-center gap-6">
-            <span>FREE INSURED SHIPPING OVER ₹25,000 · PAN-INDIA</span>
-            <Link to="/about/our-story" className="hover:text-foreground transition-colors">Sell with us →</Link>
+            <span>FREE INSURED SHIPPING OVER ₹5,000 · PAN-INDIA</span>
+            <Link to="/about/our-story" className="hover:text-foreground transition-colors"> </Link>
           </div>
         </div>
       </div>
