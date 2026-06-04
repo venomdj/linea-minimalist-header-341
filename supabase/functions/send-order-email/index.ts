@@ -1,549 +1,516 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// ─── Env ─────────────────────────────────────────────────────────────────────
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
-const FROM_EMAIL = Deno.env.get("FROM_EMAIL") ?? "orders@mythicalvault.in";
-const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") ?? "admin@mythicalvault.in";
-const STORE_NAME = "Mythical Vault";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
 // ─── Types ────────────────────────────────────────────────────────────────────
-type EmailEvent =
-  | "order_confirmed"
-  | "order_processing"
-  | "order_shipped"
-  | "order_out_for_delivery"
-  | "order_delivered"
-  | "order_cancelled";
 
-interface EmailRequest {
-  order_id: string;
-  event: EmailEvent;
-  tracking_number?: string;
-  tracking_url?: string;
-  cancellation_reason?: string;
+type EmailType =
+  | "order_confirmation"
+  | "order_notification_admin"
+  | "status_processing"
+  | "status_shipped"
+  | "status_out_for_delivery"
+  | "status_delivered"
+  | "status_cancelled";
+
+interface RequestBody {
+  orderId: string;
+  emailType: EmailType;
+  trackingNumber?: string;
+  trackingUrl?: string;
 }
 
-// ─── Resend sender ────────────────────────────────────────────────────────────
-async function sendEmail(to: string, subject: string, html: string): Promise<{ id?: string; error?: string }> {
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ from: `${STORE_NAME} <${FROM_EMAIL}>`, to, subject, html }),
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-  const json = await res.json();
-  if (!res.ok) return { error: JSON.stringify(json) };
-  return { id: json.id };
 }
 
-// ─── Idempotency key ──────────────────────────────────────────────────────────
-function idempotencyKey(order_id: string, event: EmailEvent, recipient: "customer" | "admin") {
-  return `${order_id}::${event}::${recipient}`;
+/** Simple retry wrapper — attempts up to `maxAttempts` times with exponential back-off */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxAttempts = 3,
+  baseDelayMs = 500,
+): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (i < maxAttempts - 1) {
+        await new Promise((r) => setTimeout(r, baseDelayMs * 2 ** i));
+      }
+    }
+  }
+  throw lastErr;
 }
 
-async function alreadySent(key: string): Promise<boolean> {
-  const { data } = await supabase
-    .from("email_log")
-    .select("id")
-    .eq("idempotency_key", key)
-    .eq("status", "sent")
-    .maybeSingle();
-  return !!data;
-}
+// ─── Brand colours ────────────────────────────────────────────────────────────
+const BRAND = {
+  bg: "#0a0a0f",
+  surface: "#12121a",
+  border: "#2a2a3a",
+  accent: "#9b6dff",
+  accentDark: "#7c4dff",
+  text: "#e8e8f0",
+  muted: "#888899",
+  danger: "#ff4d6d",
+  success: "#4dffb4",
+};
 
-async function logEmail(opts: {
-  order_id: string;
-  event: EmailEvent;
-  recipient: string;
-  recipient_type: "customer" | "admin";
-  subject: string;
-  idempotency_key: string;
-  status: "sent" | "failed";
-  resend_id?: string;
-  error?: string;
-}) {
-  await supabase.from("email_log").insert(opts);
-}
+// ─── Email templates ──────────────────────────────────────────────────────────
 
-// ─── Shared template shell ────────────────────────────────────────────────────
-function shell(content: string, preheader = "") {
+function baseLayout(content: string, preheader: string) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="color-scheme" content="light"/>
-<title>${STORE_NAME}</title>
-<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <title>Mythical Vault</title>
+  <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+  <style>
+    body,html{margin:0;padding:0;background:${BRAND.bg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}
+    table{border-collapse:collapse;}
+    a{color:${BRAND.accent};text-decoration:none;}
+    @media(max-width:600px){.container{width:100%!important;padding:0 16px!important;} .item-row td{display:block!important;width:100%!important;} .price-cell{text-align:left!important;padding-top:4px!important;}}
+  </style>
 </head>
-<body style="margin:0;padding:0;background:#f5f4f0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;-webkit-text-size-adjust:100%;">
-${preheader ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${preheader}&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;</div>` : ""}
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f5f4f0;padding:32px 0;">
-  <tr><td align="center">
-    <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;">
+<body style="background:${BRAND.bg};margin:0;padding:0;">
+  <span style="display:none;font-size:1px;color:${BRAND.bg};max-height:0;max-width:0;overflow:hidden;">${preheader}&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table class="container" role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:${BRAND.surface};border:1px solid ${BRAND.border};border-radius:16px;overflow:hidden;">
 
-      <!-- HEADER -->
-      <tr><td style="background:#0f0f0f;padding:28px 40px;border-radius:12px 12px 0 0;" align="center">
-        <span style="font-family:'Georgia',serif;font-size:22px;font-weight:700;color:#e8d5b0;letter-spacing:3px;text-transform:uppercase;">⚔ ${STORE_NAME}</span>
-        <p style="margin:6px 0 0;color:#888;font-size:11px;letter-spacing:2px;text-transform:uppercase;">Mythological Collectibles &amp; Replicas</p>
-      </td></tr>
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,${BRAND.accentDark},${BRAND.accent});padding:32px 40px;text-align:center;">
+              <h1 style="margin:0;font-size:26px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">⚔️ Mythical Vault</h1>
+              <p style="margin:6px 0 0;font-size:13px;color:rgba(255,255,255,.75);letter-spacing:2px;text-transform:uppercase;">Legendary Collectibles</p>
+            </td>
+          </tr>
 
-      <!-- BODY -->
-      <tr><td style="background:#ffffff;padding:40px;border-left:1px solid #e8e8e4;border-right:1px solid #e8e8e4;">
-        ${content}
-      </td></tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:40px;">
+              ${content}
+            </td>
+          </tr>
 
-      <!-- FOOTER -->
-      <tr><td style="background:#0f0f0f;padding:24px 40px;border-radius:0 0 12px 12px;" align="center">
-        <p style="margin:0;color:#666;font-size:11px;line-height:1.7;">
-          © ${new Date().getFullYear()} ${STORE_NAME} · All rights reserved<br/>
-          <span style="color:#888;">Questions? Reply to this email or contact us at ${FROM_EMAIL}</span>
-        </p>
-      </td></tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:24px 40px;border-top:1px solid ${BRAND.border};text-align:center;">
+              <p style="margin:0;font-size:12px;color:${BRAND.muted};">© ${new Date().getFullYear()} Mythical Vault · All rights reserved</p>
+              <p style="margin:6px 0 0;font-size:12px;color:${BRAND.muted};">Questions? Reply to this email or contact our support team.</p>
+            </td>
+          </tr>
 
-    </table>
-  </td></tr>
-</table>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`;
 }
 
-// ─── Shared helpers ───────────────────────────────────────────────────────────
-function formatPrice(n: number) {
-  return "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function heading(text: string) {
+  return `<h2 style="margin:0 0 8px;font-size:22px;font-weight:700;color:${BRAND.text};">${text}</h2>`;
+}
+
+function subtext(text: string) {
+  return `<p style="margin:0 0 24px;font-size:14px;color:${BRAND.muted};">${text}</p>`;
 }
 
 function divider() {
-  return `<hr style="border:none;border-top:1px solid #eee;margin:24px 0;"/>`;
+  return `<hr style="border:none;border-top:1px solid ${BRAND.border};margin:24px 0;" />`;
 }
 
-function badge(text: string, color: string, bg: string) {
-  return `<span style="display:inline-block;padding:4px 12px;border-radius:20px;background:${bg};color:${color};font-size:12px;font-weight:600;letter-spacing:0.5px;">${text}</span>`;
-}
-
-function statusBadge(status: string) {
-  const map: Record<string, [string, string]> = {
-    pending:          ["#92400e", "#fef3c7"],
-    processing:       ["#1e40af", "#dbeafe"],
-    shipped:          ["#6b21a8", "#f3e8ff"],
-    out_for_delivery: ["#065f46", "#d1fae5"],
-    delivered:        ["#166534", "#dcfce7"],
-    cancelled:        ["#991b1b", "#fee2e2"],
-  };
-  const [color, bg] = map[status.toLowerCase()] ?? ["#374151", "#f3f4f6"];
-  return badge(status.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()), color, bg);
+function badge(text: string, color = BRAND.accent) {
+  return `<span style="display:inline-block;padding:4px 12px;background:${color}22;border:1px solid ${color}55;border-radius:20px;font-size:12px;font-weight:600;color:${color};letter-spacing:.5px;">${text}</span>`;
 }
 
 function infoRow(label: string, value: string) {
   return `<tr>
-    <td style="padding:8px 0;color:#666;font-size:13px;width:40%;vertical-align:top;">${label}</td>
-    <td style="padding:8px 0;color:#1a1a1a;font-size:13px;font-weight:500;vertical-align:top;">${value}</td>
+    <td style="padding:6px 0;font-size:13px;color:${BRAND.muted};width:40%;">${label}</td>
+    <td style="padding:6px 0;font-size:13px;color:${BRAND.text};font-weight:500;">${value}</td>
   </tr>`;
 }
 
-function buildItemsTable(items: any[]) {
-  const rows = items.map(i => `
-    <tr style="border-bottom:1px solid #f0f0f0;">
-      <td style="padding:14px 0;">
-        <div style="font-size:14px;font-weight:600;color:#1a1a1a;">${i.product_name}</div>
-        ${i.variant ? `<div style="font-size:12px;color:#888;margin-top:2px;">${i.variant}</div>` : ""}
+function ctaButton(text: string, url: string) {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+    <tr>
+      <td style="background:linear-gradient(135deg,${BRAND.accentDark},${BRAND.accent});border-radius:8px;">
+        <a href="${url}" style="display:inline-block;padding:14px 28px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;letter-spacing:.3px;">${text}</a>
       </td>
-      <td style="padding:14px 12px;text-align:center;color:#555;font-size:13px;">×${i.quantity}</td>
-      <td style="padding:14px 0;text-align:right;font-size:13px;color:#1a1a1a;font-weight:500;">${formatPrice(i.unit_price * i.quantity)}</td>
-    </tr>`).join("");
-
-  return `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:16px 0;">
-    <thead>
-      <tr style="border-bottom:2px solid #eee;">
-        <th style="padding:8px 0;text-align:left;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Item</th>
-        <th style="padding:8px 12px;text-align:center;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Qty</th>
-        <th style="padding:8px 0;text-align:right;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Total</th>
-      </tr>
-    </thead>
-    <tbody>${rows}</tbody>
+    </tr>
   </table>`;
 }
 
-function buildPricingSummary(order: any) {
-  const subtotal = order.subtotal ?? (order.total_amount - (order.shipping_cost ?? 0));
-  return `
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:8px;">
-      <tr>
-        <td style="padding:4px 0;color:#555;font-size:13px;">Subtotal</td>
-        <td style="padding:4px 0;text-align:right;color:#555;font-size:13px;">${formatPrice(subtotal)}</td>
-      </tr>
-      <tr>
-        <td style="padding:4px 0;color:#555;font-size:13px;">Shipping (${order.shipping_method ?? "Standard"})</td>
-        <td style="padding:4px 0;text-align:right;color:#555;font-size:13px;">${order.shipping_cost > 0 ? formatPrice(order.shipping_cost) : "Free"}</td>
-      </tr>
-      ${order.discount_amount > 0 ? `<tr>
-        <td style="padding:4px 0;color:#16a34a;font-size:13px;">Discount</td>
-        <td style="padding:4px 0;text-align:right;color:#16a34a;font-size:13px;">−${formatPrice(order.discount_amount)}</td>
-      </tr>` : ""}
-      <tr>
-        <td colspan="2"><hr style="border:none;border-top:1px solid #eee;margin:10px 0;"/></td>
-      </tr>
-      <tr>
-        <td style="padding:4px 0;font-size:15px;font-weight:700;color:#0f0f0f;">Total Paid</td>
-        <td style="padding:4px 0;text-align:right;font-size:15px;font-weight:700;color:#0f0f0f;">${formatPrice(order.total_amount)}</td>
-      </tr>
-    </table>`;
+interface OrderData {
+  id: string;
+  created_at: string;
+  status: string;
+  total: number;
+  subtotal?: number;
+  shipping_cost?: number;
+  payment_status?: string;
+  payment_method?: string;
+  shipping_method?: string;
+  tracking_number?: string;
+  tracking_url?: string;
+  notes?: string;
+  profiles?: { full_name?: string; email?: string } | null;
+  order_items?: Array<{
+    quantity: number;
+    price: number;
+    products?: { name?: string; image_url?: string } | null;
+  }>;
+  shipping_addresses?: {
+    full_name?: string;
+    address_line1?: string;
+    address_line2?: string;
+    city?: string;
+    state?: string;
+    postal_code?: string;
+    country?: string;
+    phone?: string;
+  } | null;
 }
 
-function buildAddressBlock(order: any) {
+function renderOrderItems(items: OrderData["order_items"] = []) {
+  if (!items.length) return "";
+  const rows = items
+    .map(
+      (item) => `
+      <tr class="item-row">
+        <td style="padding:10px 0;border-bottom:1px solid ${BRAND.border};">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="font-size:14px;color:${BRAND.text};font-weight:500;">${item.products?.name ?? "Product"}</td>
+              <td class="price-cell" align="right" style="font-size:14px;color:${BRAND.text};white-space:nowrap;">
+                ${item.quantity} × $${item.price.toFixed(2)}
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2" style="font-size:12px;color:${BRAND.muted};padding-top:2px;">Subtotal: $${(item.quantity * item.price).toFixed(2)}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>`,
+    )
+    .join("");
+
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">${rows}</table>`;
+}
+
+function renderShippingAddress(addr: OrderData["shipping_addresses"]) {
+  if (!addr) return "—";
   const parts = [
-    order.address_line1,
-    order.address_line2,
-    order.city,
-    order.state,
-    order.pincode,
+    addr.full_name,
+    addr.address_line1,
+    addr.address_line2,
+    [addr.city, addr.state, addr.postal_code].filter(Boolean).join(", "),
+    addr.country,
+    addr.phone ? `📞 ${addr.phone}` : null,
   ].filter(Boolean);
-  return parts.join(", ");
+  return parts.join("<br/>");
 }
 
-// ─── STATUS TIMELINE ──────────────────────────────────────────────────────────
-function buildTimeline(activeEvent: EmailEvent) {
-  const steps: { event: EmailEvent; label: string; icon: string }[] = [
-    { event: "order_confirmed",       label: "Confirmed",        icon: "✓" },
-    { event: "order_processing",      label: "Processing",       icon: "⚙" },
-    { event: "order_shipped",         label: "Shipped",          icon: "📦" },
-    { event: "order_out_for_delivery",label: "Out for Delivery", icon: "🚚" },
-    { event: "order_delivered",       label: "Delivered",        icon: "🎉" },
-  ];
-
-  if (activeEvent === "order_cancelled") {
-    return `<div style="text-align:center;padding:16px;background:#fee2e2;border-radius:8px;color:#991b1b;font-weight:600;font-size:14px;">✕ Order Cancelled</div>`;
-  }
-
-  const activeIdx = steps.findIndex(s => s.event === activeEvent);
-
-  const dots = steps.map((s, i) => {
-    const done = i <= activeIdx;
-    const active = i === activeIdx;
-    return `<td align="center" style="width:20%;padding:0 4px;">
-      <div style="width:32px;height:32px;border-radius:50%;background:${done ? "#0f0f0f" : "#e5e5e5"};color:${done ? "#e8d5b0" : "#999"};font-size:14px;line-height:32px;text-align:center;margin:0 auto;${active ? "box-shadow:0 0 0 4px #e8d5b040;" : ""}">${s.icon}</div>
-      <div style="font-size:10px;color:${done ? "#0f0f0f" : "#aaa"};margin-top:6px;font-weight:${active ? "700" : "400"};">${s.label}</div>
-    </td>`;
-  }).join(`<td style="padding-bottom:16px;"><div style="height:2px;background:#e5e5e5;"></div></td>`);
-
-  return `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:24px 0;">
-    <tr>${dots}</tr>
-  </table>`;
-}
-
-// ─── TEMPLATES ───────────────────────────────────────────────────────────────
-
-function customerConfirmationEmail(order: any): { subject: string; html: string } {
-  const subject = `Your order #${order.order_number} is confirmed! 🎉`;
-  const html = shell(`
-    <h1 style="margin:0 0 4px;font-size:24px;font-weight:700;color:#0f0f0f;">Order Confirmed!</h1>
-    <p style="margin:0 0 24px;color:#666;font-size:14px;">Thank you, ${order.full_name}. We've received your order and will begin processing it shortly.</p>
-
-    ${buildTimeline("order_confirmed")}
+// ── Customer: order confirmation ──────────────────────────────────────────────
+function buildOrderConfirmation(order: OrderData): { subject: string; html: string } {
+  const name = order.profiles?.full_name?.split(" ")[0] ?? "Adventurer";
+  const content = `
+    ${heading(`Order Confirmed, ${name}! 🎉`)}
+    ${subtext("Your order has been received and is being prepared for fulfillment.")}
+    ${badge("Order Confirmed", BRAND.success)}
     ${divider()}
-
-    <h3 style="margin:0 0 16px;font-size:13px;text-transform:uppercase;letter-spacing:1.5px;color:#999;font-weight:600;">Order Summary</h3>
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-      ${infoRow("Order ID", `<span style="font-family:monospace;background:#f5f5f5;padding:2px 8px;border-radius:4px;">#${order.order_number}</span>`)}
-      ${infoRow("Order Date", new Date(order.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }))}
-      ${infoRow("Payment Status", statusBadge(order.payment_status ?? "pending"))}
-      ${infoRow("Payment Method", order.payment_method ?? "UPI")}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      ${infoRow("Order ID", `#${order.id.slice(0, 8).toUpperCase()}`)}
+      ${infoRow("Order Date", new Date(order.created_at).toLocaleDateString("en-US", { dateStyle: "long" }))}
+      ${infoRow("Payment Status", order.payment_status ?? "Paid")}
+      ${infoRow("Payment Method", order.payment_method ?? "—")}
+      ${infoRow("Shipping Method", order.shipping_method ?? "Standard")}
     </table>
-
     ${divider()}
-    <h3 style="margin:0 0 4px;font-size:13px;text-transform:uppercase;letter-spacing:1.5px;color:#999;font-weight:600;">Items Ordered</h3>
-    ${buildItemsTable(order.order_items)}
-    ${buildPricingSummary(order)}
-
-    ${divider()}
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+    <h3 style="margin:0 0 8px;font-size:15px;font-weight:600;color:${BRAND.text};">Items Ordered</h3>
+    ${renderOrderItems(order.order_items)}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
+      ${order.subtotal != null ? infoRow("Subtotal", `$${order.subtotal.toFixed(2)}`) : ""}
+      ${order.shipping_cost != null ? infoRow("Shipping", `$${order.shipping_cost.toFixed(2)}`) : ""}
       <tr>
-        <td style="width:50%;padding-right:12px;vertical-align:top;">
-          <h4 style="margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#999;">Shipping To</h4>
-          <p style="margin:0;font-size:13px;color:#333;line-height:1.6;">
-            <strong>${order.full_name}</strong><br/>
-            ${buildAddressBlock(order)}<br/>
-            📞 ${order.phone}
-          </p>
-        </td>
-        <td style="width:50%;padding-left:12px;vertical-align:top;">
-          <h4 style="margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#999;">Shipping Method</h4>
-          <p style="margin:0;font-size:13px;color:#333;line-height:1.6;">
-            ${order.shipping_method ?? "Standard · Insured"}<br/>
-            <span style="color:#888;">Estimated ${order.shipping_method?.toLowerCase().includes("express") ? "2–4" : "5–7"} business days</span>
-          </p>
-        </td>
+        <td style="padding:8px 0 4px;font-size:15px;font-weight:700;color:${BRAND.accent};">Total</td>
+        <td style="padding:8px 0 4px;font-size:15px;font-weight:700;color:${BRAND.accent};">$${order.total.toFixed(2)}</td>
       </tr>
     </table>
-
     ${divider()}
-    <div style="background:#f9f8f5;border-radius:8px;padding:20px;text-align:center;">
-      <p style="margin:0 0 4px;font-size:13px;color:#666;">You'll receive another email when your order ships.</p>
-      <p style="margin:0;font-size:12px;color:#aaa;">Keep this email for your records. Order ID: #${order.order_number}</p>
-    </div>
-  `, `Order #${order.order_number} confirmed · ${formatPrice(order.total_amount)}`);
-
-  return { subject, html };
+    <h3 style="margin:0 0 8px;font-size:15px;font-weight:600;color:${BRAND.text};">Shipping To</h3>
+    <p style="margin:0;font-size:13px;color:${BRAND.muted};line-height:1.8;">${renderShippingAddress(order.shipping_addresses)}</p>
+    ${divider()}
+    <p style="margin:0;font-size:13px;color:${BRAND.muted};">You'll receive another email when your order ships. Thank you for choosing Mythical Vault!</p>
+  `;
+  return {
+    subject: `Order Confirmed #${order.id.slice(0, 8).toUpperCase()} — Mythical Vault`,
+    html: baseLayout(content, `Your order #${order.id.slice(0, 8).toUpperCase()} is confirmed!`),
+  };
 }
 
-function customerStatusEmail(order: any, event: EmailEvent, extra: { tracking_number?: string; tracking_url?: string; cancellation_reason?: string }): { subject: string; html: string } {
-  const config: Record<EmailEvent, { subject: string; headline: string; body: string; color: string }> = {
-    order_confirmed: {
-      subject: `Order #${order.order_number} confirmed`,
-      headline: "Order Confirmed!",
-      body: "Your order has been confirmed and will be processed soon.",
-      color: "#0f0f0f",
+// ── Admin: new order notification ─────────────────────────────────────────────
+function buildAdminNotification(order: OrderData): { subject: string; html: string } {
+  const content = `
+    ${heading("🛒 New Order Received")}
+    ${subtext("A customer just placed an order on Mythical Vault.")}
+    ${badge("Action Required", BRAND.accent)}
+    ${divider()}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      ${infoRow("Order ID", `#${order.id.slice(0, 8).toUpperCase()}`)}
+      ${infoRow("Full ID", order.id)}
+      ${infoRow("Customer", order.profiles?.full_name ?? "—")}
+      ${infoRow("Email", order.profiles?.email ?? "—")}
+      ${infoRow("Date", new Date(order.created_at).toLocaleString())}
+      ${infoRow("Payment Status", order.payment_status ?? "—")}
+      ${infoRow("Payment Method", order.payment_method ?? "—")}
+      ${infoRow("Shipping Method", order.shipping_method ?? "Standard")}
+      ${infoRow("Order Total", `$${order.total.toFixed(2)}`)}
+    </table>
+    ${divider()}
+    <h3 style="margin:0 0 8px;font-size:15px;font-weight:600;color:${BRAND.text};">Items</h3>
+    ${renderOrderItems(order.order_items)}
+    ${divider()}
+    <h3 style="margin:0 0 8px;font-size:15px;font-weight:600;color:${BRAND.text};">Shipping Address</h3>
+    <p style="margin:0;font-size:13px;color:${BRAND.muted};line-height:1.8;">${renderShippingAddress(order.shipping_addresses)}</p>
+    ${order.notes ? `${divider()}<h3 style="margin:0 0 8px;font-size:15px;font-weight:600;color:${BRAND.text};">Customer Notes</h3><p style="margin:0;font-size:13px;color:${BRAND.muted};">${order.notes}</p>` : ""}
+  `;
+  return {
+    subject: `New Order #${order.id.slice(0, 8).toUpperCase()} — $${order.total.toFixed(2)} from ${order.profiles?.full_name ?? "Customer"}`,
+    html: baseLayout(content, `New order from ${order.profiles?.full_name ?? "a customer"}`),
+  };
+}
+
+// ── Customer: status update emails ───────────────────────────────────────────
+function buildStatusEmail(
+  order: OrderData,
+  emailType: EmailType,
+): { subject: string; html: string } {
+  const name = order.profiles?.full_name?.split(" ")[0] ?? "Adventurer";
+  const orderId = `#${order.id.slice(0, 8).toUpperCase()}`;
+
+  const statusConfig: Record<
+    string,
+    { icon: string; title: string; body: string; badgeColor: string; subject: string }
+  > = {
+    status_processing: {
+      icon: "⚙️",
+      title: `Your Order Is Being Processed`,
+      body: `Great news! Order ${orderId} has moved to <strong>Processing</strong>. Our team is preparing your legendary items for shipment.`,
+      badgeColor: "#f59e0b",
+      subject: `Processing: Order ${orderId} — Mythical Vault`,
     },
-    order_processing: {
-      subject: `We're preparing your order #${order.order_number} ⚙️`,
-      headline: "Your Order is Being Prepared",
-      body: "Our team is carefully picking, packing and inspecting your items.",
-      color: "#1e40af",
+    status_shipped: {
+      icon: "📦",
+      title: `Your Order Has Shipped!`,
+      body: `Order ${orderId} is on its way! ${order.tracking_number ? `Your tracking number is <strong>${order.tracking_number}</strong>.` : ""}`,
+      badgeColor: BRAND.accent,
+      subject: `Shipped: Order ${orderId} — Mythical Vault`,
     },
-    order_shipped: {
-      subject: `Your order #${order.order_number} has shipped! 📦`,
-      headline: "Your Order Has Shipped!",
-      body: "Your mythical treasures are on their way to you.",
-      color: "#6b21a8",
+    status_out_for_delivery: {
+      icon: "🚚",
+      title: `Out for Delivery Today!`,
+      body: `Order ${orderId} is out for delivery and should arrive today. Make sure someone is available to receive your package!`,
+      badgeColor: "#06b6d4",
+      subject: `Out for Delivery: Order ${orderId} — Mythical Vault`,
     },
-    order_out_for_delivery: {
-      subject: `Your order #${order.order_number} is out for delivery 🚚`,
-      headline: "Out for Delivery Today!",
-      body: "Your order is with the delivery agent and should reach you today.",
-      color: "#065f46",
+    status_delivered: {
+      icon: "✅",
+      title: `Order Delivered!`,
+      body: `Order ${orderId} has been delivered. We hope you love your new legendary collectibles! If you have any issues, please contact our support team.`,
+      badgeColor: BRAND.success,
+      subject: `Delivered: Order ${orderId} — Mythical Vault`,
     },
-    order_delivered: {
-      subject: `Your order #${order.order_number} has been delivered 🎉`,
-      headline: "Order Delivered!",
-      body: "Your order has been successfully delivered. We hope you love your purchase!",
-      color: "#166534",
-    },
-    order_cancelled: {
-      subject: `Your order #${order.order_number} has been cancelled`,
-      headline: "Order Cancelled",
-      body: extra.cancellation_reason
-        ? `Your order has been cancelled. Reason: ${extra.cancellation_reason}`
-        : "Your order has been cancelled. If you paid online, a refund will be processed within 5–7 business days.",
-      color: "#991b1b",
+    status_cancelled: {
+      icon: "❌",
+      title: `Order Cancelled`,
+      body: `We're sorry to inform you that order ${orderId} has been cancelled. If you did not request this cancellation or need assistance, please contact us immediately.`,
+      badgeColor: BRAND.danger,
+      subject: `Order Cancelled: ${orderId} — Mythical Vault`,
     },
   };
 
-  const { subject, headline, body, color } = config[event];
+  const cfg = statusConfig[emailType];
+  const trackingSection =
+    emailType === "status_shipped" && order.tracking_url
+      ? ctaButton("Track Your Package →", order.tracking_url)
+      : "";
 
-  const trackingBlock = extra.tracking_number
-    ? `${divider()}<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:20px;">
-        <h4 style="margin:0 0 8px;font-size:13px;color:#166534;text-transform:uppercase;letter-spacing:1px;">Tracking Information</h4>
-        <p style="margin:0 0 6px;font-size:14px;color:#333;">Tracking Number: <strong style="font-family:monospace;">${extra.tracking_number}</strong></p>
-        ${extra.tracking_url ? `<a href="${extra.tracking_url}" style="display:inline-block;margin-top:10px;padding:10px 20px;background:#0f0f0f;color:#e8d5b0;text-decoration:none;border-radius:6px;font-size:13px;font-weight:600;">Track Your Package →</a>` : ""}
-       </div>`
-    : "";
-
-  const html = shell(`
-    <div style="display:inline-block;width:48px;height:48px;border-radius:50%;background:${color}18;text-align:center;line-height:48px;font-size:24px;margin-bottom:16px;">
-      ${{ order_confirmed: "✓", order_processing: "⚙", order_shipped: "📦", order_out_for_delivery: "🚚", order_delivered: "🎉", order_cancelled: "✕" }[event]}
-    </div>
-    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#0f0f0f;">${headline}</h1>
-    <p style="margin:0 0 4px;color:#555;font-size:14px;">Hi ${order.full_name},</p>
-    <p style="margin:0 0 24px;color:#555;font-size:14px;">${body}</p>
-
-    ${event !== "order_cancelled" ? buildTimeline(event) : ""}
-    ${trackingBlock}
+  const content = `
+    ${heading(`${cfg.icon} ${cfg.title}`)}
+    ${subtext(`Hi ${name}, here's an update on your order.`)}
+    ${badge(emailType.replace("status_", "").replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()), cfg.badgeColor)}
     ${divider()}
-
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-      ${infoRow("Order ID", `<span style="font-family:monospace;background:#f5f5f5;padding:2px 8px;border-radius:4px;">#${order.order_number}</span>`)}
-      ${infoRow("Status", statusBadge(event.replace("order_", "").replace(/_/g, " ")))}
-      ${infoRow("Total", `<strong>${formatPrice(order.total_amount)}</strong>`)}
+    <p style="margin:0 0 16px;font-size:14px;color:${BRAND.muted};line-height:1.7;">${cfg.body}</p>
+    ${trackingSection}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      ${infoRow("Order ID", orderId)}
+      ${infoRow("Order Date", new Date(order.created_at).toLocaleDateString("en-US", { dateStyle: "long" }))}
+      ${infoRow("Total", `$${order.total.toFixed(2)}`)}
+      ${order.tracking_number ? infoRow("Tracking #", order.tracking_number) : ""}
     </table>
-
-    ${event === "order_delivered" ? `${divider()}<div style="background:#f9f8f5;border-radius:8px;padding:20px;text-align:center;">
-      <p style="margin:0 0 8px;font-size:15px;font-weight:600;color:#0f0f0f;">⭐ Enjoying your purchase?</p>
-      <p style="margin:0;font-size:13px;color:#666;">We'd love to hear your feedback. Your review helps other collectors make informed decisions.</p>
-    </div>` : ""}
-  `, `${headline} — Order #${order.order_number}`);
-
-  return { subject, html };
-}
-
-function adminNewOrderEmail(order: any): { subject: string; html: string } {
-  const subject = `🛒 New Order #${order.order_number} — ${formatPrice(order.total_amount)}`;
-  const html = shell(`
-    <div style="background:#0f0f0f;color:#e8d5b0;padding:16px 20px;border-radius:8px;margin-bottom:24px;">
-      <span style="font-size:13px;text-transform:uppercase;letter-spacing:1px;">New Order Received</span>
-      <span style="float:right;font-size:18px;font-weight:700;">${formatPrice(order.total_amount)}</span>
-    </div>
-
-    <h3 style="margin:0 0 16px;font-size:13px;text-transform:uppercase;letter-spacing:1.5px;color:#999;font-weight:600;">Customer Details</h3>
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-      ${infoRow("Name", order.full_name)}
-      ${infoRow("Email", order.email)}
-      ${infoRow("Phone", order.phone)}
-      ${infoRow("Order ID", `#${order.order_number}`)}
-      ${infoRow("Date", new Date(order.created_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }))}
-      ${infoRow("Payment", statusBadge(order.payment_status ?? "pending"))}
-    </table>
-
     ${divider()}
-    <h3 style="margin:0 0 4px;font-size:13px;text-transform:uppercase;letter-spacing:1.5px;color:#999;font-weight:600;">Items Ordered</h3>
-    ${buildItemsTable(order.order_items)}
-    ${buildPricingSummary(order)}
-
-    ${divider()}
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-      <tr>
-        <td style="width:50%;vertical-align:top;padding-right:12px;">
-          <h4 style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#999;">Ship To</h4>
-          <p style="margin:0;font-size:13px;color:#333;line-height:1.7;">
-            ${order.full_name}<br/>
-            ${buildAddressBlock(order)}<br/>
-            📞 ${order.phone}
-          </p>
-        </td>
-        <td style="width:50%;vertical-align:top;padding-left:12px;">
-          <h4 style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#999;">Shipping Method</h4>
-          <p style="margin:0;font-size:13px;color:#333;">${order.shipping_method ?? "Standard"}</p>
-        </td>
-      </tr>
-    </table>
-
-    ${divider()}
-    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:16px;text-align:center;">
-      <p style="margin:0;font-size:13px;color:#92400e;font-weight:600;">⚡ Action required: Update order status in the admin dashboard after processing.</p>
-    </div>
-  `, `New order from ${order.full_name}`);
-
-  return { subject, html };
+    <p style="margin:0;font-size:13px;color:${BRAND.muted};">Thank you for shopping at Mythical Vault.</p>
+  `;
+  return {
+    subject: cfg.subject,
+    html: baseLayout(content, cfg.body.replace(/<[^>]+>/g, "")),
+  };
 }
 
 // ─── Main handler ─────────────────────────────────────────────────────────────
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-const json = (status: number, body: unknown) =>
-  new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: CORS });
+    return new Response("ok", { headers: corsHeaders });
   }
 
+  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+  const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") ?? "admin@mythicalvault.com";
+  const FROM_EMAIL = Deno.env.get("FROM_EMAIL") ?? "orders@mythicalvault.com";
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  if (!RESEND_API_KEY) {
+    console.error("RESEND_API_KEY not set");
+    return jsonResponse({ success: false, error: "Email provider not configured" }, 500);
+  }
+
+  let body: RequestBody;
   try {
-    const body = (await req.json()) as EmailRequest;
-    const { order_id, event, tracking_number, tracking_url, cancellation_reason } = body;
-
-    if (!order_id || !event) {
-      return json(400, { error: "Missing order_id or event" });
-    }
-
-
-    // ── Fetch order (mapped from MV schema) ──────────────────────────────────
-    const { data: raw, error: orderErr } = await supabase
-      .from("orders")
-      .select("*")
-      .eq("id", order_id)
-      .single();
-
-    if (orderErr || !raw) {
-      return json(404, { error: `Order not found: ${orderErr?.message}` });
-    }
-
-    const lineItems = Array.isArray(raw.line_items) ? raw.line_items : [];
-    const order: any = {
-      ...raw,
-      full_name: raw.customer_name,
-      email: raw.customer_email,
-      phone: raw.customer_phone,
-      address_line1: raw.shipping_address,
-      address_line2: raw.shipping_address2,
-      shipping_cost: Number(raw.shipping_amount ?? 0),
-      shipping_method: raw.shipping_method ?? "Standard",
-      discount_amount: Number(raw.discount_amount ?? 0),
-      subtotal: Number(raw.subtotal ?? 0),
-      total_amount: Number(raw.total_amount ?? 0),
-      city: raw.shipping_city,
-      state: raw.shipping_state,
-      pincode: raw.shipping_pincode,
-      order_items: lineItems.map((i: any) => ({
-        product_name: i.title ?? i.product_name ?? "Item",
-        quantity: Number(i.quantity ?? 1),
-        unit_price: Number(i.price ?? i.unit_price ?? 0),
-        variant: i.variant ?? null,
-      })),
-    };
-
-
-    const results: Record<string, unknown> = {};
-
-    // ── Customer email ───────────────────────────────────────────────────────
-    {
-      const customerKey = idempotencyKey(order_id, event, "customer");
-      if (await alreadySent(customerKey)) {
-        results.customer = { skipped: true, reason: "already_sent" };
-      } else {
-        let emailContent: { subject: string; html: string };
-        if (event === "order_confirmed") {
-          emailContent = customerConfirmationEmail(order);
-        } else {
-          emailContent = customerStatusEmail(order, event, { tracking_number, tracking_url, cancellation_reason });
-        }
-
-        const { id: resendId, error: sendErr } = await sendEmail(order.email, emailContent.subject, emailContent.html);
-        const status = sendErr ? "failed" : "sent";
-
-        await logEmail({
-          order_id,
-          event,
-          recipient: order.email,
-          recipient_type: "customer",
-          subject: emailContent.subject,
-          idempotency_key: customerKey,
-          status,
-          resend_id: resendId,
-          error: sendErr,
-        });
-
-        results.customer = sendErr ? { error: sendErr } : { sent: true, resend_id: resendId };
-      }
-    }
-
-    // ── Admin email (only on new order) ──────────────────────────────────────
-    if (event === "order_confirmed") {
-      const adminKey = idempotencyKey(order_id, event, "admin");
-      if (await alreadySent(adminKey)) {
-        results.admin = { skipped: true, reason: "already_sent" };
-      } else {
-        const emailContent = adminNewOrderEmail(order);
-        const { id: resendId, error: sendErr } = await sendEmail(ADMIN_EMAIL, emailContent.subject, emailContent.html);
-        const status = sendErr ? "failed" : "sent";
-
-        await logEmail({
-          order_id,
-          event,
-          recipient: ADMIN_EMAIL,
-          recipient_type: "admin",
-          subject: emailContent.subject,
-          idempotency_key: adminKey,
-          status,
-          resend_id: resendId,
-          error: sendErr,
-        });
-
-        results.admin = sendErr ? { error: sendErr } : { sent: true, resend_id: resendId };
-      }
-    }
-
-    return json(200, { success: true, results });
-  } catch (err: any) {
-    console.error("[send-order-email] Fatal:", err.message);
-    return json(500, { error: err.message });
+    body = await req.json();
+  } catch {
+    return jsonResponse({ success: false, error: "Invalid JSON body" }, 400);
   }
+
+  const { orderId, emailType, trackingNumber, trackingUrl } = body;
+  if (!orderId || !emailType) {
+    return jsonResponse({ success: false, error: "orderId and emailType are required" }, 400);
+  }
+
+  // ── Idempotency check ────────────────────────────────────────────────────────
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+  const { data: existing } = await supabase
+    .from("email_log")
+    .select("id")
+    .eq("order_id", orderId)
+    .eq("email_type", emailType)
+    .eq("status", "sent")
+    .maybeSingle();
+
+  if (existing) {
+    console.info(`[send-order-email] Duplicate suppressed: ${emailType} for ${orderId}`);
+    return jsonResponse({ success: true, duplicate: true });
+  }
+
+  // ── Fetch order ──────────────────────────────────────────────────────────────
+  const { data: order, error: orderError } = await supabase
+    .from("orders")
+    .select(`
+      id, created_at, status, total, subtotal, shipping_cost,
+      payment_status, payment_method, shipping_method, notes,
+      profiles ( full_name, email ),
+      order_items (
+        quantity, price,
+        products ( name, image_url )
+      ),
+      shipping_addresses (
+        full_name, address_line1, address_line2,
+        city, state, postal_code, country, phone
+      )
+    `)
+    .eq("id", orderId)
+    .single();
+
+  if (orderError || !order) {
+    return jsonResponse({ success: false, error: `Order not found: ${orderId}` }, 404);
+  }
+
+  // Merge tracking info passed from admin dashboard
+  const enrichedOrder: OrderData = {
+    ...order,
+    tracking_number: trackingNumber ?? order.tracking_number,
+    tracking_url: trackingUrl ?? order.tracking_url,
+  };
+
+  // ── Build email ──────────────────────────────────────────────────────────────
+  let subject: string;
+  let html: string;
+  let toEmail: string;
+
+  if (emailType === "order_notification_admin") {
+    ({ subject, html } = buildAdminNotification(enrichedOrder));
+    toEmail = ADMIN_EMAIL;
+  } else if (emailType === "order_confirmation") {
+    ({ subject, html } = buildOrderConfirmation(enrichedOrder));
+    toEmail = order.profiles?.email ?? "";
+  } else {
+    ({ subject, html } = buildStatusEmail(enrichedOrder, emailType));
+    toEmail = order.profiles?.email ?? "";
+  }
+
+  if (!toEmail) {
+    return jsonResponse({ success: false, error: "No recipient email address" }, 400);
+  }
+
+  // ── Send via Resend ──────────────────────────────────────────────────────────
+  let resendData: unknown;
+  try {
+    resendData = await withRetry(async () => {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: `Mythical Vault <${FROM_EMAIL}>`,
+          to: [toEmail],
+          subject,
+          html,
+        }),
+      });
+      if (!res.ok) {
+        const errBody = await res.text();
+        throw new Error(`Resend ${res.status}: ${errBody}`);
+      }
+      return res.json();
+    });
+  } catch (sendErr) {
+    // Log failure
+    await supabase.from("email_log").insert({
+      order_id: orderId,
+      email_type: emailType,
+      recipient: toEmail,
+      status: "failed",
+      error: String(sendErr),
+    });
+    return jsonResponse({ success: false, error: String(sendErr) }, 502);
+  }
+
+  // ── Log success ──────────────────────────────────────────────────────────────
+  await supabase.from("email_log").insert({
+    order_id: orderId,
+    email_type: emailType,
+    recipient: toEmail,
+    status: "sent",
+    provider_id: (resendData as { id?: string })?.id ?? null,
+  });
+
+  return jsonResponse({ success: true, emailType, recipient: toEmail });
 });
