@@ -16,8 +16,10 @@ const ProductInfo = ({ product }: Props) => {
 
   const trend = product.lastSale ? product.price - product.lastSale : 0;
   const trendPct = product.lastSale ? (trend / product.lastSale) * 100 : 0;
+  const outOfStock = product.inStock === false;
 
   const handleBuy = () => {
+    if (outOfStock) return;
     if (tab === "bid") { toast.info("Bidding coming soon"); return; }
     add(product, 1);
     toast.success(`${product.name} added to bag`);
@@ -25,6 +27,7 @@ const ProductInfo = ({ product }: Props) => {
   };
 
   const handleAddToCart = () => {
+    if (outOfStock) return;
     if (tab === "bid") { toast.info("Bidding coming soon"); return; }
     add(product, 1);
     toast.success(`${product.name} added to bag`);
@@ -55,6 +58,11 @@ const ProductInfo = ({ product }: Props) => {
               <BadgeCheck size={11} /> Verified
             </span>
           )}
+          {outOfStock && (
+            <span className="flex items-center gap-1 px-2 py-1 text-[10px] tracking-[0.18em] uppercase font-mono border border-destructive/40 text-destructive bg-destructive/5">
+              Out of Stock
+            </span>
+          )}
         </div>
         <p className="eyebrow">{product.series}</p>
         <h1 className="font-display text-4xl md:text-5xl tracking-tight text-foreground leading-tight">
@@ -65,6 +73,7 @@ const ProductInfo = ({ product }: Props) => {
       </div>
 
       <div className="border border-border bg-surface-1 p-6 space-y-5">
+        {/* Tabs — hide bid tab when OOS since no bidding either */}
         <div className="flex border-b border-border">
           {(["buy", "bid"] as const).map((t) => (
             <button
@@ -82,7 +91,7 @@ const ProductInfo = ({ product }: Props) => {
         <div className="flex items-baseline justify-between">
           <div>
             <p className="eyebrow mb-1">{tab === "buy" ? "Lowest Ask" : "Highest Bid"}</p>
-            <p className="font-display text-4xl text-foreground tabular-nums tracking-tight">
+            <p className={`font-display text-4xl tabular-nums tracking-tight ${outOfStock ? "text-muted-foreground line-through" : "text-foreground"}`}>
               {formatPrice(tab === "buy" ? product.price : Math.round(product.price * 0.92))}
             </p>
           </div>
@@ -97,25 +106,38 @@ const ProductInfo = ({ product }: Props) => {
           )}
         </div>
 
-        <div className="space-y-2">
-          <div className="flex gap-2">
-            <Button onClick={handleBuy} className="flex-1 h-12 bg-foreground text-background hover:bg-foreground/90 rounded-none font-medium tracking-wider text-xs">
-              {tab === "buy" ? `BUY NOW · ${formatPrice(product.price)}` : "PLACE A BID"}
-            </Button>
-            <Button variant="outline" size="icon" className="h-12 w-12 rounded-none border-border hover:border-foreground/40 bg-transparent">
-              <Heart size={16} strokeWidth={1.5} />
-            </Button>
+        {outOfStock ? (
+          /* ── Out of Stock state ── */
+          <div className="space-y-3">
+            <div className="w-full h-12 flex items-center justify-center border border-border/50 bg-muted/30 text-muted-foreground text-xs tracking-[0.22em] font-mono uppercase select-none">
+              Currently Unavailable
+            </div>
+            <p className="text-[11px] text-muted-foreground font-mono text-center tracking-wide">
+              This item is out of stock. Check back later or browse similar listings.
+            </p>
           </div>
-          {tab === "buy" && (
-            <Button
-              onClick={handleAddToCart}
-              variant="outline"
-              className="w-full h-12 rounded-none border-border hover:border-foreground/40 bg-transparent text-xs tracking-[0.18em] font-medium"
-            >
-              <ShoppingBag size={14} strokeWidth={1.5} /> ADD TO CART
-            </Button>
-          )}
-        </div>
+        ) : (
+          /* ── In Stock state ── */
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Button onClick={handleBuy} className="flex-1 h-12 bg-foreground text-background hover:bg-foreground/90 rounded-none font-medium tracking-wider text-xs">
+                {tab === "buy" ? `BUY NOW · ${formatPrice(product.price)}` : "PLACE A BID"}
+              </Button>
+              <Button variant="outline" size="icon" className="h-12 w-12 rounded-none border-border hover:border-foreground/40 bg-transparent">
+                <Heart size={16} strokeWidth={1.5} />
+              </Button>
+            </div>
+            {tab === "buy" && (
+              <Button
+                onClick={handleAddToCart}
+                variant="outline"
+                className="w-full h-12 rounded-none border-border hover:border-foreground/40 bg-transparent text-xs tracking-[0.18em] font-medium"
+              >
+                <ShoppingBag size={14} strokeWidth={1.5} /> ADD TO CART
+              </Button>
+            )}
+          </div>
+        )}
 
         <div className="flex items-center gap-3 text-[11px] font-mono tracking-wider text-muted-foreground pt-2 border-t border-border/50">
           <Shield size={12} className="text-verified" />
