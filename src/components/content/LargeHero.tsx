@@ -34,7 +34,7 @@ const LargeHero = () => {
         <div className="max-w-4xl">
           <div className="flex items-center gap-3 mb-6 lg:mb-8 animate-fade-in">
             <span className="w-1.5 h-1.5 rounded-full bg-verified pulse-dot" />
-            <span className="eyebrow text-foreground/70 text-[10px] sm:text-xs">Series 03 — Eclipse Saga · Now Live</span>
+            <span className="eyebrow text-foreground/70 text-[10px] sm:text-xs">Hope you like it<3</span>
           </div>
 
           <h1
@@ -68,8 +68,8 @@ const LargeHero = () => {
               to="/about/our-story"
               className="group inline-flex items-center gap-2 text-xs sm:text-sm text-foreground/80 hover:text-foreground transition-colors py-3 sm:py-4 border-b border-foreground/20 hover:border-foreground/60"
             >
-              How authentication works
-              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+              
+              
             </Link>
           </div>
 
