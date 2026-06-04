@@ -2,6 +2,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Order, OrderInsert, OrderUpdate } from '@/types/order';
+import { sendOrderEmail, statusToEmailType } from '@/lib/emailService';
 
 // ─── Admin hook — full CRUD + realtime ────────────────────────────────────────
 export function useOrders() {
@@ -69,6 +70,42 @@ export function useOrders() {
     }
   }, []);
 
+  // ✅ Use this when changing order status — fires the right email automatically
+  const updateOrderStatusWithTracking = useCallback(async (
+    id: string,
+    status: string,
+    trackingNumber?: string,
+    trackingUrl?: string,
+  ): Promise<boolean> => {
+    setError(null);
+    try {
+      const updatePayload: Record<string, unknown> = { status };
+      if (trackingNumber) updatePayload.tracking_number = trackingNumber;
+      if (trackingUrl)    updatePayload.tracking_url    = trackingUrl;
+
+      const { data, error: err } = await supabase
+        .from('orders')
+        .update(updatePayload as never)
+        .eq('id', id)
+        .select()
+        .single();
+      if (err) throw err;
+      setOrders(prev => prev.map(o => (o.id === id ? (data as unknown as Order) : o)));
+
+      // Fire status email (non-blocking)
+      const emailType = statusToEmailType(status);
+      if (emailType) {
+        sendOrderEmail({ orderId: id, emailType, trackingNumber, trackingUrl }).catch((err) =>
+          console.error('[useOrders] status email error:', err)
+        );
+      }
+      return true;
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to update order');
+      return false;
+    }
+  }, []);
+
   const deleteOrder = useCallback(async (id: string): Promise<boolean> => {
     setError(null);
     try {
@@ -82,7 +119,7 @@ export function useOrders() {
     }
   }, []);
 
-  return { orders, loading, error, fetchAllOrders, createOrder, updateOrder, deleteOrder };
+  return { orders, loading, error, fetchAllOrders, createOrder, updateOrder, updateOrderStatusWithTracking, deleteOrder };
 }
 
 // ─── User-scoped hook — my orders with realtime subscription ─────────────────
