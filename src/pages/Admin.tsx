@@ -86,11 +86,11 @@ const Admin = () => {
       </header>
 
       {/* Admin Sub-Navigation Menu */}
-      <div className="border-b border-border bg-muted/10">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 flex gap-4">
+      <div className="border-b border-border bg-muted/10 overflow-x-auto">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 flex gap-1 sm:gap-4 min-w-max">
           <button
             onClick={() => setActiveTab("products")}
-            className={`py-3 px-2 font-mono text-xs tracking-wider uppercase border-b-2 transition-colors flex items-center gap-2 ${
+            className={`py-3 px-2 font-mono text-xs tracking-wider uppercase border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${
               activeTab === "products"
                 ? "border-primary text-foreground font-medium"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -100,7 +100,7 @@ const Admin = () => {
           </button>
           <button
             onClick={() => setActiveTab("orders")}
-            className={`py-3 px-2 font-mono text-xs tracking-wider uppercase border-b-2 transition-colors flex items-center gap-2 ${
+            className={`py-3 px-2 font-mono text-xs tracking-wider uppercase border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${
               activeTab === "orders"
                 ? "border-primary text-foreground font-medium"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -108,8 +108,24 @@ const Admin = () => {
           >
             <ClipboardList size={14} /> Orders
           </button>
+          <button
+            onClick={() => setActiveTab("notifications")}
+            className={`py-3 px-2 font-mono text-xs tracking-wider uppercase border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap relative ${
+              activeTab === "notifications"
+                ? "border-primary text-foreground font-medium"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Bell size={14} /> Notifications
+            {unreadCount > 0 && (
+              <span className="ml-1 h-4 min-w-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-mono flex items-center justify-center">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </button>
         </div>
       </div>
+
 
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-8">
         {/* VIEW 1: ORDERS DASHBOARD */}
