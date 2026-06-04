@@ -423,14 +423,17 @@ function adminNewOrderEmail(order: any): { subject: string; html: string } {
 }
 
 // ─── Main handler ─────────────────────────────────────────────────────────────
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+const json = (status: number, body: unknown) =>
+  new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-      },
-    });
+    return new Response("ok", { headers: CORS });
   }
 
   try {
@@ -438,8 +441,9 @@ serve(async (req) => {
     const { order_id, event, tracking_number, tracking_url, cancellation_reason } = body;
 
     if (!order_id || !event) {
-      return new Response(JSON.stringify({ error: "Missing order_id or event" }), { status: 400 });
+      return json(400, { error: "Missing order_id or event" });
     }
+
 
     // ── Fetch order (mapped from MV schema) ──────────────────────────────────
     const { data: raw, error: orderErr } = await supabase
