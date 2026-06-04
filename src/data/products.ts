@@ -18,6 +18,10 @@ export interface Product {
   verified: boolean;
   isNew?: boolean;
   population?: number;
+  /** Current stock quantity from DB */
+  stock?: number;
+  /** Whether the item is available to purchase */
+  inStock?: boolean;
 }
 
 // Indian numbering system, e.g. ₹1,45,000
