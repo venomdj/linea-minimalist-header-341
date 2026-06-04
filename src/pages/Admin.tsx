@@ -127,9 +127,10 @@ const Admin = () => {
       </div>
 
 
-      <main className="max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-8">
-        {/* VIEW 1: ORDERS DASHBOARD */}
+      <main className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 space-y-8">
         {activeTab === "orders" && <AdminOrders />}
+        {activeTab === "notifications" && <AdminNotifications />}
+
 
         {/* VIEW 2: PRODUCTS DASHBOARD */}
         {activeTab === "products" && (
