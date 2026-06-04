@@ -11,7 +11,7 @@ const ALL_STATUSES = [...ORDER_STAGES.map(s => s.status), 'cancelled'] as const;
 type Panel = 'list' | 'edit';
 
 export default function AdminOrders() {
-  const { orders, loading, error, fetchAllOrders, updateOrder, deleteOrder } = useOrders();
+  const { orders, loading, error, fetchAllOrders, updateOrder, updateOrderStatusWithTracking, deleteOrder } = useOrders();
   const [panel, setPanel]     = useState<Panel>('list');
   const [search, setSearch]   = useState('');
   const [editing, setEditing] = useState<Order | null>(null);
@@ -61,25 +61,49 @@ export default function AdminOrders() {
   async function handleSave() {
     if (!editing) return;
     setSaving(true);
-    const payload: OrderUpdate = {
-      status:             editing.status,
-      payment_status:     editing.payment_status ?? undefined,
-      courier_name:       editing.courier_name,
-      tracking_number:    editing.tracking_number,
-      estimated_delivery: editing.estimated_delivery,
-      notes:              editing.notes,
-      customer_name:      editing.customer_name,
-      customer_email:     editing.customer_email,
-      customer_phone:     editing.customer_phone,
-    };
-    const ok = await updateOrder(editing.id, payload);
-    setSaving(false);
-    if (ok) {
-      showToast('Order updated.');
-      setPanel('list');
-      setEditing(null);
+
+    // If status changed, use the email-aware updater; otherwise plain updateOrder
+    const statusChanged = editing.status !== orders.find(o => o.id === editing.id)?.status;
+
+    if (statusChanged) {
+      // Use updateOrderStatusWithTracking so the right email fires automatically
+      const ok = await updateOrderStatusWithTracking(
+        editing.id,
+        editing.status,
+        editing.tracking_number ?? undefined,
+        undefined, // tracking_url not in this form — add if needed
+      );
+      if (ok) {
+        // Also save the remaining non-status fields
+        await updateOrder(editing.id, {
+          payment_status:     editing.payment_status ?? undefined,
+          courier_name:       editing.courier_name,
+          estimated_delivery: editing.estimated_delivery,
+          notes:              editing.notes,
+          customer_name:      editing.customer_name,
+          customer_email:     editing.customer_email,
+          customer_phone:     editing.customer_phone,
+        });
+      }
+      setSaving(false);
+      if (ok) { showToast('Order updated — status email sent.'); setPanel('list'); setEditing(null); }
+      else     { showToast('Failed to update order.'); }
     } else {
-      showToast('Failed to update order.');
+      // Status unchanged — plain update, no email
+      const payload: OrderUpdate = {
+        payment_status:     editing.payment_status ?? undefined,
+        courier_name:       editing.courier_name,
+        tracking_number:    editing.tracking_number,
+        estimated_delivery: editing.estimated_delivery,
+        notes:              editing.notes,
+        customer_name:      editing.customer_name,
+        customer_email:     editing.customer_email,
+        customer_phone:     editing.customer_phone,
+      };
+      const ok = await updateOrder(editing.id, payload);
+      setSaving(false);
+      if (ok) { showToast('Order updated.'); setPanel('list'); setEditing(null); }
+      else     { showToast('Failed to update order.'); }
     }
   }
 
