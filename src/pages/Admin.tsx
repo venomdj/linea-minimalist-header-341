@@ -37,7 +37,9 @@ const Admin = () => {
   const [q, setQ] = useState("");
   
   // Tab control state: Defaults to managing products
-  const [activeTab, setActiveTab] = useState<"products" | "orders">("products");
+  const [activeTab, setActiveTab] = useState<"products" | "orders" | "notifications">("products");
+  const unreadCount = useAdminNotificationsCount();
+
 
   const signOut = async () => {
     await supabase.auth.signOut();
