@@ -214,6 +214,7 @@ export type Database = {
           grade: string | null
           id: string
           image_url: string | null
+          in_stock: boolean
           is_new: boolean
           last_sale: number | null
           population: number | null
@@ -235,6 +236,7 @@ export type Database = {
           grade?: string | null
           id?: string
           image_url?: string | null
+          in_stock?: boolean
           is_new?: boolean
           last_sale?: number | null
           population?: number | null
@@ -256,6 +258,7 @@ export type Database = {
           grade?: string | null
           id?: string
           image_url?: string | null
+          in_stock?: boolean
           is_new?: boolean
           last_sale?: number | null
           population?: number | null
