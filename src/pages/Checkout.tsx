@@ -292,13 +292,12 @@ const Checkout = () => {
       };
 
       const { error: orderErr } = await supabase.from("orders").insert([orderPayload]);
-      if (orderErr) {
-        console.error("[Checkout] Supabase order insert error:", orderErr);
-        // Non-fatal — still show confirmation
-      }
-    } catch (err) {
-      console.error("[Checkout] Order creation error:", err);
-    }
+if (orderErr) {
+  console.error("[Checkout] Supabase order insert error:", orderErr);
+  toast.error("Failed to save order. Please try again or contact support.");
+  setSubmitting(false);
+  return; // ← stop, don't show fake success
+}
 
     setSubmitting(false);
     // ── Confirmation total sourced from finalPricing — same value as UI & DB ──
