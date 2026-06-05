@@ -58,6 +58,33 @@ export type Database = {
           },
         ]
       }
+      notification_logs: {
+        Row: {
+          channel: string
+          created_at: string | null
+          error_message: string | null
+          id: string
+          order_id: string
+          status: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          order_id: string
+          status: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          order_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
