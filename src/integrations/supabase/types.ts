@@ -17,42 +17,36 @@ export type Database = {
       email_log: {
         Row: {
           created_at: string
+          email_type: string
           error: string | null
-          event: string
           id: string
-          idempotency_key: string
-          order_id: string | null
+          order_id: string
+          provider_id: string | null
           recipient: string
-          recipient_type: string
-          resend_id: string | null
           status: string
-          subject: string | null
+          updated_at: string
         }
         Insert: {
           created_at?: string
+          email_type: string
           error?: string | null
-          event: string
           id?: string
-          idempotency_key: string
-          order_id?: string | null
+          order_id: string
+          provider_id?: string | null
           recipient: string
-          recipient_type: string
-          resend_id?: string | null
-          status: string
-          subject?: string | null
+          status?: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
+          email_type?: string
           error?: string | null
-          event?: string
           id?: string
-          idempotency_key?: string
-          order_id?: string | null
+          order_id?: string
+          provider_id?: string | null
           recipient?: string
-          recipient_type?: string
-          resend_id?: string | null
           status?: string
-          subject?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -131,12 +125,16 @@ export type Database = {
           shipping_address2: string | null
           shipping_amount: number
           shipping_city: string | null
+          shipping_cost: number | null
+          shipping_method: string | null
           shipping_pincode: string | null
           shipping_state: string | null
           status: Database["public"]["Enums"]["order_status"]
+          stock_deducted: boolean
           subtotal: number
           total_amount: number
           tracking_number: string | null
+          tracking_url: string | null
           updated_at: string
           user_id: string | null
         }
@@ -162,12 +160,16 @@ export type Database = {
           shipping_address2?: string | null
           shipping_amount?: number
           shipping_city?: string | null
+          shipping_cost?: number | null
+          shipping_method?: string | null
           shipping_pincode?: string | null
           shipping_state?: string | null
           status?: Database["public"]["Enums"]["order_status"]
+          stock_deducted?: boolean
           subtotal?: number
           total_amount?: number
           tracking_number?: string | null
+          tracking_url?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -193,12 +195,16 @@ export type Database = {
           shipping_address2?: string | null
           shipping_amount?: number
           shipping_city?: string | null
+          shipping_cost?: number | null
+          shipping_method?: string | null
           shipping_pincode?: string | null
           shipping_state?: string | null
           status?: Database["public"]["Enums"]["order_status"]
+          stock_deducted?: boolean
           subtotal?: number
           total_amount?: number
           tracking_number?: string | null
+          tracking_url?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -215,15 +221,19 @@ export type Database = {
           id: string
           image_url: string | null
           in_stock: boolean
+          is_in_stock: boolean
           is_new: boolean
           last_sale: number | null
+          low_stock_threshold: number
           population: number | null
           price: number
           rarity: string | null
           series: string | null
           set_name: string | null
           stock: number
+          stock_quantity: number
           title: string
+          track_stock: boolean
           updated_at: string
           verified: boolean
         }
@@ -237,15 +247,19 @@ export type Database = {
           id?: string
           image_url?: string | null
           in_stock?: boolean
+          is_in_stock?: boolean
           is_new?: boolean
           last_sale?: number | null
+          low_stock_threshold?: number
           population?: number | null
           price?: number
           rarity?: string | null
           series?: string | null
           set_name?: string | null
           stock?: number
+          stock_quantity?: number
           title: string
+          track_stock?: boolean
           updated_at?: string
           verified?: boolean
         }
@@ -259,15 +273,19 @@ export type Database = {
           id?: string
           image_url?: string | null
           in_stock?: boolean
+          is_in_stock?: boolean
           is_new?: boolean
           last_sale?: number | null
+          low_stock_threshold?: number
           population?: number | null
           price?: number
           rarity?: string | null
           series?: string | null
           set_name?: string | null
           stock?: number
+          stock_quantity?: number
           title?: string
+          track_stock?: boolean
           updated_at?: string
           verified?: boolean
         }
@@ -318,6 +336,57 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_log: {
+        Row: {
+          change_type: string
+          created_at: string | null
+          id: string
+          note: string | null
+          order_id: string | null
+          product_id: string | null
+          quantity: number
+          stock_after: number
+          stock_before: number
+        }
+        Insert: {
+          change_type: string
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          order_id?: string | null
+          product_id?: string | null
+          quantity: number
+          stock_after: number
+          stock_before: number
+        }
+        Update: {
+          change_type?: string
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          order_id?: string | null
+          product_id?: string | null
+          quantity?: number
+          stock_after?: number
+          stock_before?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_log_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_log_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -344,6 +413,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_cart_stock: {
+        Args: { cart: Json }
+        Returns: {
+          available: number
+          product_id: string
+          requested: number
+          title: string
+        }[]
+      }
+      check_stock_availability: { Args: { p_items: Json }; Returns: Json }
+      decrement_stock: {
+        Args: { p_product_id: string; p_quantity: number }
+        Returns: Json
+      }
+      decrement_stock_for_order: { Args: { p_order_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -375,12 +459,16 @@ export type Database = {
           shipping_address2: string | null
           shipping_amount: number
           shipping_city: string | null
+          shipping_cost: number | null
+          shipping_method: string | null
           shipping_pincode: string | null
           shipping_state: string | null
           status: Database["public"]["Enums"]["order_status"]
+          stock_deducted: boolean
           subtotal: number
           total_amount: number
           tracking_number: string | null
+          tracking_url: string | null
           updated_at: string
           user_id: string | null
         }[]
@@ -391,6 +479,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      restore_stock_for_order: { Args: { p_order_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "user"
