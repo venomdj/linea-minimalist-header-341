@@ -384,16 +384,22 @@ serve(async (req) => {
   }
 
   const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-  const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") ?? "admin@mythicalvault.com";
-  const FROM_EMAIL = Deno.env.get("FROM_EMAIL") ?? "orders@mythicalvault.com";
-  const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") ?? "jaigamerz069@gmail.com";
+const FROM_EMAIL = Deno.env.get("FROM_EMAIL") ?? "onboarding@resend.dev";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-  if (!RESEND_API_KEY) {
-    console.error("RESEND_API_KEY not set");
-    return jsonResponse({ success: false, error: "Email provider not configured" }, 500);
-  }
-
+const missing: string[] = [];
+if (!RESEND_API_KEY) missing.push("RESEND_API_KEY");
+if (!SUPABASE_URL) missing.push("SUPABASE_URL");
+if (!SUPABASE_SERVICE_ROLE_KEY) missing.push("SUPABASE_SERVICE_ROLE_KEY");
+if (missing.length) {
+  console.error("[send-order-email] missing env:", missing.join(", "));
+  return jsonResponse(
+    { success: false, error: `Email service misconfigured: missing ${missing.join(", ")}` },
+    500,
+  );
+}
   let body: RequestBody;
   try {
     body = await req.json();
