@@ -142,7 +142,12 @@ const generateOrderId = () => {
 const Checkout = () => {
   const navigate  = useNavigate();
   const { user }  = useAuth();
-  const { items, subtotal, setQty, remove, clear, hasOutOfStockItems } = useCart();
+  const { items, subtotal, setQty, remove, clear, hasOutOfStockItems, refreshStock } = useCart();
+
+  // Re-check stock when the checkout page mounts (handles stale localStorage carts)
+  useEffect(() => {
+    refreshStock();
+  }, [refreshStock]);
 
   const [form,      setForm]      = useState<BuyerForm>(initial);
   const [errors,    setErrors]    = useState<FormErrors>({});
@@ -322,6 +327,15 @@ const Checkout = () => {
 
       if (orderErr) {
         console.error("[Checkout] Supabase order insert error:", JSON.stringify(orderErr, null, 2));
+        // Stock changed between our pre-check and the DB trigger — re-sync the cart
+        if (orderErr.message?.toLowerCase().includes("insufficient stock")) {
+          await refreshStock();
+          toast.error(
+            "Stock changed while placing your order. Your cart has been updated — please review and try again."
+          );
+          setSubmitting(false);
+          return;
+        }
         // Surface a human-readable error so the customer knows what happened
         const msg =
           orderErr.code === "42501"
@@ -915,11 +929,22 @@ const Checkout = () => {
                               <button
                                 type="button"
                                 onClick={() => setQty(item.id, item.quantity + 1)}
+                                disabled={item.stock != null && item.quantity >= item.stock}
                                 aria-label="Increase"
-                                className="w-6 h-6 border border-border hover:border-foreground/40 flex items-center justify-center"
+                                className="w-6 h-6 border border-border hover:border-foreground/40 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-border"
+                                title={
+                                  item.stock != null && item.quantity >= item.stock
+                                    ? `Only ${item.stock} in stock`
+                                    : undefined
+                                }
                               >
                                 <Plus size={11} />
                               </button>
+                              {item.stock != null && item.quantity >= item.stock && (
+                                <span className="text-[10px] text-muted-foreground ml-1">
+                                  max
+                                </span>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => remove(item.id)}
