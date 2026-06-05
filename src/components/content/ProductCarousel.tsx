@@ -64,7 +64,7 @@ const ProductCarousel = () => {
                   key={String(p.id)}
                   className="pl-3 basis-[78%] sm:basis-[45%] md:basis-1/3 lg:basis-1/4 xl:basis-1/5 animate-fade-in"
                   style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
-                  aria-label={`Product ${i + 1} of ${products.length}: ${p.title ?? "Untitled"}`}
+                  aria-label={`Product ${i + 1} of ${products.length}: ${p.name ?? "Untitled"}`}
                 >
                   <ProductCard product={p} priority={i < 4} />
                 </CarouselItem>
