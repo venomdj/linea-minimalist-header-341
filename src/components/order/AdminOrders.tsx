@@ -2,6 +2,7 @@
 // Drop into your /admin page: <AdminOrders />
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrders } from '@/hooks/useOrders';
 import type { Order, OrderUpdate } from '@/types/order';
@@ -22,7 +23,12 @@ export default function AdminOrders() {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   // ── WhatsApp helpers ──────────────────────────────────────────────────────
-  const [waMenu, setWaMenu] = useState<string | null>(null); // order.id with open menu
+  const [waMenu, setWaMenu] = useState<{ id: string; x: number; y: number } | null>(null);
+
+  function openWaMenu(e: React.MouseEvent<HTMLButtonElement>, orderId: string) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setWaMenu({ id: orderId, x: rect.right, y: rect.bottom + window.scrollY });
+  }
 
   function waLink(order: Order, type: string): string {
     const phone = (order.customer_phone ?? '').replace(/\D/g, '');
@@ -325,7 +331,7 @@ export default function AdminOrders() {
                     {/* WhatsApp dropdown */}
                     <div style={{ position: 'relative', display: 'inline-block' }}>
                       <button
-                        onClick={() => setWaMenu(waMenu === order.id ? null : order.id)}
+                        onClick={(e) => openWaMenu(e, order.id)}
                         style={btnWa}
                       >
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: 4, flexShrink: 0 }}>
@@ -333,41 +339,6 @@ export default function AdminOrders() {
                         </svg>
                         WA ▾
                       </button>
-                      {waMenu === order.id && (
-                        <>
-                          {/* Click-outside backdrop */}
-                          <div
-                            style={{ position: 'fixed', inset: 0, zIndex: 49 }}
-                            onClick={() => setWaMenu(null)}
-                          />
-                          <div style={waDropdown}>
-                            <p style={waDropdownLabel}>Send to {order.customer_name.split(' ')[0]}</p>
-                            {[
-                              { key: 'placed',            label: 'Order Placed' },
-                              { key: 'cod',               label: 'COD Confirmation' },
-                              { key: 'payment',           label: 'Payment Success' },
-                              { key: 'processing',        label: 'Order Processing' },
-                              { key: 'shipped',           label: 'Order Shipped' },
-                              { key: 'out_for_delivery',  label: 'Out for Delivery' },
-                              { key: 'delivered',         label: 'Delivered' },
-                              { key: 'cancelled',         label: 'Order Cancelled' },
-                            ].map(({ key, label }) => (
-                              <a
-                                key={key}
-                                href={waLink(order, key)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={() => setWaMenu(null)}
-                                style={waItem}
-                                onMouseEnter={e => (e.currentTarget.style.background = '#1c1c1f')}
-                                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                              >
-                                {label}
-                              </a>
-                            ))}
-                          </div>
-                        </>
-                      )}
                     </div>
                   </td>
                 </tr>
@@ -376,6 +347,53 @@ export default function AdminOrders() {
           </tbody>
         </table>
       </div>
+
+      {/* WhatsApp portal menu — renders outside overflow container */}
+      {waMenu && (() => {
+        const order = orders.find(o => o.id === waMenu.id);
+        if (!order) return null;
+        return ReactDOM.createPortal(
+          <>
+            <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => setWaMenu(null)} />
+            <div style={{
+              position: 'absolute',
+              top: waMenu.y + 4,
+              left: waMenu.x - 180,
+              background: '#0c0c0e',
+              border: '1px solid #27272a',
+              minWidth: 180,
+              zIndex: 9999,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
+            }}>
+              <p style={waDropdownLabel}>Send to {order.customer_name.split(' ')[0]}</p>
+              {[
+                { key: 'placed',           label: 'Order Placed' },
+                { key: 'cod',              label: 'COD Confirmation' },
+                { key: 'payment',          label: 'Payment Success' },
+                { key: 'processing',       label: 'Order Processing' },
+                { key: 'shipped',          label: 'Order Shipped' },
+                { key: 'out_for_delivery', label: 'Out for Delivery' },
+                { key: 'delivered',        label: 'Delivered' },
+                { key: 'cancelled',        label: 'Order Cancelled' },
+              ].map(({ key, label }) => (
+                <a
+                  key={key}
+                  href={waLink(order, key)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setWaMenu(null)}
+                  style={waItem}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#1c1c1f')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  {label}
+                </a>
+              ))}
+            </div>
+          </>,
+          document.body
+        );
+      })()}
     </div>
   );
 }
