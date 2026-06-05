@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrders } from '@/hooks/useOrders';
 import type { Order, OrderUpdate } from '@/types/order';
 import { ORDER_STAGES, CANCELLED_STAGE, getStatusColor, getStatusBg } from '@/types/order';
+import { buildWaLink } from '@/utils/whatsappHelpers';
 
 const ALL_STATUSES = [...ORDER_STAGES.map(s => s.status), 'cancelled'] as const;
 type Panel = 'list' | 'edit';
@@ -19,6 +20,30 @@ export default function AdminOrders() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [saving, setSaving]   = useState(false);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  // ── WhatsApp helpers ──────────────────────────────────────────────────────
+  const [waMenu, setWaMenu] = useState<string | null>(null); // order.id with open menu
+
+  function waLink(order: Order, type: string): string {
+    const phone = (order.customer_phone ?? '').replace(/\D/g, '');
+    const name  = order.customer_name;
+    const id    = order.order_number;
+    const amt   = `₹${order.total_amount.toLocaleString('en-IN')}`;
+    const isCod = order.payment_status !== 'paid';
+
+    const msgs: Record<string, string> = {
+      placed: `Hi ${name}! 👋\n\nThank you for your order at *Mythical Vault*! 🎉\n\n🧾 *Order ID:* ${id}\n💰 *Total:* ${amt}\n\nYour order has been received and is being processed. We'll keep you updated at every step! 😊`,
+      cod:    `Hi ${name}! 👋\n\nYou placed a *Cash on Delivery* order at Mythical Vault.\n\n🧾 *Order ID:* ${id}\n💰 *Amount to Pay on Delivery:* ${amt}\n\nPlease confirm or cancel:\n✅ Reply *CONFIRM* to confirm\n❌ Reply *CANCEL* to cancel`,
+      payment:`Hi ${name}! 💳✅\n\nYour payment of *${amt}* has been received!\n\n🧾 *Order ID:* ${id}\n\nWe're now preparing your order for dispatch. 🚀`,
+      processing: `Hi ${name}! ⚙️\n\nYour order *${id}* is now being processed and prepared for packaging!\n\nWe'll notify you as soon as it ships. 📦`,
+      shipped:    `Hi ${name}! 🚀\n\nYour order *${id}* has been shipped!${order.courier_name ? `\n🚚 *Courier:* ${order.courier_name}` : ''}${order.tracking_number ? `\n📦 *Tracking:* ${order.tracking_number}` : ''}\n\nEstimated delivery: 2–5 business days. 😊`,
+      out_for_delivery: `Hi ${name}! 🛵\n\nYour order *${id}* is *OUT FOR DELIVERY* today!\n\nPlease be available to receive the package.${isCod ? `\n💰 Amount to pay: *${amt}*` : '\n✅ Already paid — no payment needed!'}`,
+      delivered: `Hi ${name}! 🎉\n\nYour order *${id}* has been *DELIVERED* successfully!\n\nWe hope you love your purchase. ⭐ Feel free to share your feedback!\n\nThank you for shopping with *Mythical Vault*! 🛍️`,
+      cancelled: `Hi ${name},\n\nYour order *${id}* has been *cancelled*.\n\nIf you paid online, your refund will be processed within 5–7 business days.\n\nSorry for the inconvenience. Feel free to shop again! 🛍️`,
+    };
+
+    return buildWaLink(phone, msgs[type] ?? msgs.placed);
+  }
 
   // Realtime subscription so admin list updates live
   useEffect(() => {
@@ -293,10 +318,57 @@ export default function AdminOrders() {
                     <button
                       onClick={() => handleDelete(order.id)}
                       disabled={deleting === order.id}
-                      style={{ ...btnDanger, padding: '4px 10px', fontSize: 11 }}
+                      style={{ ...btnDanger, padding: '4px 10px', fontSize: 11, marginRight: 6 }}
                     >
                       {deleting === order.id ? '…' : 'Del'}
                     </button>
+                    {/* WhatsApp dropdown */}
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                      <button
+                        onClick={() => setWaMenu(waMenu === order.id ? null : order.id)}
+                        style={btnWa}
+                      >
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: 4, flexShrink: 0 }}>
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                        </svg>
+                        WA ▾
+                      </button>
+                      {waMenu === order.id && (
+                        <>
+                          {/* Click-outside backdrop */}
+                          <div
+                            style={{ position: 'fixed', inset: 0, zIndex: 49 }}
+                            onClick={() => setWaMenu(null)}
+                          />
+                          <div style={waDropdown}>
+                            <p style={waDropdownLabel}>Send to {order.customer_name.split(' ')[0]}</p>
+                            {[
+                              { key: 'placed',            label: 'Order Placed' },
+                              { key: 'cod',               label: 'COD Confirmation' },
+                              { key: 'payment',           label: 'Payment Success' },
+                              { key: 'processing',        label: 'Order Processing' },
+                              { key: 'shipped',           label: 'Order Shipped' },
+                              { key: 'out_for_delivery',  label: 'Out for Delivery' },
+                              { key: 'delivered',         label: 'Delivered' },
+                              { key: 'cancelled',         label: 'Order Cancelled' },
+                            ].map(({ key, label }) => (
+                              <a
+                                key={key}
+                                href={waLink(order, key)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => setWaMenu(null)}
+                                style={waItem}
+                                onMouseEnter={e => (e.currentTarget.style.background = '#1c1c1f')}
+                                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                              >
+                                {label}
+                              </a>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
@@ -393,4 +465,51 @@ const btnDanger: React.CSSProperties = {
   fontSize: 11,
   fontFamily: 'monospace',
   cursor: 'pointer',
+};
+
+const btnWa: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  background: 'transparent',
+  color: '#25D366',
+  border: '1px solid rgba(37,211,102,0.35)',
+  padding: '4px 10px',
+  fontSize: 11,
+  fontFamily: 'monospace',
+  letterSpacing: '0.08em',
+  cursor: 'pointer',
+};
+
+const waDropdown: React.CSSProperties = {
+  position: 'absolute',
+  right: 0,
+  top: '100%',
+  marginTop: 4,
+  background: '#0c0c0e',
+  border: '1px solid #27272a',
+  minWidth: 180,
+  zIndex: 50,
+  boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+};
+
+const waDropdownLabel: React.CSSProperties = {
+  fontSize: 9,
+  letterSpacing: '0.15em',
+  color: '#52525b',
+  textTransform: 'uppercase',
+  padding: '8px 12px 6px',
+  borderBottom: '1px solid #27272a',
+  margin: 0,
+};
+
+const waItem: React.CSSProperties = {
+  display: 'block',
+  padding: '7px 12px',
+  fontSize: 11,
+  fontFamily: 'monospace',
+  color: '#a1a1aa',
+  textDecoration: 'none',
+  cursor: 'pointer',
+  background: 'transparent',
+  transition: 'background 0.1s',
 };
