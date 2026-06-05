@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Order, OrderInsert, OrderUpdate } from '@/types/order';
-import { sendOrderEmail, statusToEmailType } from '@/lib/emailService';
+import { sendOrderEmail, statusToEmailEvent } from '@/lib/emailService';
 
 // ─── Admin hook — full CRUD + realtime ────────────────────────────────────────
 export function useOrders() {
