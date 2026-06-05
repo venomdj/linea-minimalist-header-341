@@ -34,7 +34,7 @@ const LargeHero = () => {
         <div className="max-w-4xl">
           <div className="flex items-center gap-3 mb-6 lg:mb-8 animate-fade-in">
             <span className="w-1.5 h-1.5 rounded-full bg-verified pulse-dot" />
-            <span className="eyebrow text-foreground/70 text-[10px] sm:text-xs">Hope you like it<3</span>
+            <span className="eyebrow text-foreground/70 text-[10px] sm:text-xs">Hope you like it {"<3"}</span>
           </div>
 
           <h1

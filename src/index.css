@@ -100,13 +100,22 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
   }
 
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, sans-serif;
     font-feature-settings: 'ss01', 'cv11';
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
   }
+
+  /* Prevent iOS auto-zoom on form inputs */
+  @media (max-width: 640px) {
+    input, select, textarea { font-size: 16px; }
+  }
+
 
   h1, h2, h3, h4, .display {
     font-family: 'Space Grotesk', 'Inter', sans-serif;
