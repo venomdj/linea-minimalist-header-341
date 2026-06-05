@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Order, OrderInsert, OrderUpdate } from '@/types/order';
-import { sendOrderEmail, statusToEmailEvent } from '@/lib/emailService';
+import { sendStatusEmail, statusToEmailType } from '@/lib/emailService';
 
 // ─── Admin hook — full CRUD + realtime ────────────────────────────────────────
 export function useOrders() {
@@ -93,13 +93,11 @@ export function useOrders() {
       setOrders(prev => prev.map(o => (o.id === id ? (data as unknown as Order) : o)));
 
       // Fire status email (non-blocking)
-      const event = statusToEmailEvent(status);
-      if (event) {
-        sendOrderEmail({
-          order_id: id,
-          event,
-          tracking_number: trackingNumber,
-          tracking_url: trackingUrl,
+      const emailType = statusToEmailType(status);
+      if (emailType) {
+        sendStatusEmail(id, status, {
+          trackingNumber,
+          trackingUrl,
         }).catch((err) => console.error('[useOrders] status email error:', err));
       }
       return true;
