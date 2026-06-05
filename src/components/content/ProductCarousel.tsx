@@ -52,7 +52,11 @@ const ProductCarousel = () => {
           </p>
         </div>
       ) : (
-        <Carousel opts={{ align: "start", loop: false, dragFree: true }} className="w-full">
+        <Carousel
+          opts={{ align: "start", loop: false, dragFree: true }}
+          className="w-full"
+          aria-label="Featured products"
+        >
           <div className="relative">
             <CarouselContent className="px-4 sm:px-6 lg:px-12 -ml-3">
               {products.map((p, i) => (
@@ -60,14 +64,21 @@ const ProductCarousel = () => {
                   key={String(p.id)}
                   className="pl-3 basis-[78%] sm:basis-[45%] md:basis-1/3 lg:basis-1/4 xl:basis-1/5 animate-fade-in"
                   style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
+                  aria-label={`Product ${i + 1} of ${products.length}: ${p.title ?? "Untitled"}`}
                 >
                   <ProductCard product={p} priority={i < 4} />
                 </CarouselItem>
               ))}
             </CarouselContent>
             <div className="hidden md:block">
-              <CarouselPrevious className="left-4 lg:left-6 bg-background/60 backdrop-blur-md border-border text-foreground hover:bg-background hover:text-foreground" />
-              <CarouselNext className="right-4 lg:right-6 bg-background/60 backdrop-blur-md border-border text-foreground hover:bg-background hover:text-foreground" />
+              <CarouselPrevious
+                aria-label="Previous products"
+                className="left-4 lg:left-6 bg-background/60 backdrop-blur-md border-border text-foreground hover:bg-background hover:text-foreground"
+              />
+              <CarouselNext
+                aria-label="Next products"
+                className="right-4 lg:right-6 bg-background/60 backdrop-blur-md border-border text-foreground hover:bg-background hover:text-foreground"
+              />
             </div>
           </div>
         </Carousel>
