@@ -31,7 +31,8 @@ export default function AdminOrders() {
   }
 
   function waLink(order: Order, type: string): string {
-    const phone = (order.customer_phone ?? '').replace(/\D/g, '');
+    const raw = (order.customer_phone ?? '').replace(/\D/g, '');
+const phone = raw.length === 10 ? `91${raw}` : raw;
     const name  = order.customer_name;
     const id    = order.order_number;
     const amt   = `₹${order.total_amount.toLocaleString('en-IN')}`;
