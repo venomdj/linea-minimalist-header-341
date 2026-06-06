@@ -19,6 +19,7 @@ import TermsOfService from "./pages/TermsOfService";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
+import { useAdminNotifications } from "./hooks/useAdminNotifications";
 
 // Account pages
 import Dashboard from "./pages/account/Dashboard";
@@ -29,6 +30,49 @@ import AccountSettings from "./pages/account/AccountSettings";
 
 const queryClient = new QueryClient();
 
+// Inner component so the hook runs inside AuthProvider + BrowserRouter context
+function AppRoutes() {
+  useAdminNotifications();
+
+  return (
+    <>
+      <ScrollToTop />
+      <Routes>
+        {/* OAuth callback — MUST be registered in Google Cloud Console & Supabase */}
+        <Route path="/auth/callback" element={<AuthCallback />} />
+
+        {/* Public routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Index />} />
+        <Route path="/category/:category" element={<Category />} />
+        <Route path="/product/:productId" element={<ProductDetail />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/track-order" element={<TrackOrder />} />
+        <Route path="/about/our-story" element={<NotFound />} />
+        <Route path="/about/size-guide" element={<NotFound />} />
+        <Route path="/about/customer-care" element={<NotFound />} />
+        <Route path="/about/store-locator" element={<NotFound />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+
+        {/* My Account — protected by AccountLayout (redirects to /login if not authed) */}
+        <Route path="/account" element={<Dashboard />} />
+        <Route path="/account/profile" element={<Profile />} />
+        <Route path="/account/orders" element={<MyOrders />} />
+        <Route path="/account/orders/:orderId" element={<OrderDetail />} />
+        <Route path="/account/settings" element={<AccountSettings />} />
+
+        {/* Admin */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+
+        {/* Catch-all */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -37,43 +81,12 @@ const App = () => (
       <AuthProvider>
         <CartProvider>
           <BrowserRouter basename={import.meta.env.BASE_URL}>
-            <ScrollToTop />
-            <Routes>
-              {/* OAuth callback — MUST be registered in Google Cloud Console & Supabase */}
-              <Route path="/auth/callback" element={<AuthCallback />} />
-
-              {/* Public routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Index />} />
-              <Route path="/category/:category" element={<Category />} />
-              <Route path="/product/:productId" element={<ProductDetail />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/track-order" element={<TrackOrder />} />
-              <Route path="/about/our-story" element={<NotFound />} />
-              <Route path="/about/size-guide" element={<NotFound />} />
-              <Route path="/about/customer-care" element={<NotFound />} />
-              <Route path="/about/store-locator" element={<NotFound />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/terms-of-service" element={<TermsOfService />} />
-
-              {/* My Account — protected by AccountLayout (redirects to /login if not authed) */}
-              <Route path="/account" element={<Dashboard />} />
-              <Route path="/account/profile" element={<Profile />} />
-              <Route path="/account/orders" element={<MyOrders />} />
-              <Route path="/account/orders/:orderId" element={<OrderDetail />} />
-              <Route path="/account/settings" element={<AccountSettings />} />
-
-              {/* Admin */}
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-
-              {/* Catch-all */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AppRoutes />
           </BrowserRouter>
         </CartProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
+
 export default App;
