@@ -339,7 +339,7 @@ const Checkout = () => {
         // Surface a human-readable error so the customer knows what happened
         const msg =
           orderErr.code === "42501"
-            ? "Permission denied. Please refresh and try again."
+            ? "PLEASE LOGIN BEFORE ORDERING :) ."
             : orderErr.message
             ? `Order failed: ${orderErr.message}`
             : "Failed to save order. Please try again or contact support.";
