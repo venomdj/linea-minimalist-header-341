@@ -5,7 +5,7 @@ import LargeHero from "../components/content/LargeHero";
 import EditorialSection from "../components/content/EditorialSection";
 import ProductCarousel from "../components/content/ProductCarousel";
 import CategoryFilter from "../components/product/CategoryFilter";
-import ProductGrid from "../components/product/ProductGrid";
+import ProductGrid from "../components/category/ProductGrid";
 import { useProducts } from "../hooks/useProducts";
 
 const Index = () => {
