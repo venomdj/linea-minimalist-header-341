@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProducts, type DbProduct } from "@/hooks/useProducts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ProductForm from "@/components/admin/ProductForm";
-import AdminOrders from '../components/order/AdminOrders';
-import AdminNotifications from '@/components/admin/AdminNotifications';
-import { useAdminNotificationsCount } from '@/hooks/useAdminNotificationsCount';
+import AdminCategories from "@/components/admin/AdminCategories";
+import AdminOrders from "../components/order/AdminOrders";
+import AdminNotifications from "@/components/admin/AdminNotifications";
+import { useAdminNotificationsCount } from "@/hooks/useAdminNotificationsCount";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +21,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { LogOut, Plus, Pencil, Trash2, Package, Search, ClipboardList, Bell } from "lucide-react";
+import { LogOut, Plus, Pencil, Trash2, Package, Search, ClipboardList, Bell, Tags } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const inr = (n: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
@@ -35,11 +36,10 @@ const Admin = () => {
   const [toDelete, setToDelete] = useState<DbProduct | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [q, setQ] = useState("");
-  
-  // Tab control state: Defaults to managing products
-  const [activeTab, setActiveTab] = useState<"products" | "orders" | "notifications">("products");
-  const unreadCount = useAdminNotificationsCount();
 
+  // Tab control state: Defaults to managing products
+  const [activeTab, setActiveTab] = useState<"products" | "categories" | "orders" | "notifications">("products");
+  const unreadCount = useAdminNotificationsCount();
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -99,6 +99,16 @@ const Admin = () => {
             <Package size={14} /> Products
           </button>
           <button
+            onClick={() => setActiveTab("categories")}
+            className={`py-3 px-2 font-mono text-xs tracking-wider uppercase border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${
+              activeTab === "categories"
+                ? "border-primary text-foreground font-medium"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Tags size={14} /> Categories
+          </button>
+          <button
             onClick={() => setActiveTab("orders")}
             className={`py-3 px-2 font-mono text-xs tracking-wider uppercase border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${
               activeTab === "orders"
@@ -126,13 +136,12 @@ const Admin = () => {
         </div>
       </div>
 
-
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 space-y-8">
         {activeTab === "orders" && <AdminOrders />}
         {activeTab === "notifications" && <AdminNotifications />}
+        {activeTab === "categories" && <AdminCategories />}
 
-
-        {/* VIEW 2: PRODUCTS DASHBOARD */}
+        {/* VIEW: PRODUCTS DASHBOARD */}
         {activeTab === "products" && (
           showingForm ? (
             <section className="border border-border bg-surface-1 p-6">
@@ -212,7 +221,12 @@ const Admin = () => {
                               <Button size="sm" variant="outline" className="rounded-none" onClick={() => setEditing(r)}>
                                 <Pencil size={12} /> Edit
                               </Button>
-                              <Button size="sm" variant="outline" className="rounded-none text-destructive hover:text-destructive" onClick={() => setToDelete(r)}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="rounded-none text-destructive hover:text-destructive"
+                                onClick={() => setToDelete(r)}
+                              >
                                 <Trash2 size={12} /> Delete
                               </Button>
                             </td>
