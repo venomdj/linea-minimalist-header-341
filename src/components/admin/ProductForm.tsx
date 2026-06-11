@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import CategorySelect from "./CategorySelect";
 import { toast } from "sonner";
 import { Loader2, Upload, PackageX, Package } from "lucide-react";
 import type { DbProduct } from "@/hooks/useProducts";
@@ -13,6 +14,7 @@ const schema = z.object({
   title: z.string().trim().min(1, "Title required").max(160),
   price: z.coerce.number().min(0, "Price must be ≥ 0"),
   description: z.string().trim().max(4000).optional().or(z.literal("")),
+  category_id: z.string().optional().or(z.literal("")),
   category: z.string().trim().max(80).optional().or(z.literal("")),
   stock: z.coerce.number().int().min(0),
   featured: z.boolean(),
@@ -34,6 +36,7 @@ const ProductForm = ({ initial, onDone, onCancel }: Props) => {
     title: initial?.title ?? "",
     price: String(initial?.price ?? ""),
     description: initial?.description ?? "",
+    category_id: (initial as any)?.category_id ?? "",
     category: initial?.category ?? "",
     stock: String(initial?.stock ?? 0),
     featured: !!initial?.featured,
@@ -104,6 +107,7 @@ const ProductForm = ({ initial, onDone, onCancel }: Props) => {
         price: parsed.data.price,
         description: parsed.data.description || null,
         image_url: imageUrl || null,
+        category_id: parsed.data.category_id || null,
         category: parsed.data.category || null,
         stock: finalStock,
         in_stock: finalInStock,
@@ -209,10 +213,32 @@ const ProductForm = ({ initial, onDone, onCancel }: Props) => {
           )}
         </div>
 
+        {/* NEW: Category ID dropdown */}
         <div className="space-y-2">
           <Label>Category</Label>
-          <Input value={form.category} onChange={(e) => set("category", e.target.value)} placeholder="e.g. Trading Cards" />
+          <CategorySelect 
+            value={form.category_id} 
+            onChange={(e) => set("category_id", e)}
+            placeholder="Select a category..."
+          />
+          <p className="text-[11px] text-muted-foreground font-mono tracking-wide">
+            Select from predefined categories for better filtering and organization.
+          </p>
         </div>
+
+        {/* Legacy category field (optional, for backwards compatibility) */}
+        <div className="space-y-2">
+          <Label>Legacy Category (Optional)</Label>
+          <Input 
+            value={form.category} 
+            onChange={(e) => set("category", e.target.value)} 
+            placeholder="e.g. Trading Cards" 
+          />
+          <p className="text-[11px] text-muted-foreground font-mono tracking-wide">
+            Legacy field. Use the Category dropdown above instead.
+          </p>
+        </div>
+
         <div className="space-y-2">
           <Label>Rarity</Label>
           <select
