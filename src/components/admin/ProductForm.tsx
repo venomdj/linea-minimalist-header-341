@@ -1,9 +1,9 @@
 /**
  * ProductForm.tsx
  * Admin form for creating / editing a product.
- * Includes a dynamic Category dropdown sourced from the categories table.
+ * Image upload → Supabase Storage (product-images bucket).
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { type DbProduct } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
@@ -19,7 +19,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, X, ImageIcon } from "lucide-react";
+
+// ── Constants ──────────────────────────────────────────────────────────────
+const BUCKET = "product-images";
+const ACCEPTED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface Props {
@@ -33,7 +38,7 @@ type FormState = {
   price: string;
   description: string;
   image_url: string;
-  category: string;       // category slug (e.g. "pokemon")
+  category: string;
   series: string;
   set_name: string;
   edition: string;
@@ -90,13 +95,176 @@ const dbToForm = (p: DbProduct): FormState => ({
   population: p.population != null ? String(p.population) : "",
 });
 
-// ── Component ──────────────────────────────────────────────────────────────
+// ── Image Upload Zone ──────────────────────────────────────────────────────
+interface ImageUploadProps {
+  currentUrl: string;
+  onUploaded: (url: string) => void;
+  onClear: () => void;
+  disabled?: boolean;
+}
+
+const ImageUploadZone = ({ currentUrl, onUploaded, onClear, disabled }: ImageUploadProps) => {
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [preview, setPreview] = useState<string>(currentUrl);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Keep preview in sync when form resets (e.g. editing a different product)
+  useEffect(() => {
+    setPreview(currentUrl);
+  }, [currentUrl]);
+
+  const uploadFile = useCallback(async (file: File) => {
+    if (!ACCEPTED.includes(file.type)) {
+      toast.error("Only JPEG, PNG, WebP or GIF images are allowed");
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      toast.error("Image must be under 8 MB");
+      return;
+    }
+
+    // Instant local preview
+    const objectUrl = URL.createObjectURL(file);
+    setPreview(objectUrl);
+    setUploading(true);
+
+    try {
+      const ext = file.name.split(".").pop() ?? "jpg";
+      const path = `products/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+      const { error: upErr } = await supabase.storage
+        .from(BUCKET)
+        .upload(path, file, { upsert: false, contentType: file.type });
+
+      if (upErr) throw upErr;
+
+      const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+      onUploaded(data.publicUrl);
+      toast.success("Image uploaded");
+    } catch (err: any) {
+      toast.error(err.message ?? "Upload failed");
+      setPreview(currentUrl); // revert preview on failure
+    } finally {
+      setUploading(false);
+    }
+  }, [currentUrl, onUploaded]);
+
+  const handleFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    uploadFile(files[0]);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (!disabled) handleFiles(e.dataTransfer.files);
+  };
+
+  const handleClear = () => {
+    setPreview("");
+    onClear();
+    if (inputRef.current) inputRef.current.value = "";
+  };
+
+  // ── With image ────────────────────────────────────────────────────────
+  if (preview) {
+    return (
+      <div className="relative group w-full">
+        <div className="relative border border-border overflow-hidden bg-muted/20" style={{ aspectRatio: "3/4", maxWidth: 180 }}>
+          <img
+            src={preview}
+            alt="Product"
+            className="w-full h-full object-cover"
+            onError={() => setPreview("")}
+          />
+          {uploading && (
+            <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
+              <Loader2 size={20} className="animate-spin" />
+            </div>
+          )}
+          {/* Replace overlay on hover */}
+          {!uploading && !disabled && (
+            <div
+              className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 cursor-pointer"
+              onClick={() => inputRef.current?.click()}
+            >
+              <Upload size={18} />
+              <span className="font-mono text-[10px] tracking-widest uppercase">Replace</span>
+            </div>
+          )}
+        </div>
+        {!disabled && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="absolute top-1.5 left-[calc(180px-28px)] p-1 bg-background border border-border hover:bg-destructive hover:border-destructive hover:text-destructive-foreground transition-colors"
+            title="Remove image"
+          >
+            <X size={12} />
+          </button>
+        )}
+        <input
+          ref={inputRef}
+          type="file"
+          accept={ACCEPTED.join(",")}
+          className="sr-only"
+          onChange={(e) => handleFiles(e.target.files)}
+          disabled={disabled || uploading}
+        />
+      </div>
+    );
+  }
+
+  // ── Empty drop zone ───────────────────────────────────────────────────
+  return (
+    <div
+      onClick={() => !disabled && inputRef.current?.click()}
+      onDragOver={(e) => { e.preventDefault(); if (!disabled) setDragOver(true); }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={handleDrop}
+      className={`
+        flex flex-col items-center justify-center gap-3
+        border-2 border-dashed transition-colors cursor-pointer
+        py-10 px-6 w-full
+        ${dragOver
+          ? "border-foreground bg-muted/30"
+          : "border-border hover:border-foreground/50 bg-muted/10"
+        }
+        ${disabled ? "pointer-events-none opacity-50" : ""}
+      `}
+    >
+      {uploading ? (
+        <Loader2 size={24} className="animate-spin text-muted-foreground" />
+      ) : (
+        <ImageIcon size={24} className="text-muted-foreground" />
+      )}
+      <div className="text-center">
+        <p className="font-mono text-xs tracking-wider uppercase text-foreground">
+          {uploading ? "Uploading…" : "Drop image here"}
+        </p>
+        <p className="text-[11px] text-muted-foreground mt-1">
+          or <span className="underline underline-offset-2">click to browse</span> · JPEG, PNG, WebP · max 8 MB
+        </p>
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={ACCEPTED.join(",")}
+        className="sr-only"
+        onChange={(e) => handleFiles(e.target.files)}
+        disabled={disabled || uploading}
+      />
+    </div>
+  );
+};
+
+// ── Main Form ──────────────────────────────────────────────────────────────
 const ProductForm = ({ initial, onDone, onCancel }: Props) => {
   const [form, setForm] = useState<FormState>(initial ? dbToForm(initial) : empty);
   const [saving, setSaving] = useState(false);
   const { categories, loading: catsLoading } = useCategories();
 
-  // Keep form in sync if `initial` changes (e.g. switching between edit targets)
   useEffect(() => {
     setForm(initial ? dbToForm(initial) : empty);
   }, [initial?.id]);
@@ -107,14 +275,8 @@ const ProductForm = ({ initial, onDone, onCancel }: Props) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.title.trim()) {
-      toast.error("Title is required");
-      return;
-    }
-    if (!form.price || isNaN(Number(form.price))) {
-      toast.error("A valid price is required");
-      return;
-    }
+    if (!form.title.trim()) { toast.error("Title is required"); return; }
+    if (!form.price || isNaN(Number(form.price))) { toast.error("A valid price is required"); return; }
 
     setSaving(true);
     try {
@@ -139,10 +301,7 @@ const ProductForm = ({ initial, onDone, onCancel }: Props) => {
       };
 
       if (initial) {
-        const { error } = await supabase
-          .from("products")
-          .update(payload)
-          .eq("id", initial.id);
+        const { error } = await supabase.from("products").update(payload).eq("id", initial.id);
         if (error) throw error;
         toast.success("Product updated");
       } else {
@@ -159,11 +318,10 @@ const ProductForm = ({ initial, onDone, onCancel }: Props) => {
     }
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
 
-      {/* ── Section: Core details ──────────────────────────────────────── */}
+      {/* ── Core details ────────────────────────────────────────────────── */}
       <fieldset className="space-y-4">
         <legend className="font-mono text-[11px] tracking-widest uppercase text-muted-foreground pb-1 border-b border-border w-full">
           Core details
@@ -217,7 +375,7 @@ const ProductForm = ({ initial, onDone, onCancel }: Props) => {
             />
           </div>
 
-          {/* ── Category dropdown ──────────────────────────────────────── */}
+          {/* Category */}
           <div className="space-y-1.5">
             <Label htmlFor="category" className="font-mono text-xs tracking-wider uppercase">
               Category
@@ -285,30 +443,21 @@ const ProductForm = ({ initial, onDone, onCancel }: Props) => {
           />
         </div>
 
-        {/* Image URL */}
+        {/* ── Image upload ─────────────────────────────────────────────── */}
         <div className="space-y-1.5">
-          <Label htmlFor="image_url" className="font-mono text-xs tracking-wider uppercase">
-            Image URL
+          <Label className="font-mono text-xs tracking-wider uppercase">
+            Product image
           </Label>
-          <Input
-            id="image_url"
-            type="url"
-            value={form.image_url}
-            onChange={(e) => set("image_url", e.target.value)}
-            placeholder="https://…"
+          <ImageUploadZone
+            currentUrl={form.image_url}
+            onUploaded={(url) => set("image_url", url)}
+            onClear={() => set("image_url", "")}
+            disabled={saving}
           />
-          {form.image_url && (
-            <img
-              src={form.image_url}
-              alt="Preview"
-              className="mt-2 h-24 w-auto object-contain border border-border"
-              onError={(e) => (e.currentTarget.style.display = "none")}
-            />
-          )}
         </div>
       </fieldset>
 
-      {/* ── Section: Card details ─────────────────────────────────────── */}
+      {/* ── Card details ─────────────────────────────────────────────────── */}
       <fieldset className="space-y-4">
         <legend className="font-mono text-[11px] tracking-widest uppercase text-muted-foreground pb-1 border-b border-border w-full">
           Card details
@@ -316,70 +465,33 @@ const ProductForm = ({ initial, onDone, onCancel }: Props) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="series" className="font-mono text-xs tracking-wider uppercase">
-              Series
-            </Label>
-            <Input
-              id="series"
-              value={form.series}
-              onChange={(e) => set("series", e.target.value)}
-              placeholder="e.g. Scarlet & Violet"
-            />
+            <Label htmlFor="series" className="font-mono text-xs tracking-wider uppercase">Series</Label>
+            <Input id="series" value={form.series} onChange={(e) => set("series", e.target.value)} placeholder="e.g. Scarlet & Violet" />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="set_name" className="font-mono text-xs tracking-wider uppercase">
-              Set name
-            </Label>
-            <Input
-              id="set_name"
-              value={form.set_name}
-              onChange={(e) => set("set_name", e.target.value)}
-              placeholder="e.g. Obsidian Flames"
-            />
+            <Label htmlFor="set_name" className="font-mono text-xs tracking-wider uppercase">Set name</Label>
+            <Input id="set_name" value={form.set_name} onChange={(e) => set("set_name", e.target.value)} placeholder="e.g. Obsidian Flames" />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="edition" className="font-mono text-xs tracking-wider uppercase">
-              Edition
-            </Label>
-            <Input
-              id="edition"
-              value={form.edition}
-              onChange={(e) => set("edition", e.target.value)}
-              placeholder="e.g. 1st Edition"
-            />
+            <Label htmlFor="edition" className="font-mono text-xs tracking-wider uppercase">Edition</Label>
+            <Input id="edition" value={form.edition} onChange={(e) => set("edition", e.target.value)} placeholder="e.g. 1st Edition" />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="grade" className="font-mono text-xs tracking-wider uppercase">
-              Grade
-            </Label>
-            <Input
-              id="grade"
-              value={form.grade}
-              onChange={(e) => set("grade", e.target.value)}
-              placeholder="e.g. PSA 10"
-            />
+            <Label htmlFor="grade" className="font-mono text-xs tracking-wider uppercase">Grade</Label>
+            <Input id="grade" value={form.grade} onChange={(e) => set("grade", e.target.value)} placeholder="e.g. PSA 10" />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="population" className="font-mono text-xs tracking-wider uppercase">
-              Population
-            </Label>
-            <Input
-              id="population"
-              type="number"
-              min="0"
-              value={form.population}
-              onChange={(e) => set("population", e.target.value)}
-              placeholder="PSA pop report count"
-            />
+            <Label htmlFor="population" className="font-mono text-xs tracking-wider uppercase">Population</Label>
+            <Input id="population" type="number" min="0" value={form.population} onChange={(e) => set("population", e.target.value)} placeholder="PSA pop report count" />
           </div>
         </div>
       </fieldset>
 
-      {/* ── Section: Stock & flags ────────────────────────────────────── */}
+      {/* ── Stock & flags ─────────────────────────────────────────────────── */}
       <fieldset className="space-y-4">
         <legend className="font-mono text-[11px] tracking-widest uppercase text-muted-foreground pb-1 border-b border-border w-full">
           Stock &amp; flags
@@ -387,35 +499,25 @@ const ProductForm = ({ initial, onDone, onCancel }: Props) => {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="stock" className="font-mono text-xs tracking-wider uppercase">
-              Stock qty
-            </Label>
-            <Input
-              id="stock"
-              type="number"
-              min="0"
-              value={form.stock}
-              onChange={(e) => set("stock", e.target.value)}
-            />
+            <Label htmlFor="stock" className="font-mono text-xs tracking-wider uppercase">Stock qty</Label>
+            <Input id="stock" type="number" min="0" value={form.stock} onChange={(e) => set("stock", e.target.value)} />
           </div>
         </div>
 
-        {/* Boolean toggles */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {(
             [
-              { key: "in_stock",  label: "In stock"  },
-              { key: "featured",  label: "Featured"  },
-              { key: "verified",  label: "Verified"  },
-              { key: "is_new",    label: "New listing"},
+              { key: "in_stock", label: "In stock" },
+              { key: "featured", label: "Featured" },
+              { key: "verified", label: "Verified" },
+              { key: "is_new",   label: "New listing" },
             ] as { key: keyof FormState; label: string }[]
           ).map(({ key, label }) => (
             <label
               key={key}
               className={`
                 flex items-center gap-2 px-3 py-2.5 border cursor-pointer
-                font-mono text-xs tracking-wider uppercase select-none
-                transition-colors
+                font-mono text-xs tracking-wider uppercase select-none transition-colors
                 ${form[key]
                   ? "border-foreground bg-foreground text-background"
                   : "border-border text-muted-foreground hover:border-foreground/50"
@@ -441,15 +543,10 @@ const ProductForm = ({ initial, onDone, onCancel }: Props) => {
         </div>
       </fieldset>
 
-      {/* ── Actions ───────────────────────────────────────────────────── */}
+      {/* ── Actions ───────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 pt-2">
         <Button type="submit" disabled={saving} className="rounded-none min-w-[120px]">
-          {saving ? (
-            <>
-              <Loader2 size={13} className="animate-spin" />
-              Saving…
-            </>
-          ) : initial ? "Save changes" : "Create product"}
+          {saving ? <><Loader2 size={13} className="animate-spin" /> Saving…</> : initial ? "Save changes" : "Create product"}
         </Button>
         <Button type="button" variant="outline" className="rounded-none" onClick={onCancel} disabled={saving}>
           Cancel
