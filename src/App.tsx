@@ -18,7 +18,8 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
-import ProtectedRoute from "./components/admin/ProtectedRoute";
+import AdminProtectedRoute from "./components/admin/ProtectedRoute";
+import UserProtectedRoute from "./components/ProtectedRoute"; // ← NEW
 import { useAdminNotifications } from "./hooks/useAdminNotifications";
 
 // Account pages
@@ -30,7 +31,6 @@ import AccountSettings from "./pages/account/AccountSettings";
 
 const queryClient = new QueryClient();
 
-// Inner component so the hook runs inside AuthProvider + BrowserRouter context
 function AppRoutes() {
   useAdminNotifications();
 
@@ -38,7 +38,7 @@ function AppRoutes() {
     <>
       <ScrollToTop />
       <Routes>
-        {/* OAuth callback — MUST be registered in Google Cloud Console & Supabase */}
+        {/* OAuth callback */}
         <Route path="/auth/callback" element={<AuthCallback />} />
 
         {/* Public routes */}
@@ -46,7 +46,6 @@ function AppRoutes() {
         <Route path="/" element={<Index />} />
         <Route path="/category/:category" element={<Category />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
-        <Route path="/checkout" element={<Checkout />} />
         <Route path="/track-order" element={<TrackOrder />} />
         <Route path="/about/our-story" element={<NotFound />} />
         <Route path="/about/size-guide" element={<NotFound />} />
@@ -55,16 +54,26 @@ function AppRoutes() {
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
 
-        {/* My Account — protected by AccountLayout (redirects to /login if not authed) */}
-        <Route path="/account" element={<Dashboard />} />
-        <Route path="/account/profile" element={<Profile />} />
-        <Route path="/account/orders" element={<MyOrders />} />
-        <Route path="/account/orders/:orderId" element={<OrderDetail />} />
-        <Route path="/account/settings" element={<AccountSettings />} />
+        {/* ── Checkout — auth gated ── */}
+        <Route
+          path="/checkout"
+          element={
+            <UserProtectedRoute>
+              <Checkout />
+            </UserProtectedRoute>
+          }
+        />
+
+        {/* ── My Account — auth gated ── */}
+        <Route path="/account" element={<UserProtectedRoute><Dashboard /></UserProtectedRoute>} />
+        <Route path="/account/profile" element={<UserProtectedRoute><Profile /></UserProtectedRoute>} />
+        <Route path="/account/orders" element={<UserProtectedRoute><MyOrders /></UserProtectedRoute>} />
+        <Route path="/account/orders/:orderId" element={<UserProtectedRoute><OrderDetail /></UserProtectedRoute>} />
+        <Route path="/account/settings" element={<UserProtectedRoute><AccountSettings /></UserProtectedRoute>} />
 
         {/* Admin */}
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+        <Route path="/admin" element={<AdminProtectedRoute><Admin /></AdminProtectedRoute>} />
 
         {/* Catch-all */}
         <Route path="*" element={<NotFound />} />
