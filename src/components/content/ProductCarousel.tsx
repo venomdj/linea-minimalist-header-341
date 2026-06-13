@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
@@ -8,6 +9,10 @@ import { useProducts } from "@/hooks/useProducts";
 const ProductCarousel = () => {
   const ref = useScrollReveal();
   const { products, loading } = useProducts();
+  // Track whether the initial fade-in animation has already played.
+  // Supabase realtime triggers re-renders; without this flag every card
+  // would re-animate every time a product is added/updated.
+  const hasAnimated = useRef(false);
 
   return (
     <section ref={ref} className="reveal w-full py-16 md:py-20 lg:py-28">
@@ -59,16 +64,24 @@ const ProductCarousel = () => {
         >
           <div className="relative">
             <CarouselContent className="px-4 sm:px-6 lg:px-12 -ml-3">
-              {products.map((p, i) => (
-                <CarouselItem
-                  key={String(p.id)}
-                  className="pl-3 basis-[78%] sm:basis-[45%] md:basis-1/3 lg:basis-1/4 xl:basis-1/5 animate-fade-in"
-                  style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
-                  aria-label={`Product ${i + 1} of ${products.length}: ${p.name ?? "Untitled"}`}
-                >
-                  <ProductCard product={p} priority={i < 4} />
-                </CarouselItem>
-              ))}
+              {products.map((p, i) => {
+                // Only animate cards on the very first render, not on
+                // subsequent realtime re-renders from Supabase.
+                const shouldAnimate = !hasAnimated.current;
+                return (
+                  <CarouselItem
+                    key={String(p.id)}
+                    className={`pl-3 basis-[78%] sm:basis-[45%] md:basis-1/3 lg:basis-1/4 xl:basis-1/5 ${shouldAnimate ? "animate-fade-in" : ""}`}
+                    style={{
+                      animationDelay: shouldAnimate ? `${Math.min(i, 8) * 40}ms` : undefined,
+                      willChange: "transform",
+                    }}
+                    aria-label={`Product ${i + 1} of ${products.length}: ${p.name ?? "Untitled"}`}
+                  >
+                    <ProductCard product={p} priority={i < 4} />
+                  </CarouselItem>
+                );
+              })}
             </CarouselContent>
             <div className="hidden md:block">
               <CarouselPrevious
@@ -83,6 +96,12 @@ const ProductCarousel = () => {
           </div>
         </Carousel>
       )}
+      {/* Mark animation as done after first render so realtime updates
+          don't re-trigger the fade-in on every card */}
+      {!hasAnimated.current && products.length > 0 && !loading && (() => {
+        hasAnimated.current = true;
+        return null;
+      })()}
 
       <div className="md:hidden px-4 mt-6 text-center">
         <Link
