@@ -28,9 +28,9 @@ interface FilterSortBarProps {
 const FilterSortBar = ({ filtersOpen, setFiltersOpen, itemCount }: FilterSortBarProps) => {
   const [sortBy, setSortBy] = useState("featured");
 
-  const categories = ["Æther Order", "Silent Chronicle", "Eclipse Saga", "Hollow Vow", "Lantern Codex"];
+  const categories = ["Pokémon", "One Piece", "Accessories"];
   const priceRanges = ["Under ₹10,000", "₹10,000 — ₹50,000", "₹50,000 — ₹1,00,000", "Over ₹1,00,000"];
-  const materials = ["PSA 10", "PSA 9", "BGS 9.5", "Ungraded"];
+  const grades = ["PSA 10", "PSA 9", "BGS 9.5", "Ungraded"];
 
   return (
     <>
@@ -91,15 +91,15 @@ const FilterSortBar = ({ filtersOpen, setFiltersOpen, itemCount }: FilterSortBar
 
                   <Separator className="border-border" />
 
-                  {/* Material Filter */}
+                  {/* Grade Filter */}
                   <div>
-                    <h3 className="text-sm font-light mb-4 text-foreground">Material</h3>
+                    <h3 className="text-sm font-light mb-4 text-foreground">Grade</h3>
                     <div className="space-y-3">
-                      {materials.map((material) => (
-                        <div key={material} className="flex items-center space-x-3">
-                          <Checkbox id={material} className="border-border data-[state=checked]:bg-foreground data-[state=checked]:border-foreground" />
-                          <Label htmlFor={material} className="text-sm font-light text-foreground cursor-pointer">
-                            {material}
+                      {grades.map((grade) => (
+                        <div key={grade} className="flex items-center space-x-3">
+                          <Checkbox id={grade} className="border-border data-[state=checked]:bg-foreground data-[state=checked]:border-foreground" />
+                          <Label htmlFor={grade} className="text-sm font-light text-foreground cursor-pointer">
+                            {grade}
                           </Label>
                         </div>
                       ))}
