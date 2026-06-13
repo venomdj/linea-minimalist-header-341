@@ -15,7 +15,7 @@ const navItems = [
 
 const mobileCategories = [
   { name: "All",         href: "/category/all" },
-  { name: "Pokémon",     href: "/category/pokemon" },
+  { name: "Pokemon",     href: "/category/pokemon" },
   { name: "One Piece",   href: "/category/one-piece" },
   { name: "Accessories", href: "/category/accessories" },
 ];
