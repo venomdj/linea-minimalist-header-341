@@ -5,18 +5,24 @@ import { supabase } from '../integrations/supabase/client';
 import Header from "../components/header/Header";
 import Footer from "../components/footer/Footer";
 import { useAuth } from "@/context/AuthContext";
+import { ShieldCheck } from "lucide-react";
 
 export default function Login() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/account';
+
+  // Support both ?redirect= (legacy) and ?returnTo= (new auth-gate param)
+  const returnTo =
+    searchParams.get('returnTo') ||
+    searchParams.get('redirect') ||
+    '/account';
+
   const authError = searchParams.get('error');
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Show friendly error if we were sent back from callback with an error
   useEffect(() => {
     if (authError === 'auth_failed') {
       setErrorMessage(
@@ -25,38 +31,36 @@ export default function Login() {
     }
   }, [authError]);
 
-  // Redirect if already logged in
+  // Redirect if already logged in — honour returnTo
   useEffect(() => {
     if (!loading && user) {
-      navigate(redirect, { replace: true });
+      // Safety: only allow relative paths (prevent open redirect)
+      const safe = returnTo.startsWith('/') ? returnTo : '/account';
+      navigate(safe, { replace: true });
     }
-  }, [user, loading, navigate, redirect]);
+  }, [user, loading, navigate, returnTo]);
 
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
       setErrorMessage(null);
 
-      // Always redirect to production domain so users land on mythicalvault.vercel.app
-      // regardless of whether they clicked login from the Lovable preview URL.
       const PRODUCTION_URL = 'https://mythicalvault.vercel.app';
-      const callbackUrl = `${PRODUCTION_URL}/auth/callback?next=${encodeURIComponent(redirect)}`;
+      // Pass returnTo through so AuthCallback can redirect back to product page
+      const callbackUrl = `${PRODUCTION_URL}/auth/callback?next=${encodeURIComponent(returnTo)}`;
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: callbackUrl,
           queryParams: {
-            // Request offline access so Supabase can refresh tokens
             access_type: 'offline',
-            // Use 'select_account' so users can choose a Google account
             prompt: 'select_account',
           },
         },
       });
 
       if (error) throw error;
-      // Browser will navigate away to Google — no need to setIsLoading(false)
     } catch (err: unknown) {
       console.error('[Login] Google OAuth error:', err);
       setErrorMessage(
@@ -68,18 +72,38 @@ export default function Login() {
     }
   };
 
+  // Derive a human-readable action hint from returnTo
+  const isProductReturn = returnTo.startsWith('/product/');
+  const isCheckoutReturn = returnTo.startsWith('/checkout');
+
+  const contextHint = isCheckoutReturn
+    ? 'Sign in to complete your purchase'
+    : isProductReturn
+    ? 'Sign in to buy this card'
+    : 'Authenticate to view your orders and account';
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
       <Header />
 
       <main className="flex-1 flex items-center justify-center px-4 py-20 bg-zinc-950/20">
         <div className="w-full max-w-md border border-zinc-900 bg-black p-8 text-center space-y-8">
+
+          {/* Icon — only shown when coming from a purchase flow */}
+          {(isProductReturn || isCheckoutReturn) && (
+            <div className="flex justify-center">
+              <div className="w-11 h-11 rounded-full border border-zinc-800 flex items-center justify-center bg-zinc-950">
+                <ShieldCheck size={20} strokeWidth={1.5} className="text-zinc-400" />
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <h1 className="text-xl font-light tracking-[0.2em] text-white uppercase">
               Access The Vault
             </h1>
-            <p className="text-xs text-zinc-500 font-mono tracking-wider">
-              AUTHENTICATE TO VIEW YOUR ORDERS AND ACCOUNT
+            <p className="text-xs text-zinc-500 font-mono tracking-wider uppercase">
+              {contextHint}
             </p>
           </div>
 
