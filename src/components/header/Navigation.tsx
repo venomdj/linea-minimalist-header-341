@@ -72,33 +72,15 @@ const Navigation = () => {
         {/* 3-column grid: left | center brand | right — keeps brand pixel-perfect centered */}
         <div className="grid grid-cols-[1fr_auto_1fr] items-center h-16 px-4 sm:px-6">
 
-          {/* LEFT — hamburger (mobile) or nav links (desktop) */}
+          {/* LEFT — hamburger on all screen sizes */}
           <div className="flex items-center">
             <button
               onClick={() => setMobile(!mobile)}
-              className="lg:hidden p-2 -ml-2 text-nav-foreground hover:text-nav-hover transition-colors"
+              className="p-2 -ml-2 text-nav-foreground hover:text-nav-hover transition-colors"
               aria-label="Menu"
             >
               {mobile ? <X size={20} /> : <Menu size={20} />}
             </button>
-
-            <div className="hidden lg:flex items-center gap-8">
-              {navItems.map((item) => (
-                <div
-                  key={item.name}
-                  className="relative"
-                  onMouseEnter={() => setOpen(item.name)}
-                  onMouseLeave={() => setOpen(null)}
-                >
-                  <Link
-                    to={item.href}
-                    className="text-[13px] tracking-wide text-nav-foreground hover:text-nav-hover transition-colors py-6 block"
-                  >
-                    {item.name}
-                  </Link>
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* CENTER BRAND — naturally centered by grid */}
@@ -201,33 +183,7 @@ const Navigation = () => {
           </div>
         </div>
 
-        {/* Dropdown contents */}
-        {open && (
-          <div
-            className="absolute top-full left-0 right-0 glass-strong border-t border-border/40 animate-fade-in"
-            onMouseEnter={() => setOpen(open)}
-            onMouseLeave={() => setOpen(null)}
-          >
-            <div className="px-6 py-10 grid grid-cols-12 gap-8">
-              <div className="col-span-3">
-                <p className="eyebrow mb-4">{open}</p>
-                <ul className="space-y-3">
-                  {navItems.find((i) => i.name === open)?.sub.map((s) => (
-                    <li key={s}>
-                      <Link
-                        to="/category/all"
-                        className="text-sm text-nav-foreground hover:text-nav-hover transition-colors flex items-center justify-between group"
-                      >
-                        <span>{s}</span>
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {/* Search Modal */}
         {search && (
