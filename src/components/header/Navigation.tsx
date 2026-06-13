@@ -210,9 +210,9 @@ const Navigation = () => {
           </div>
         )}
 
-        {/* Mobile slide menu — real site categories only */}
+        {/* Menu — all screen sizes */}
         {mobile && (
-          <div className="lg:hidden absolute top-full left-0 right-0 glass-strong border-t border-border/40 animate-fade-in">
+          <div className="absolute top-full left-0 right-0 glass-strong border-t border-border/40 animate-fade-in z-50">
             <div className="px-6 pt-6 pb-8">
 
               {/* Section label */}
