@@ -32,7 +32,7 @@ const ProductCard = ({ product, priority }: Props) => {
             src={product.hoverImage}
             alt=""
             aria-hidden
-            loading="lazy"
+            loading="eager"
             className="absolute inset-0 w-full h-full object-cover scale-105 opacity-0 transition-all duration-[1200ms] ease-expo-out group-hover:scale-100 group-hover:opacity-100"
           />
         )}
