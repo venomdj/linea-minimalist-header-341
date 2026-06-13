@@ -2,49 +2,35 @@ import ProductCard from "@/components/product/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMemo, useEffect, useRef, useState } from "react";
+import type { ActiveFilters } from "@/pages/Category";
 
 interface Props {
-  /** null = show all products */
   activeCategory?: string | null;
+  activeFilters?: ActiveFilters;
 }
 
-const ProductGrid = ({ activeCategory = null }: Props) => {
-  const { products, loading } = useProducts();
+const PRICE_MAP: Record<string, [number, number]> = {
+  "Under ₹10,000":          [0,      9999],
+  "₹10,000 — ₹50,000":     [10000,  49999],
+  "₹50,000 — ₹1,00,000":   [50000,  99999],
+  "Over ₹1,00,000":         [100000, Infinity],
+};
 
-  // Animate content swap when category changes
+const ProductGrid = ({ activeCategory = null, activeFilters }: Props) => {
+  const { products, rows, loading } = useProducts();
+
   const [visible, setVisible] = useState(true);
   const prevCatRef = useRef(activeCategory);
 
   useEffect(() => {
     if (prevCatRef.current === activeCategory) return;
     prevCatRef.current = activeCategory;
-    // Fade out, swap, fade in
     setVisible(false);
     const t = setTimeout(() => setVisible(true), 160);
     return () => clearTimeout(t);
   }, [activeCategory]);
 
-  const filtered = useMemo(() => {
-    if (!activeCategory) return products;
-    return products.filter((p) => {
-      // p.series is mapped from category in mapDbToProduct — check both
-      // We also carry category info via the raw series field fallback.
-      // The cleanest approach: re-check against the DbProduct via the
-      // products array which has series set to category slug when no
-      // explicit series is provided.
-      //
-      // Since mapDbToProduct sets series = p.series ?? p.category ?? "MYTHICAL VAULT",
-      // and products.category stores the slug, we use a custom attribute.
-      // We piggyback on the `set` field which falls back to category slug too.
-      //
-      // Best: use the id-keyed raw row from useProducts(). The hook exposes
-      // `rows` (DbProducts) alongside `products` (mapped). We match by id.
-      return true; // Overridden below with row-level check
-    });
-  }, [products, activeCategory]);
-
-  // Use rows for accurate category matching
-  const { rows } = useProducts();
+  // Build a row-level map for category slug matching
   const rowMap = useMemo(() => {
     const m: Record<string, string | null> = {};
     for (const r of rows) m[String(r.id)] = r.category;
@@ -52,9 +38,50 @@ const ProductGrid = ({ activeCategory = null }: Props) => {
   }, [rows]);
 
   const displayProducts = useMemo(() => {
-    if (!activeCategory) return products;
-    return products.filter((p) => rowMap[String(p.id)] === activeCategory);
-  }, [products, rows, activeCategory, rowMap]);
+    let list = products;
+
+    // 1. Filter by URL category param (e.g. /category/pokemon)
+    if (activeCategory && activeCategory !== "all") {
+      list = list.filter((p) => {
+        const cat = rowMap[String(p.id)] ?? "";
+        return cat.toLowerCase() === activeCategory.toLowerCase();
+      });
+    }
+
+    // 2. Filter panel — categories (Pokémon / One Piece / Accessories)
+    if (activeFilters?.categories?.length) {
+      list = list.filter((p) => {
+        const cat = (rowMap[String(p.id)] ?? "").toLowerCase();
+        return activeFilters.categories.some((c) => cat.includes(c.toLowerCase().replace(" ", "-")));
+      });
+    }
+
+    // 3. Filter panel — grade
+    if (activeFilters?.grades?.length) {
+      list = list.filter((p) =>
+        activeFilters.grades.some((g) => p.grade?.toLowerCase() === g.toLowerCase())
+      );
+    }
+
+    // 4. Filter panel — price ranges
+    if (activeFilters?.priceRanges?.length) {
+      list = list.filter((p) =>
+        activeFilters.priceRanges.some((r) => {
+          const [min, max] = PRICE_MAP[r] ?? [0, Infinity];
+          return p.price >= min && p.price <= max;
+        })
+      );
+    }
+
+    // 5. Sort
+    const sort = activeFilters?.sortBy ?? "featured";
+    if (sort === "price-low")  list = [...list].sort((a, b) => a.price - b.price);
+    if (sort === "price-high") list = [...list].sort((a, b) => b.price - a.price);
+    if (sort === "newest")     list = [...list].sort((a, b) => String(b.id).localeCompare(String(a.id)));
+    if (sort === "name")       list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+
+    return list;
+  }, [products, rows, activeCategory, activeFilters, rowMap]);
 
   return (
     <section className="w-full px-6 lg:px-12 mb-20">
@@ -70,12 +97,10 @@ const ProductGrid = ({ activeCategory = null }: Props) => {
           style={{ opacity: visible ? 1 : 0 }}
         >
           <p className="font-display text-2xl text-foreground tracking-tight mb-3">
-            {activeCategory ? "No products in this category" : "The vault is empty"}
+            No products match these filters
           </p>
           <p className="text-sm text-muted-foreground max-w-md">
-            {activeCategory
-              ? "Check back soon — new authenticated collectibles are added regularly."
-              : "New authenticated collectibles will appear here once they are added by the team."}
+            Try adjusting or clearing your filters to see more results.
           </p>
         </div>
       ) : (
