@@ -62,46 +62,49 @@ const Navigation = () => {
           scrolled ? "glass-strong" : "bg-background"
         }`}
       >
-        <div className="flex items-center justify-between h-16 px-4 sm:px-6">
-          {/* Mobile menu trigger */}
-          <button
-            onClick={() => setMobile(!mobile)}
-            className="lg:hidden p-2 text-nav-foreground hover:text-nav-hover transition-colors"
-            aria-label="Menu"
-          >
-            {mobile ? <X size={20} /> : <Menu size={20} />}
-          </button>
+        {/* 3-column grid: left | center brand | right — keeps brand pixel-perfect centered */}
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center h-16 px-4 sm:px-6">
 
-          {/* Left nav desktop links */}
-          <div className="hidden lg:flex items-center gap-8">
-            {navItems.map((item) => (
-              <div
-                key={item.name}
-                className="relative"
-                onMouseEnter={() => setOpen(item.name)}
-                onMouseLeave={() => setOpen(null)}
-              >
-                <Link
-                  to={item.href}
-                  className="text-[13px] tracking-wide text-nav-foreground hover:text-nav-hover transition-colors py-6 block"
+          {/* LEFT — hamburger (mobile) or nav links (desktop) */}
+          <div className="flex items-center">
+            <button
+              onClick={() => setMobile(!mobile)}
+              className="lg:hidden p-2 -ml-2 text-nav-foreground hover:text-nav-hover transition-colors"
+              aria-label="Menu"
+            >
+              {mobile ? <X size={20} /> : <Menu size={20} />}
+            </button>
+
+            <div className="hidden lg:flex items-center gap-8">
+              {navItems.map((item) => (
+                <div
+                  key={item.name}
+                  className="relative"
+                  onMouseEnter={() => setOpen(item.name)}
+                  onMouseLeave={() => setOpen(null)}
                 >
-                  {item.name}
-                </Link>
-              </div>
-            ))}
+                  <Link
+                    to={item.href}
+                    className="text-[13px] tracking-wide text-nav-foreground hover:text-nav-hover transition-colors py-6 block"
+                  >
+                    {item.name}
+                  </Link>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* ── CENTER BRAND — FIX: whitespace-nowrap + fluid font-size ── */}
+          {/* CENTER BRAND — naturally centered by grid */}
           <Link
             to="/"
-            className="absolute left-1/2 -translate-x-1/2 group select-none"
+            className="group select-none"
             aria-label="Mythical Vault — Home"
           >
             <span
               className="
                 font-display font-semibold tracking-[0.28em]
                 text-foreground whitespace-nowrap
-                text-[clamp(0.7rem,2.6vw,1.125rem)]
+                text-[clamp(0.65rem,2.6vw,1.125rem)]
                 group-hover:text-foreground/80 transition-colors duration-300
               "
             >
@@ -109,8 +112,8 @@ const Navigation = () => {
             </span>
           </Link>
 
-          {/* Right side icon actions panel */}
-          <div className="flex items-center gap-1 sm:gap-2">
+          {/* RIGHT — icons, always flush right */}
+          <div className="flex items-center justify-end gap-0.5 sm:gap-1">
             <button
               onClick={() => setSearch(!search)}
               className="p-2 text-nav-foreground hover:text-nav-hover transition-colors"
@@ -118,12 +121,14 @@ const Navigation = () => {
             >
               <Search size={18} strokeWidth={1.5} />
             </button>
+
             <button
-              className="hidden lg:block p-2 text-nav-foreground hover:text-nav-hover transition-colors"
+              className="hidden lg:flex p-2 text-nav-foreground hover:text-nav-hover transition-colors"
               aria-label="Watchlist"
             >
               <Heart size={18} strokeWidth={1.5} />
             </button>
+
             <button
               onClick={() => setBagOpen(true)}
               className="p-2 text-nav-foreground hover:text-nav-hover transition-colors relative"
@@ -137,26 +142,27 @@ const Navigation = () => {
               )}
             </button>
 
-            {/* ── ACCOUNT / LOGIN — premium redesign ── */}
+            {/* ACCOUNT / LOGIN
+                Mobile: icon-only pill (no text, no chevron) to keep bar slim
+                Desktop (sm+): full labelled button */}
             {user ? (
               <button
                 onClick={() => navigate("/account")}
                 className="
-                  group ml-1 sm:ml-2 relative flex items-center gap-2
-                  pl-2.5 pr-3 py-1.5
-                  border border-zinc-700/60 bg-zinc-900/80
-                  hover:border-zinc-500 hover:bg-zinc-800/90
-                  transition-all duration-200
-                  overflow-hidden
+                  group relative flex items-center
+                  ml-0.5 sm:ml-1
+                  p-2 sm:pl-2.5 sm:pr-3 sm:py-1.5
+                  sm:border sm:border-zinc-700/60 sm:bg-zinc-900/80
+                  hover:sm:border-zinc-500 hover:sm:bg-zinc-800/90
+                  transition-all duration-200 overflow-hidden
                 "
                 title="My Account"
               >
-                {/* subtle shimmer on hover */}
                 <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent pointer-events-none" />
                 <span className="relative flex items-center justify-center w-5 h-5 rounded-full bg-zinc-700 group-hover:bg-zinc-600 transition-colors">
                   <User size={11} strokeWidth={2} className="text-zinc-200" />
                 </span>
-                <span className="hidden sm:block text-[10px] font-mono uppercase tracking-widest text-zinc-300 group-hover:text-white transition-colors">
+                <span className="hidden sm:block ml-2 text-[10px] font-mono uppercase tracking-widest text-zinc-300 group-hover:text-white transition-colors">
                   Account
                 </span>
               </button>
@@ -164,25 +170,25 @@ const Navigation = () => {
               <button
                 onClick={() => navigate("/login")}
                 className="
-                  group ml-1 sm:ml-2 relative flex items-center gap-2
-                  pl-2.5 pr-3 py-1.5
-                  border border-zinc-700/40 bg-transparent
-                  hover:border-zinc-500 hover:bg-zinc-900/70
-                  transition-all duration-200
-                  overflow-hidden
+                  group relative flex items-center
+                  ml-0.5 sm:ml-1
+                  p-2 sm:pl-2.5 sm:pr-3 sm:py-1.5
+                  sm:border sm:border-zinc-700/40 sm:bg-transparent
+                  hover:sm:border-zinc-500 hover:sm:bg-zinc-900/70
+                  transition-all duration-200 overflow-hidden
                 "
                 title="Sign In"
               >
                 <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-transparent via-white/[0.03] to-transparent pointer-events-none" />
-                {/* glowing dot indicator — draws the eye */}
                 <span className="relative flex items-center justify-center w-5 h-5">
-                  <span className="absolute w-5 h-5 rounded-full border border-zinc-500/40 group-hover:border-zinc-400/60 transition-colors" />
-                  <LogIn size={10} strokeWidth={2} className="text-zinc-400 group-hover:text-zinc-200 transition-colors" />
+                  <span className="absolute w-5 h-5 rounded-full border border-zinc-500/40 group-hover:border-zinc-400/60 transition-colors sm:hidden" />
+                  <LogIn size={18} strokeWidth={1.5} className="text-nav-foreground hover:text-nav-hover sm:hidden" />
+                  <LogIn size={10} strokeWidth={2} className="hidden sm:block text-zinc-400 group-hover:text-zinc-200 transition-colors" />
                 </span>
-                <span className="hidden sm:block text-[10px] font-mono uppercase tracking-widest text-zinc-400 group-hover:text-zinc-200 transition-colors">
+                <span className="hidden sm:block ml-2 text-[10px] font-mono uppercase tracking-widest text-zinc-400 group-hover:text-zinc-200 transition-colors">
                   Sign&nbsp;In
                 </span>
-                <ChevronRight size={9} className="hidden sm:block text-zinc-600 group-hover:text-zinc-400 transition-colors -ml-0.5" />
+                <ChevronRight size={9} className="hidden sm:block text-zinc-600 group-hover:text-zinc-400 transition-colors ml-0.5" />
               </button>
             )}
           </div>
