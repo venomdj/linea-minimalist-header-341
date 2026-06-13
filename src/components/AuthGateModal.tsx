@@ -4,7 +4,7 @@
 
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, LogIn, UserPlus, ShieldCheck } from "lucide-react";
+import { X, LogIn, ShieldCheck } from "lucide-react";
 
 interface Props {
   isOpen: boolean;
@@ -42,11 +42,6 @@ const AuthGateModal = ({ isOpen, onClose, returnTo = "/", action = "complete thi
   const goLogin = () => {
     onClose();
     navigate(`/login?returnTo=${encodedReturn}`);
-  };
-
-  const goSignup = () => {
-    onClose();
-    navigate(`/signup?returnTo=${encodedReturn}`);
   };
 
   return (
@@ -113,19 +108,7 @@ const AuthGateModal = ({ isOpen, onClose, returnTo = "/", action = "complete thi
               Sign In
             </button>
 
-            <button
-              onClick={goSignup}
-              className="
-                group w-full flex items-center justify-center gap-2.5
-                h-11 border border-zinc-700 text-zinc-300
-                text-[11px] font-mono uppercase tracking-[0.18em]
-                hover:border-zinc-500 hover:text-white hover:bg-zinc-900/60
-                transition-all duration-150
-              "
-            >
-              <UserPlus size={13} strokeWidth={2} />
-              Create Account — Free
-            </button>
+
           </div>
 
           {/* Trust strip */}
