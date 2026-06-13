@@ -13,6 +13,13 @@ const navItems = [
   { name: "Vault", href: "/", sub: ["About Mythical Vault", "Authentication", "Grading Standards", "Sell With Us"] },
 ];
 
+const mobileCategories = [
+  { name: "All",         href: "/category/all" },
+  { name: "Pokémon",     href: "/category/pokemon" },
+  { name: "One Piece",   href: "/category/one-piece" },
+  { name: "Accessories", href: "/category/accessories" },
+];
+
 const Navigation = () => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
@@ -247,53 +254,54 @@ const Navigation = () => {
           </div>
         )}
 
-        {/* Mobile slide menu container */}
+        {/* Mobile slide menu — real site categories only */}
         {mobile && (
           <div className="lg:hidden absolute top-full left-0 right-0 glass-strong border-t border-border/40 animate-fade-in">
-            <div className="px-6 py-8 space-y-6">
-              {navItems.map((item) => (
-                <div key={item.name}>
+            <div className="px-6 pt-6 pb-8">
+
+              {/* Section label */}
+              <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50 mb-3">
+                Browse
+              </p>
+
+              {/* Category links */}
+              <div className="space-y-1">
+                {mobileCategories.map((cat) => (
                   <Link
-                    to={item.href}
+                    key={cat.name}
+                    to={cat.href}
                     onClick={() => setMobile(false)}
-                    className="block font-display text-xl text-foreground tracking-tight"
+                    className="flex items-center justify-between w-full py-3 border-b border-border/30 last:border-0 group"
                   >
-                    {item.name}
+                    <span className="font-display text-lg text-foreground tracking-tight group-hover:text-foreground/70 transition-colors">
+                      {cat.name}
+                    </span>
+                    <ChevronRight size={15} className="text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
                   </Link>
-                  <div className="mt-2 pl-1 space-y-1.5">
-                    {item.sub.map((s) => (
-                      <Link
-                        key={s}
-                        to="/category/all"
-                        onClick={() => setMobile(false)}
-                        className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {s}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ))}
-              {/* Mobile auth CTA */}
-              <div className="pt-2 border-t border-border/40">
+                ))}
+              </div>
+
+              {/* Auth CTA */}
+              <div className="mt-6 pt-4 border-t border-border/40">
                 {user ? (
                   <button
                     onClick={() => { navigate("/account"); setMobile(false); }}
-                    className="w-full flex items-center gap-3 py-3 text-sm text-foreground"
+                    className="w-full flex items-center gap-3 py-2 text-sm text-foreground hover:text-foreground/70 transition-colors"
                   >
-                    <User size={16} strokeWidth={1.5} />
+                    <User size={15} strokeWidth={1.5} />
                     My Account
                   </button>
                 ) : (
                   <button
                     onClick={() => { navigate("/login"); setMobile(false); }}
-                    className="w-full flex items-center gap-3 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="w-full flex items-center gap-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    <LogIn size={16} strokeWidth={1.5} />
+                    <LogIn size={15} strokeWidth={1.5} />
                     Sign In / Create Account
                   </button>
                 )}
               </div>
+
             </div>
           </div>
         )}
