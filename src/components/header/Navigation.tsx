@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Search, Heart, ShoppingBag as BagIcon, X, Menu, LogIn, User } from "lucide-react";
+import { Search, Heart, ShoppingBag as BagIcon, X, Menu, LogIn, User, ChevronRight } from "lucide-react";
 import ShoppingBag from "./ShoppingBag";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
@@ -48,11 +48,11 @@ const Navigation = () => {
         <div className="px-6 h-8 flex items-center justify-between text-[11px] font-mono tracking-wider text-muted-foreground/80">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-verified pulse-dot" />
-            LIVE 
+            LIVE
           </div>
           <div className="flex items-center gap-6">
             <span>FREE INSURED SHIPPING OVER ₹5,000 · PAN-INDIA</span>
-            <Link to="/about/our-story" className="hover:text-foreground transition-colors"> </Link>
+            <Link to="/about/our-story" className="hover:text-foreground transition-colors" />
           </div>
         </div>
       </div>
@@ -62,7 +62,7 @@ const Navigation = () => {
           scrolled ? "glass-strong" : "bg-background"
         }`}
       >
-        <div className="flex items-center justify-between h-16 px-6">
+        <div className="flex items-center justify-between h-16 px-4 sm:px-6">
           {/* Mobile menu trigger */}
           <button
             onClick={() => setMobile(!mobile)}
@@ -91,15 +91,26 @@ const Navigation = () => {
             ))}
           </div>
 
-          {/* Center brand title */}
-          <Link to="/" className="absolute left-1/2 -translate-x-1/2 group">
-            <span className="font-display text-lg font-semibold tracking-[0.32em] text-foreground">
+          {/* ── CENTER BRAND — FIX: whitespace-nowrap + fluid font-size ── */}
+          <Link
+            to="/"
+            className="absolute left-1/2 -translate-x-1/2 group select-none"
+            aria-label="Mythical Vault — Home"
+          >
+            <span
+              className="
+                font-display font-semibold tracking-[0.28em]
+                text-foreground whitespace-nowrap
+                text-[clamp(0.7rem,2.6vw,1.125rem)]
+                group-hover:text-foreground/80 transition-colors duration-300
+              "
+            >
               MYTHICAL VAULT
             </span>
           </Link>
 
           {/* Right side icon actions panel */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <button
               onClick={() => setSearch(!search)}
               className="p-2 text-nav-foreground hover:text-nav-hover transition-colors"
@@ -126,24 +137,52 @@ const Navigation = () => {
               )}
             </button>
 
-            {/* Account / Login button */}
+            {/* ── ACCOUNT / LOGIN — premium redesign ── */}
             {user ? (
               <button
                 onClick={() => navigate("/account")}
-                className="ml-2 flex items-center gap-1.5 px-3 py-1.5 border border-zinc-800 bg-zinc-900/60 text-[10px] font-mono uppercase tracking-widest text-zinc-400 hover:text-white hover:border-zinc-600 transition duration-200"
+                className="
+                  group ml-1 sm:ml-2 relative flex items-center gap-2
+                  pl-2.5 pr-3 py-1.5
+                  border border-zinc-700/60 bg-zinc-900/80
+                  hover:border-zinc-500 hover:bg-zinc-800/90
+                  transition-all duration-200
+                  overflow-hidden
+                "
                 title="My Account"
               >
-                <User size={12} strokeWidth={2} />
-                <span className="hidden sm:inline">Account</span>
+                {/* subtle shimmer on hover */}
+                <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent pointer-events-none" />
+                <span className="relative flex items-center justify-center w-5 h-5 rounded-full bg-zinc-700 group-hover:bg-zinc-600 transition-colors">
+                  <User size={11} strokeWidth={2} className="text-zinc-200" />
+                </span>
+                <span className="hidden sm:block text-[10px] font-mono uppercase tracking-widest text-zinc-300 group-hover:text-white transition-colors">
+                  Account
+                </span>
               </button>
             ) : (
               <button
                 onClick={() => navigate("/login")}
-                className="ml-2 flex items-center gap-1.5 px-3 py-1.5 border border-zinc-900 bg-zinc-950/40 text-[10px] font-mono uppercase tracking-widest text-zinc-400 hover:text-white hover:border-zinc-700 transition duration-200"
+                className="
+                  group ml-1 sm:ml-2 relative flex items-center gap-2
+                  pl-2.5 pr-3 py-1.5
+                  border border-zinc-700/40 bg-transparent
+                  hover:border-zinc-500 hover:bg-zinc-900/70
+                  transition-all duration-200
+                  overflow-hidden
+                "
                 title="Sign In"
               >
-                <LogIn size={12} strokeWidth={2} />
-                <span className="hidden sm:inline">Login</span>
+                <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-transparent via-white/[0.03] to-transparent pointer-events-none" />
+                {/* glowing dot indicator — draws the eye */}
+                <span className="relative flex items-center justify-center w-5 h-5">
+                  <span className="absolute w-5 h-5 rounded-full border border-zinc-500/40 group-hover:border-zinc-400/60 transition-colors" />
+                  <LogIn size={10} strokeWidth={2} className="text-zinc-400 group-hover:text-zinc-200 transition-colors" />
+                </span>
+                <span className="hidden sm:block text-[10px] font-mono uppercase tracking-widest text-zinc-400 group-hover:text-zinc-200 transition-colors">
+                  Sign&nbsp;In
+                </span>
+                <ChevronRight size={9} className="hidden sm:block text-zinc-600 group-hover:text-zinc-400 transition-colors -ml-0.5" />
               </button>
             )}
           </div>
@@ -229,6 +268,26 @@ const Navigation = () => {
                   </div>
                 </div>
               ))}
+              {/* Mobile auth CTA */}
+              <div className="pt-2 border-t border-border/40">
+                {user ? (
+                  <button
+                    onClick={() => { navigate("/account"); setMobile(false); }}
+                    className="w-full flex items-center gap-3 py-3 text-sm text-foreground"
+                  >
+                    <User size={16} strokeWidth={1.5} />
+                    My Account
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => { navigate("/login"); setMobile(false); }}
+                    className="w-full flex items-center gap-3 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <LogIn size={16} strokeWidth={1.5} />
+                    Sign In / Create Account
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
