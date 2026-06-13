@@ -65,8 +65,10 @@ let channelCreated = false;
 const notify = () => listeners.forEach((fn) => fn());
 
 const load = async () => {
-  sharedLoading = true;
-  notify();
+ if (sharedProducts.length === 0) {
+    sharedLoading = true;
+    notify();
+  }
   const { data, error } = await supabase
     .from("products")
     .select("*")
