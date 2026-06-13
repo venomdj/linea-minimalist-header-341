@@ -24,7 +24,7 @@ const ProductCard = ({ product, priority }: Props) => {
           src={product.image}
           alt={product.name}
           loading={priority ? "eager" : "lazy"}
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-[1200ms] ease-expo-out group-hover:scale-105 group-hover:opacity-0 ${outOfStock ? "opacity-50 grayscale" : ""}`}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[450ms] ease-expo-out group-hover:scale-105 group-hover:opacity-0 ${outOfStock ? "opacity-50 grayscale" : ""}`}
         />
         {/* Hover image */}
         {product.hoverImage && !outOfStock && (
@@ -33,7 +33,7 @@ const ProductCard = ({ product, priority }: Props) => {
             alt=""
             aria-hidden
             loading="eager"
-            className="absolute inset-0 w-full h-full object-cover scale-105 opacity-0 transition-all duration-[1200ms] ease-expo-out group-hover:scale-100 group-hover:opacity-100"
+            className="absolute inset-0 w-full h-full object-cover scale-105 opacity-0 transition-opacity duration-[450ms] ease-expo-out group-hover:scale-100 group-hover:opacity-100"
           />
         )}
 
