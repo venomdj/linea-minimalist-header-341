@@ -9,6 +9,9 @@ interface Props {
   activeFilters?: ActiveFilters;
 }
 
+// Normalise any string to a slug: "One Piece" → "one-piece", "pokemon" → "pokemon"
+const toSlug = (s: string) => s.toLowerCase().trim().replace(/\s+/g, "-");
+
 const PRICE_MAP: Record<string, [number, number]> = {
   "Under ₹10,000":          [0,      9999],
   "₹10,000 — ₹50,000":     [10000,  49999],
@@ -40,19 +43,23 @@ const ProductGrid = ({ activeCategory = null, activeFilters }: Props) => {
   const displayProducts = useMemo(() => {
     let list = products;
 
-    // 1. Filter by URL category param (e.g. /category/pokemon)
+    // 1. Filter by URL category param (e.g. /category/pokemon, /category/one-piece)
     if (activeCategory && activeCategory !== "all") {
       list = list.filter((p) => {
-        const cat = rowMap[String(p.id)] ?? "";
-        return cat.toLowerCase() === activeCategory.toLowerCase();
+        const dbCat = toSlug(rowMap[String(p.id)] ?? "");
+        const urlCat = toSlug(activeCategory);
+        return dbCat === urlCat || dbCat.includes(urlCat) || urlCat.includes(dbCat);
       });
     }
 
     // 2. Filter panel — categories (Pokémon / One Piece / Accessories)
     if (activeFilters?.categories?.length) {
       list = list.filter((p) => {
-        const cat = (rowMap[String(p.id)] ?? "").toLowerCase();
-        return activeFilters.categories.some((c) => cat.includes(c.toLowerCase().replace(" ", "-")));
+        const dbCat = toSlug(rowMap[String(p.id)] ?? "");
+        return activeFilters.categories.some((c) => {
+          const cs = toSlug(c);
+          return dbCat === cs || dbCat.includes(cs) || cs.includes(dbCat);
+        });
       });
     }
 
