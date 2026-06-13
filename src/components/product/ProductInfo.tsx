@@ -5,6 +5,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { BadgeCheck, Shield, TrendingUp, Heart, ShoppingBag } from "lucide-react";
 import { formatPrice, rarityClass, type Product } from "@/data/products";
 import { useCart } from "@/context/CartContext";
+import { useAuthGate } from "@/hooks/useAuthGate";  // ← NEW
 import { toast } from "sonner";
 
 interface Props { product: Product; }
@@ -13,6 +14,13 @@ const ProductInfo = ({ product }: Props) => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<"buy" | "bid">("buy");
   const { add } = useCart();
+
+  // ── Auth gate — shows login modal for guests ──────────────────────────────
+  const { guardedAction, AuthGate } = useAuthGate({
+    returnTo: `/product/${product.id}`,
+    action: "purchase this card",
+  });
+  // ─────────────────────────────────────────────────────────────────────────
 
   const trend = product.lastSale ? product.price - product.lastSale : 0;
   const trendPct = product.lastSale ? (trend / product.lastSale) * 100 : 0;
@@ -35,6 +43,9 @@ const ProductInfo = ({ product }: Props) => {
 
   return (
     <div className="space-y-8">
+      {/* Auth gate modal — invisible until a guest clicks Buy Now / Add to Cart */}
+      <AuthGate />
+
       <div className="hidden lg:block">
         <Breadcrumb>
           <BreadcrumbList className="text-muted-foreground">
@@ -73,7 +84,6 @@ const ProductInfo = ({ product }: Props) => {
       </div>
 
       <div className="border border-border bg-surface-1 p-6 space-y-5">
-        {/* Tabs — hide bid tab when OOS since no bidding either */}
         <div className="flex border-b border-border">
           {(["buy", "bid"] as const).map((t) => (
             <button
@@ -107,7 +117,6 @@ const ProductInfo = ({ product }: Props) => {
         </div>
 
         {outOfStock ? (
-          /* ── Out of Stock state ── */
           <div className="space-y-3">
             <div className="w-full h-12 flex items-center justify-center border border-border/50 bg-muted/30 text-muted-foreground text-xs tracking-[0.22em] font-mono uppercase select-none">
               Currently Unavailable
@@ -117,10 +126,13 @@ const ProductInfo = ({ product }: Props) => {
             </p>
           </div>
         ) : (
-          /* ── In Stock state ── */
           <div className="space-y-2">
             <div className="flex gap-2">
-              <Button onClick={handleBuy} className="flex-1 h-12 bg-foreground text-background hover:bg-foreground/90 rounded-none font-medium tracking-wider text-xs">
+              {/* ── Buy Now — gated: guests see login modal ── */}
+              <Button
+                onClick={() => guardedAction(handleBuy)}
+                className="flex-1 h-12 bg-foreground text-background hover:bg-foreground/90 rounded-none font-medium tracking-wider text-xs"
+              >
                 {tab === "buy" ? `BUY NOW · ${formatPrice(product.price)}` : "PLACE A BID"}
               </Button>
               <Button variant="outline" size="icon" className="h-12 w-12 rounded-none border-border hover:border-foreground/40 bg-transparent">
@@ -128,8 +140,9 @@ const ProductInfo = ({ product }: Props) => {
               </Button>
             </div>
             {tab === "buy" && (
+              /* ── Add to Cart — also gated ── */
               <Button
-                onClick={handleAddToCart}
+                onClick={() => guardedAction(handleAddToCart)}
                 variant="outline"
                 className="w-full h-12 rounded-none border-border hover:border-foreground/40 bg-transparent text-xs tracking-[0.18em] font-medium"
               >
