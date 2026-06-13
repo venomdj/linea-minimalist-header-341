@@ -1,4 +1,3 @@
-import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import ProductCard from "@/components/product/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,7 +9,6 @@ interface Props {
 }
 
 const ProductGrid = ({ activeCategory = null }: Props) => {
-  const ref = useScrollReveal();
   const { products, loading } = useProducts();
 
   // Animate content swap when category changes
@@ -59,7 +57,7 @@ const ProductGrid = ({ activeCategory = null }: Props) => {
   }, [products, rows, activeCategory, rowMap]);
 
   return (
-    <section ref={ref} className="reveal w-full px-6 lg:px-12 mb-20">
+    <section className="w-full px-6 lg:px-12 mb-20">
       {loading && products.length === 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-12 lg:gap-x-6 lg:gap-y-16">
           {Array.from({ length: 8 }).map((_, i) => (
