@@ -27,7 +27,7 @@ interface FilterSortBarProps {
   setActiveFilters: (f: ActiveFilters) => void;
 }
 
-const CATEGORIES = ["Pokémon", "One Piece", "Accessories"];
+const CATEGORIES = ["Pokemon", "One Piece", "Accessories"];
 const PRICE_RANGES = ["Under ₹10,000", "₹10,000 — ₹50,000", "₹50,000 — ₹1,00,000", "Over ₹1,00,000"];
 const GRADES = ["PSA 10", "PSA 9", "BGS 9.5", "Ungraded"];
 
