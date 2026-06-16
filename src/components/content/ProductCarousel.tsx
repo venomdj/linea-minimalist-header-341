@@ -89,7 +89,7 @@ const ProductCarousel = () => {
           <Carousel
             setApi={setApi}
             opts={{
-              align: "start",
+              align: "center",
               loop: true,
               dragFree: false,
               duration: 28,          // lower = snappier settle (Embla uses friction-based easing)
