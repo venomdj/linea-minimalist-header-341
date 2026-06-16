@@ -40,13 +40,13 @@ const ImageZoom = ({ images, initialIndex, isOpen, onClose }: ImageZoomProps) =>
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
       {/* Backdrop click to close */}
-      <div className="absolute inset-0" onClick={onClose} />
+      <div className="absolute inset-0 z-0" onClick={onClose} />
 
       {/* Close button */}
       <button
         onClick={onClose}
         aria-label="Close"
-        className="absolute top-5 right-5 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
+        className="absolute top-5 right-5 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
       >
         <X className="w-5 h-5" />
       </button>
@@ -56,7 +56,7 @@ const ImageZoom = ({ images, initialIndex, isOpen, onClose }: ImageZoomProps) =>
         <button
           onClick={(e) => { e.stopPropagation(); setCurrent((c) => c - 1); }}
           aria-label="Previous image"
-          className="absolute left-4 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
+          className="absolute left-4 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
         >
           <ChevronLeft className="w-6 h-6" />
         </button>
@@ -78,7 +78,7 @@ const ImageZoom = ({ images, initialIndex, isOpen, onClose }: ImageZoomProps) =>
         <button
           onClick={(e) => { e.stopPropagation(); setCurrent((c) => c + 1); }}
           aria-label="Next image"
-          className="absolute right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
+          className="absolute right-4 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
         >
           <ChevronRight className="w-6 h-6" />
         </button>
@@ -86,7 +86,7 @@ const ImageZoom = ({ images, initialIndex, isOpen, onClose }: ImageZoomProps) =>
 
       {/* Dot indicators (only if multiple images) */}
       {images.length > 1 && (
-        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-10">
+        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-20">
           {images.map((_, i) => (
             <button
               key={i}
