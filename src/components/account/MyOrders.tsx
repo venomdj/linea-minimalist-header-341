@@ -1,12 +1,13 @@
-// src/pages/account/MyOrders.tsx
+// src/components/account/MyOrders.tsx
 import { Link } from "react-router-dom";
-import { Package, ArrowRight, Search } from "lucide-react";
+import { Package, ArrowRight, Search, FileText } from "lucide-react";
 import { useState } from "react";
 import AccountLayout from "@/components/account/AccountLayout";
 import OrderTimeline from "@/components/account/OrderTimeline";
 import { useAuth } from "@/context/AuthContext";
 import { useMyOrders } from "@/hooks/useOrders";
 import { getStatusBg, getStatusColor } from "@/types/order";
+import { viewInvoicePDF } from "@/lib/generateInvoice";
 
 export default function MyOrders() {
   const { user } = useAuth();
@@ -76,12 +77,20 @@ export default function MyOrders() {
                       {" · "}₹{order.total_amount.toLocaleString("en-IN")}
                     </p>
                   </div>
-                  <Link
-                    to={`/account/orders/${order.id}`}
-                    className="flex items-center gap-1.5 text-[10px] font-mono tracking-widest text-zinc-500 hover:text-white border border-zinc-700 hover:border-zinc-500 px-3 py-1.5 transition-colors uppercase flex-shrink-0"
-                  >
-                    Details <ArrowRight size={10} />
-                  </Link>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => viewInvoicePDF(order)}
+                      className="flex items-center gap-1.5 text-[10px] font-mono tracking-widest text-zinc-500 hover:text-white border border-zinc-700 hover:border-zinc-500 px-3 py-1.5 transition-colors uppercase"
+                    >
+                      <FileText size={10} /> View PDF
+                    </button>
+                    <Link
+                      to={`/account/orders/${order.id}`}
+                      className="flex items-center gap-1.5 text-[10px] font-mono tracking-widest text-zinc-500 hover:text-white border border-zinc-700 hover:border-zinc-500 px-3 py-1.5 transition-colors uppercase"
+                    >
+                      Details <ArrowRight size={10} />
+                    </Link>
+                  </div>
                 </div>
 
                 {/* Line items preview */}
