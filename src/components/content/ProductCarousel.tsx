@@ -1,7 +1,16 @@
-import { useRef } from "react";
+import { useRef, useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  CarouselDots,
+  type CarouselApi,
+} from "@/components/ui/carousel";
 import ProductCard from "@/components/product/ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProducts } from "@/hooks/useProducts";
@@ -9,13 +18,22 @@ import { useProducts } from "@/hooks/useProducts";
 const ProductCarousel = () => {
   const ref = useScrollReveal();
   const { products, loading } = useProducts();
-  // Track whether the initial fade-in animation has already played.
-  // Supabase realtime triggers re-renders; without this flag every card
-  // would re-animate every time a product is added/updated.
   const hasAnimated = useRef(false);
+  const [api, setApi] = useState<CarouselApi>();
+
+  // Autoplay plugin — pauses on hover/drag, resumes after 4 s idle
+  const autoplay = useRef(
+    Autoplay({ delay: 3200, stopOnInteraction: true, stopOnMouseEnter: true })
+  );
+
+  // Resume autoplay after user interaction settles
+  const handlePointerUp = useCallback(() => {
+    if (autoplay.current?.reset) autoplay.current.reset();
+  }, []);
 
   return (
     <section ref={ref} className="reveal w-full py-16 md:py-20 lg:py-28">
+      {/* Header */}
       <div className="px-4 sm:px-6 lg:px-12 flex items-end justify-between mb-8 md:mb-10 gap-4">
         <div className="min-w-0">
           <p className="eyebrow mb-2 md:mb-3 flex items-center gap-2">
@@ -26,7 +44,9 @@ const ProductCarousel = () => {
             The collection, in motion.
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground mt-2">
-            {loading ? "Syncing vault…" : `${products.length} authenticated card${products.length === 1 ? "" : "s"} available now`}
+            {loading
+              ? "Syncing vault…"
+              : `${products.length} authenticated card${products.length === 1 ? "" : "s"} available now`}
           </p>
         </div>
         <Link
@@ -37,16 +57,22 @@ const ProductCarousel = () => {
         </Link>
       </div>
 
+      {/* Loading skeletons */}
       {loading ? (
         <div className="px-4 sm:px-6 lg:px-12 flex gap-3 overflow-hidden">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="basis-[70%] sm:basis-[45%] md:basis-1/3 lg:basis-1/4 xl:basis-1/5 shrink-0">
+            <div
+              key={i}
+              className="basis-[70%] sm:basis-[45%] md:basis-1/3 lg:basis-1/4 xl:basis-1/5 shrink-0"
+            >
               <Skeleton className="aspect-[3/4] w-full" />
               <Skeleton className="h-4 w-2/3 mt-3" />
               <Skeleton className="h-3 w-1/3 mt-2" />
             </div>
           ))}
         </div>
+
+      /* Empty state */
       ) : products.length === 0 ? (
         <div className="mx-4 sm:mx-6 lg:mx-12 border border-dashed border-border p-10 md:p-16 text-center">
           <p className="font-mono text-xs tracking-widest text-muted-foreground uppercase">
@@ -56,53 +82,73 @@ const ProductCarousel = () => {
             New drops will appear here automatically.
           </p>
         </div>
-      ) : (
-        <Carousel
-          opts={{ align: "start", loop: false, dragFree: true }}
-          className="w-full"
-          aria-label="Featured products"
-        >
-          <div className="relative">
-            <CarouselContent className="px-4 sm:px-6 lg:px-12 -ml-3">
-              {products.map((p, i) => {
-                // Only animate cards on the very first render, not on
-                // subsequent realtime re-renders from Supabase.
-                const shouldAnimate = !hasAnimated.current;
-                return (
-                  <CarouselItem
-                    key={String(p.id)}
-                    className={`pl-3 basis-[78%] sm:basis-[45%] md:basis-1/3 lg:basis-1/4 xl:basis-1/5 ${shouldAnimate ? "animate-fade-in" : ""}`}
-                    style={{
-                      animationDelay: shouldAnimate ? `${Math.min(i, 8) * 40}ms` : undefined,
-                      willChange: "transform",
-                    }}
-                    aria-label={`Product ${i + 1} of ${products.length}: ${p.name ?? "Untitled"}`}
-                  >
-                    <ProductCard product={p} priority={i < 4} />
-                  </CarouselItem>
-                );
-              })}
-            </CarouselContent>
-            <div className="hidden md:block">
-              <CarouselPrevious
-                aria-label="Previous products"
-                className="left-4 lg:left-6 bg-background/60 backdrop-blur-md border-border text-foreground hover:bg-background hover:text-foreground"
-              />
-              <CarouselNext
-                aria-label="Next products"
-                className="right-4 lg:right-6 bg-background/60 backdrop-blur-md border-border text-foreground hover:bg-background hover:text-foreground"
-              />
-            </div>
-          </div>
-        </Carousel>
-      )}
-      {/* Mark animation as done after first render so realtime updates
-          don't re-trigger the fade-in on every card */}
-      {!hasAnimated.current && products.length > 0 && !loading && (() => {
-        hasAnimated.current = true;
-        return null;
-      })()}
 
+      /* Carousel */
+      ) : (
+        <>
+          <Carousel
+            setApi={setApi}
+            opts={{
+              align: "start",
+              loop: true,
+              dragFree: false,
+              duration: 28,          // lower = snappier settle (Embla uses friction-based easing)
+              skipSnaps: false,
+            }}
+            plugins={[autoplay.current]}
+            className="w-full"
+            aria-label="Featured products"
+            onPointerUp={handlePointerUp}
+          >
+            <div className="relative">
+              {/* Left fade edge */}
+              <div className="pointer-events-none absolute left-0 top-0 h-full w-8 z-10 bg-gradient-to-r from-background to-transparent" />
+              {/* Right fade edge */}
+              <div className="pointer-events-none absolute right-0 top-0 h-full w-8 z-10 bg-gradient-to-l from-background to-transparent" />
+
+              <CarouselContent className="px-4 sm:px-6 lg:px-12 -ml-3">
+                {products.map((p, i) => {
+                  const shouldAnimate = !hasAnimated.current;
+                  return (
+                    <CarouselItem
+                      key={String(p.id)}
+                      className={`pl-3 basis-[78%] sm:basis-[45%] md:basis-1/3 lg:basis-1/4 xl:basis-1/5 ${shouldAnimate ? "animate-fade-in" : ""}`}
+                      style={{
+                        animationDelay: shouldAnimate ? `${Math.min(i, 8) * 40}ms` : undefined,
+                        willChange: "transform",
+                      }}
+                      aria-label={`Product ${i + 1} of ${products.length}: ${p.name ?? "Untitled"}`}
+                    >
+                      <ProductCard product={p} priority={i < 4} />
+                    </CarouselItem>
+                  );
+                })}
+              </CarouselContent>
+
+              {/* Nav arrows — desktop only */}
+              <div className="hidden md:block">
+                <CarouselPrevious
+                  aria-label="Previous products"
+                  className="left-4 lg:left-6 bg-background/60 backdrop-blur-md border-border text-foreground hover:bg-background hover:text-foreground"
+                />
+                <CarouselNext
+                  aria-label="Next products"
+                  className="right-4 lg:right-6 bg-background/60 backdrop-blur-md border-border text-foreground hover:bg-background hover:text-foreground"
+                />
+              </div>
+            </div>
+
+            {/* Dot indicators */}
+            <CarouselDots className="mt-6 px-4" />
+          </Carousel>
+        </>
+      )}
+
+      {/* Mark animation done after first render */}
+      {!hasAnimated.current && products.length > 0 && !loading &&
+        (() => { hasAnimated.current = true; return null; })()}
+
+      {/* Mobile "See full market" link */}
       <div className="md:hidden px-4 mt-6 text-center">
         <Link
           to="/category/all"
