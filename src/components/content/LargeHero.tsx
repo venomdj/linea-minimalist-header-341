@@ -1,7 +1,67 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, BadgeCheck } from "lucide-react";
 import heroVault from "@/assets/hero-vault.jpg";
+import { useAuth } from "@/context/AuthContext";
+
+const HOLD_MS = 2600;   // how long each message stays fully visible
+const FADE_MS = 650;    // fade/blur transition duration
+
+function HeroMessageRotator() {
+  const { user, profile } = useAuth();
+
+  const messages = useMemo(() => {
+    const base = [
+      "Discover rare collectibles",
+      "Build your legendary collection",
+      "Your next grail awaits",
+    ];
+    if (user) {
+      const name = profile?.full_name || user.email?.split("@")[0] || "Collector";
+      return [`✦ Welcome back, ${name}`, ...base];
+    }
+    return base;
+  }, [user, profile]);
+
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    let holdTimer: ReturnType<typeof setTimeout>;
+    let fadeTimer: ReturnType<typeof setTimeout>;
+
+    const cycle = () => {
+      holdTimer = setTimeout(() => {
+        setVisible(false);
+        fadeTimer = setTimeout(() => {
+          setIndex((i) => (i + 1) % messages.length);
+          setVisible(true);
+          cycle();
+        }, FADE_MS);
+      }, HOLD_MS);
+    };
+
+    cycle();
+    return () => {
+      clearTimeout(holdTimer);
+      clearTimeout(fadeTimer);
+    };
+  }, [messages.length]);
+
+  return (
+    <div className="flex items-center gap-3 mb-6 lg:mb-8 animate-fade-in min-h-[18px]">
+      <span className="w-1.5 h-1.5 rounded-full bg-accent dot-glow-gold flex-shrink-0" />
+      <span
+        className={`eyebrow text-accent text-glow-gold text-[10px] sm:text-xs tracking-[0.2em] transition-all ease-expo-out ${
+          visible ? "opacity-100 blur-0 translate-y-0" : "opacity-0 blur-[3px] -translate-y-1"
+        }`}
+        style={{ transitionDuration: `${FADE_MS}ms` }}
+      >
+        {messages[index]}
+      </span>
+    </div>
+  );
+}
 
 const LargeHero = () => {
   const [scrollY, setScrollY] = useState(0);
@@ -32,10 +92,7 @@ const LargeHero = () => {
       {/* Content */}
       <div className="relative z-10 flex-1 flex flex-col justify-end px-6 lg:px-12 pt-28 pb-12 lg:pt-32 lg:pb-24">
         <div className="max-w-4xl">
-          <div className="flex items-center gap-3 mb-6 lg:mb-8 animate-fade-in">
-            <span className="w-1.5 h-1.5 rounded-full bg-verified pulse-dot" />
-            <span className="eyebrow text-foreground/70 text-[10px] sm:text-xs">Hope you like it {"<3"}</span>
-          </div>
+          <HeroMessageRotator />
 
           <h1
             className="font-display text-[clamp(2rem,7vw,7.5rem)] leading-[1] tracking-[-0.03em] font-light text-foreground animate-fade-up"
