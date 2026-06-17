@@ -43,7 +43,7 @@ export default function AccountLayout({ children, title }: Props) {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
 
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-[11px] font-mono tracking-widest text-muted-foreground mb-8 uppercase">
+          <nav className="flex items-center gap-2 text-[12px] font-mono tracking-widest text-muted-foreground mb-8 uppercase">
             <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
             <ChevronRight size={10} />
             <Link to="/account" className="hover:text-foreground transition-colors">My Account</Link>
@@ -59,23 +59,26 @@ export default function AccountLayout({ children, title }: Props) {
 
             {/* Sidebar */}
             <aside>
-              {/* Profile card */}
-              <div className="border border-zinc-800 bg-zinc-950 p-5 mb-4">
+              {/* Profile card — vault access card */}
+              <div className="relative border border-accent/25 bg-zinc-950 p-5 mb-4 shine overflow-hidden">
+                <span className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
                 <div className="flex items-center gap-3 mb-4">
                   {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt={displayName} className="w-10 h-10 rounded-full object-cover border border-zinc-700" />
+                    <img src={profile.avatar_url} alt={displayName} className="w-11 h-11 rounded-full object-cover border-2 border-accent/40" />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-mono text-zinc-300">
+                    <div className="w-11 h-11 rounded-full bg-accent/10 border-2 border-accent/40 flex items-center justify-center text-sm font-display font-semibold text-accent">
                       {initials}
                     </div>
                   )}
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{displayName}</p>
+                    <p className="text-[15px] font-display font-medium text-white truncate">{displayName}</p>
                     <p className="text-[11px] font-mono text-zinc-500 truncate">{user.email}</p>
                   </div>
                 </div>
-                <div className="text-[10px] font-mono tracking-widest text-zinc-600 border-t border-zinc-800 pt-3 uppercase">
-                  Vault Member
+                <div className="flex items-center justify-between border-t border-zinc-800 pt-3">
+                  <span className="px-2.5 py-1 text-[9px] font-mono tracking-[0.18em] uppercase border border-rarity-legendary/50 text-rarity-legendary bg-background/40">
+                    Vault Member
+                  </span>
                 </div>
               </div>
 
@@ -87,15 +90,16 @@ export default function AccountLayout({ children, title }: Props) {
                     <Link
                       key={href}
                       to={href}
-                      className={`flex items-center gap-3 px-4 py-3 text-[13px] border-b border-zinc-800 last:border-0 transition-colors ${
+                      className={`relative flex items-center gap-3 px-4 py-3 text-[13px] border-b border-zinc-800 last:border-0 transition-colors ${
                         active
-                          ? "bg-zinc-800 text-white"
+                          ? "bg-accent/[0.07] text-white"
                           : "text-zinc-400 hover:text-white hover:bg-zinc-900"
                       }`}
                     >
-                      <Icon size={15} strokeWidth={1.5} />
+                      {active && <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-accent" />}
+                      <Icon size={15} strokeWidth={1.5} className={active ? "text-accent" : ""} />
                       <span className="font-mono tracking-wider">{label}</span>
-                      {active && <ChevronRight size={12} className="ml-auto text-zinc-500" />}
+                      {active && <ChevronRight size={12} className="ml-auto text-accent" />}
                     </Link>
                   );
                 })}
