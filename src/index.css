@@ -240,4 +240,12 @@
     50% { opacity: 0.3; }
   }
   .pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+
+  /* Gold glow — luxury accent treatments (hero message rotator, premium badges) */
+  .text-glow-gold {
+    text-shadow: 0 0 14px hsl(var(--accent) / 0.35), 0 0 32px hsl(var(--accent) / 0.12);
+  }
+  .dot-glow-gold {
+    box-shadow: 0 0 5px hsl(var(--accent) / 0.9), 0 0 14px hsl(var(--accent) / 0.55), 0 0 22px hsl(var(--accent) / 0.25);
+  }
 }
