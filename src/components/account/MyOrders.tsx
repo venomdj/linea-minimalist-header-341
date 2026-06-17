@@ -80,7 +80,7 @@ export default function MyOrders() {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button
                       onClick={() => viewInvoicePDF(order)}
-                      className="flex items-center gap-1.5 text-[10px] font-mono tracking-widest text-zinc-500 hover:text-white border border-zinc-700 hover:border-zinc-500 px-3 py-1.5 transition-colors uppercase"
+                      className="flex items-center gap-1.5 text-[10px] font-mono font-semibold tracking-widest text-accent-foreground bg-accent hover:bg-accent/85 border border-accent px-3 py-1.5 transition-colors uppercase"
                     >
                       <FileText size={10} /> View PDF
                     </button>
