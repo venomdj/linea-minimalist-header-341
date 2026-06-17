@@ -115,6 +115,11 @@ const phone = raw.length === 10 ? `91${raw}` : raw;
           customer_name:      editing.customer_name,
           customer_email:     editing.customer_email,
           customer_phone:     editing.customer_phone,
+          shipping_address:   editing.shipping_address,
+          shipping_address2:  editing.shipping_address2,
+          shipping_city:      editing.shipping_city,
+          shipping_state:     editing.shipping_state,
+          shipping_pincode:   editing.shipping_pincode,
         });
       }
       setSaving(false);
@@ -131,6 +136,11 @@ const phone = raw.length === 10 ? `91${raw}` : raw;
         customer_name:      editing.customer_name,
         customer_email:     editing.customer_email,
         customer_phone:     editing.customer_phone,
+        shipping_address:   editing.shipping_address,
+        shipping_address2:  editing.shipping_address2,
+        shipping_city:      editing.shipping_city,
+        shipping_state:     editing.shipping_state,
+        shipping_pincode:   editing.shipping_pincode,
       };
       const ok = await updateOrder(editing.id, payload);
       setSaving(false);
@@ -142,13 +152,13 @@ const phone = raw.length === 10 ? `91${raw}` : raw;
   // Rendered field editors for edit panel
   function field(label: string, value: string, onChange: (v: string) => void, type = 'text') {
     return (
-      <div style={{ marginBottom: 14 }}>
-        <label style={{ display: 'block', fontSize: 10, letterSpacing: '0.15em', color: '#71717a', textTransform: 'uppercase', marginBottom: 5 }}>{label}</label>
+      <div style={{ marginBottom: 16 }}>
+        <label style={{ display: 'block', fontSize: 12, letterSpacing: '0.08em', color: '#a1a1aa', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>{label}</label>
         <input
           type={type}
           value={value ?? ''}
           onChange={e => onChange(e.target.value)}
-          style={{ width: '100%', background: '#18181b', border: '1px solid #3f3f46', color: '#fff', padding: '7px 10px', fontSize: 13, fontFamily: 'monospace', outline: 'none', boxSizing: 'border-box' }}
+          style={{ width: '100%', background: '#18181b', border: '1px solid #52525b', color: '#fff', padding: '9px 12px', fontSize: 14, fontFamily: 'monospace', outline: 'none', boxSizing: 'border-box' }}
         />
       </div>
     );
@@ -164,7 +174,7 @@ const phone = raw.length === 10 ? `91${raw}` : raw;
         {toastMsg && <Toast msg={toastMsg} />}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <button onClick={() => { setPanel('list'); setEditing(null); }} style={btnGhost}>← Back</button>
-          <span style={{ fontSize: 11, fontFamily: 'monospace', letterSpacing: '0.15em', color: '#71717a', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 13, fontFamily: 'monospace', letterSpacing: '0.1em', color: '#d4d4d8', textTransform: 'uppercase', fontWeight: 600 }}>
             Edit · {e.order_number}
           </span>
         </div>
@@ -200,6 +210,16 @@ const phone = raw.length === 10 ? `91${raw}` : raw;
             {field('Full Name', e.customer_name, set('customer_name'))}
             {field('Email', e.customer_email, set('customer_email'), 'email')}
             {field('Phone', e.customer_phone ?? '', set('customer_phone'))}
+          </section>
+
+          {/* Shipping Address */}
+          <section style={card}>
+            <SectionTitle>Shipping Address</SectionTitle>
+            {field('Address Line 1', e.shipping_address ?? '', set('shipping_address'))}
+            {field('Address Line 2', e.shipping_address2 ?? '', set('shipping_address2'))}
+            {field('City', e.shipping_city ?? '', set('shipping_city'))}
+            {field('State', e.shipping_state ?? '', set('shipping_state'))}
+            {field('Pincode', e.shipping_pincode ?? '', set('shipping_pincode'))}
           </section>
 
           {/* Notes */}
@@ -250,8 +270,8 @@ const phone = raw.length === 10 ? `91${raw}` : raw;
       {toastMsg && <Toast msg={toastMsg} />}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-        <h2 style={{ fontSize: 18, fontFamily: 'monospace', letterSpacing: '0.1em', color: '#fff', margin: 0 }}>ORDERS</h2>
-        <span style={{ fontSize: 11, color: '#52525b', fontFamily: 'monospace' }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, fontFamily: 'monospace', letterSpacing: '0.06em', color: '#fff', margin: 0 }}>ORDERS</h2>
+        <span style={{ fontSize: 12, color: '#a1a1aa', fontFamily: 'monospace' }}>
           {orders.length} total · live sync
         </span>
       </div>
@@ -267,19 +287,19 @@ const phone = raw.length === 10 ? `91${raw}` : raw;
         {search && <button type="button" onClick={() => { setSearch(''); fetchAllOrders(); }} style={btnGhost}>Clear</button>}
       </form>
 
-      {loading && <p style={{ fontFamily: 'monospace', color: '#52525b', fontSize: 12 }}>Loading…</p>}
-      {error && <p style={{ color: '#f87171', fontFamily: 'monospace', fontSize: 12 }}>{error}</p>}
+      {loading && <p style={{ fontFamily: 'monospace', color: '#a1a1aa', fontSize: 13 }}>Loading…</p>}
+      {error && <p style={{ color: '#f87171', fontFamily: 'monospace', fontSize: 13 }}>{error}</p>}
 
       {!loading && orders.length === 0 && (
-        <p style={{ fontFamily: 'monospace', color: '#52525b', fontSize: 12, padding: '40px 0' }}>No orders found.</p>
+        <p style={{ fontFamily: 'monospace', color: '#a1a1aa', fontSize: 13, padding: '40px 0' }}>No orders found.</p>
       )}
 
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, fontFamily: 'monospace' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, fontFamily: 'monospace' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #27272a' }}>
               {['Order #', 'Date', 'Customer', 'Items', 'Total', 'Payment', 'Status', 'Actions'].map(h => (
-                <th key={h} style={{ padding: '8px 12px', color: '#71717a', textAlign: 'left', fontWeight: 500, letterSpacing: '0.1em', fontSize: 10, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                <th key={h} style={{ padding: '8px 12px', color: '#a1a1aa', textAlign: 'left', fontWeight: 600, letterSpacing: '0.08em', fontSize: 11, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -290,14 +310,19 @@ const phone = raw.length === 10 ? `91${raw}` : raw;
               return (
                 <tr key={order.id} style={{ borderBottom: '1px solid #18181b' }}>
                   <td style={{ padding: '10px 12px', color: '#e4e4e7', whiteSpace: 'nowrap' }}>{order.order_number}</td>
-                  <td style={{ padding: '10px 12px', color: '#71717a', whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '10px 12px', color: '#a1a1aa', whiteSpace: 'nowrap' }}>
                     {new Date(order.order_date).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
                   </td>
                   <td style={{ padding: '10px 12px' }}>
                     <p style={{ color: '#e4e4e7', marginBottom: 2 }}>{order.customer_name}</p>
-                    <p style={{ color: '#71717a', fontSize: 10 }}>{order.customer_email}</p>
+                    <p style={{ color: '#a1a1aa', fontSize: 11 }}>{order.customer_email}</p>
+                    {(order.shipping_city || order.shipping_pincode) && (
+                      <p style={{ color: '#71717a', fontSize: 11 }}>
+                        {[order.shipping_city, order.shipping_pincode].filter(Boolean).join(' · ')}
+                      </p>
+                    )}
                   </td>
-                  <td style={{ padding: '10px 12px', color: '#71717a' }}>
+                  <td style={{ padding: '10px 12px', color: '#a1a1aa' }}>
                     {(order.line_items as unknown[]).length} item{(order.line_items as unknown[]).length !== 1 ? 's' : ''}
                   </td>
                   <td style={{ padding: '10px 12px', color: '#e4e4e7', whiteSpace: 'nowrap' }}>
@@ -305,17 +330,17 @@ const phone = raw.length === 10 ? `91${raw}` : raw;
                   </td>
                   <td style={{ padding: '10px 12px' }}>
                     <span style={{
-                      fontSize: 9, letterSpacing: '0.15em', padding: '3px 7px',
+                      fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', padding: '4px 9px',
                       color: order.payment_status === 'paid' ? '#4ade80' : '#facc15',
-                      background: order.payment_status === 'paid' ? 'rgba(74,222,128,0.1)' : 'rgba(250,204,21,0.1)',
-                      border: order.payment_status === 'paid' ? '1px solid rgba(74,222,128,0.3)' : '1px solid rgba(250,204,21,0.3)',
+                      background: order.payment_status === 'paid' ? 'rgba(74,222,128,0.12)' : 'rgba(250,204,21,0.12)',
+                      border: order.payment_status === 'paid' ? '1px solid rgba(74,222,128,0.4)' : '1px solid rgba(250,204,21,0.4)',
                       textTransform: 'uppercase',
                     }}>
                       {order.payment_status ?? 'pending'}
                     </span>
                   </td>
                   <td style={{ padding: '10px 12px' }}>
-                    <span style={{ fontSize: 9, letterSpacing: '0.15em', padding: '3px 7px', textTransform: 'uppercase' }}
+                    <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', padding: '4px 9px', textTransform: 'uppercase' }}
                           className={`${statusClass} ${statusText}`}>
                       {order.status.replace(/_/g, ' ')}
                     </span>
@@ -409,14 +434,14 @@ function Toast({ msg }: { msg: string }) {
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <p style={{ fontSize: 10, letterSpacing: '0.18em', color: '#71717a', textTransform: 'uppercase', marginBottom: 14, borderBottom: '1px solid #27272a', paddingBottom: 8 }}>{children}</p>;
+  return <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', color: '#d4d4d8', textTransform: 'uppercase', marginBottom: 16, borderBottom: '1px solid #27272a', paddingBottom: 10 }}>{children}</p>;
 }
 
 function InfoRow({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-      <span style={{ fontSize: 11, color: '#71717a', fontFamily: 'monospace' }}>{label}</span>
-      <span style={{ fontSize: 12, color: bold ? '#fff' : '#a1a1aa', fontFamily: 'monospace', fontWeight: bold ? 600 : 400 }}>{value}</span>
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+      <span style={{ fontSize: 13, color: '#a1a1aa', fontFamily: 'monospace' }}>{label}</span>
+      <span style={{ fontSize: 13, color: bold ? '#fff' : '#e4e4e7', fontFamily: 'monospace', fontWeight: bold ? 700 : 400 }}>{value}</span>
     </div>
   );
 }
@@ -430,10 +455,10 @@ const card: React.CSSProperties = {
 
 const inputStyle: React.CSSProperties = {
   background: '#18181b',
-  border: '1px solid #3f3f46',
+  border: '1px solid #52525b',
   color: '#e4e4e7',
-  padding: '8px 12px',
-  fontSize: 13,
+  padding: '9px 12px',
+  fontSize: 14,
   fontFamily: 'monospace',
   outline: 'none',
 };
@@ -446,42 +471,46 @@ const selectStyle: React.CSSProperties = {
 
 const fieldLabel: React.CSSProperties = {
   display: 'block',
-  fontSize: 10,
-  letterSpacing: '0.15em',
-  color: '#71717a',
+  fontSize: 12,
+  letterSpacing: '0.08em',
+  color: '#a1a1aa',
   textTransform: 'uppercase',
-  marginBottom: 5,
+  marginBottom: 6,
+  fontWeight: 600,
 };
 
 const btnPrimary: React.CSSProperties = {
   background: '#fff',
   color: '#000',
   border: 'none',
-  padding: '8px 18px',
-  fontSize: 11,
+  padding: '9px 20px',
+  fontSize: 12,
+  fontWeight: 600,
   fontFamily: 'monospace',
-  letterSpacing: '0.12em',
+  letterSpacing: '0.08em',
   textTransform: 'uppercase',
   cursor: 'pointer',
 };
 
 const btnGhost: React.CSSProperties = {
   background: 'transparent',
-  color: '#a1a1aa',
-  border: '1px solid #3f3f46',
-  padding: '8px 18px',
-  fontSize: 11,
+  color: '#d4d4d8',
+  border: '1px solid #52525b',
+  padding: '9px 20px',
+  fontSize: 12,
+  fontWeight: 600,
   fontFamily: 'monospace',
-  letterSpacing: '0.1em',
+  letterSpacing: '0.06em',
   cursor: 'pointer',
 };
 
 const btnDanger: React.CSSProperties = {
   background: 'transparent',
   color: '#f87171',
-  border: '1px solid rgba(248,113,113,0.3)',
-  padding: '8px 12px',
-  fontSize: 11,
+  border: '1px solid rgba(248,113,113,0.4)',
+  padding: '9px 14px',
+  fontSize: 12,
+  fontWeight: 600,
   fontFamily: 'monospace',
   cursor: 'pointer',
 };
