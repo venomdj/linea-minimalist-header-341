@@ -132,26 +132,26 @@ const Navigation = () => {
             </button>
 
             {/* ACCOUNT / LOGIN
-                Mobile: icon-only pill (no text, no chevron) to keep bar slim
-                Desktop (sm+): full labelled button */}
+                Mobile: icon-only pill, ringed in accent so it reads against the dark bar
+                Desktop (sm+): full labelled button with accent border */}
             {user ? (
               <button
                 onClick={() => navigate("/account")}
                 className="
                   group relative flex items-center
-                  ml-0.5 sm:ml-1
-                  p-2 sm:pl-2.5 sm:pr-3 sm:py-1.5
-                  sm:border sm:border-zinc-700/60 sm:bg-zinc-900/80
-                  hover:sm:border-zinc-500 hover:sm:bg-zinc-800/90
+                  ml-0.5 sm:ml-1.5
+                  p-1.5 sm:pl-2.5 sm:pr-3.5 sm:py-1.5
+                  border border-accent/40 bg-accent/[0.06]
+                  hover:border-accent/70 hover:bg-accent/[0.1]
                   transition-all duration-200 overflow-hidden
                 "
                 title="My Account"
               >
-                <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent pointer-events-none" />
-                <span className="relative flex items-center justify-center w-5 h-5 rounded-full bg-zinc-700 group-hover:bg-zinc-600 transition-colors">
-                  <User size={11} strokeWidth={2} className="text-zinc-200" />
+                <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-transparent via-accent/10 to-transparent pointer-events-none" />
+                <span className="relative flex items-center justify-center w-6 h-6 rounded-full bg-accent/15 border border-accent/50 group-hover:bg-accent/25 group-hover:border-accent transition-colors">
+                  <User size={12} strokeWidth={2.25} className="text-accent" />
                 </span>
-                <span className="hidden sm:block ml-2 text-[10px] font-mono uppercase tracking-widest text-zinc-300 group-hover:text-white transition-colors">
+                <span className="hidden sm:block ml-2.5 text-[10px] font-mono font-medium uppercase tracking-widest text-accent group-hover:text-foreground transition-colors">
                   Account
                 </span>
               </button>
