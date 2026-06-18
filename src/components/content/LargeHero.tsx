@@ -1,160 +1,150 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowRight, BadgeCheck } from "lucide-react";
-import heroVault from "@/assets/hero-vault.jpg";
-import { useAuth } from "@/context/AuthContext";
-import LiveActivityTicker from "../ui/LiveActivityTicker";
+import { useEffect, useState, type CSSProperties } from "react";
 
-const HOLD_MS = 2600;   // how long each message stays fully visible
-const FADE_MS = 650;    // fade/blur transition duration
-
-function HeroMessageRotator() {
-  const { user, profile } = useAuth();
-
-  const messages = useMemo(() => {
-    const base = [
-      "Discover rare collectibles",
-      "Build your legendary collection",
-      "Your next grail awaits",
-    ];
-    if (user) {
-      const name = profile?.full_name || user.email?.split("@")[0] || "Collector";
-      return [`✦ Welcome back, ${name}`, ...base];
-    }
-    return base;
-  }, [user, profile]);
-
-  const [index, setIndex] = useState(0);
-  const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    let holdTimer: ReturnType<typeof setTimeout>;
-    let fadeTimer: ReturnType<typeof setTimeout>;
-
-    const cycle = () => {
-      holdTimer = setTimeout(() => {
-        setVisible(false);
-        fadeTimer = setTimeout(() => {
-          setIndex((i) => (i + 1) % messages.length);
-          setVisible(true);
-          cycle();
-        }, FADE_MS);
-      }, HOLD_MS);
-    };
-
-    cycle();
-    return () => {
-      clearTimeout(holdTimer);
-      clearTimeout(fadeTimer);
-    };
-  }, [messages.length]);
-
-  return (
-    <div className="flex items-center gap-3 mb-6 lg:mb-8 animate-fade-in min-h-[18px]">
-      <span className="w-1.5 h-1.5 rounded-full bg-accent dot-glow-gold flex-shrink-0" />
-      <span
-        className={`eyebrow text-accent text-glow-gold text-[10px] sm:text-xs tracking-[0.2em] transition-all ease-expo-out ${
-          visible ? "opacity-100 blur-0 translate-y-0" : "opacity-0 blur-[3px] -translate-y-1"
-        }`}
-        style={{ transitionDuration: `${FADE_MS}ms` }}
-      >
-        {messages[index]}
-      </span>
-    </div>
-  );
+interface TickerMessage {
+  icon: string;
+  text: string;
 }
 
-const LargeHero = () => {
-  const [scrollY, setScrollY] = useState(0);
+interface LiveActivityTickerProps {
+  messages?: TickerMessage[];
+  speed?: number;
+  className?: string;
+}
+
+const DEFAULT_MESSAGES: TickerMessage[] = [
+  { icon: "🔥", text: "Arjun just secured a Blue-Eyes White Dragon" },
+  { icon: "🚚", text: "1,200+ orders shipped securely" },
+  { icon: "⭐", text: "New collector joined from Mumbai" },
+  { icon: "💎", text: "Rare cards authenticated daily" },
+  { icon: "🛡️", text: "100% secure transactions" },
+  { icon: "⚡", text: "Limited inventory updated" },
+  { icon: "📦", text: "Pan-India insured shipping" },
+  { icon: "🎴", text: "Collector sold a PSA 10 card" },
+];
+
+const ACCENT_VARS = {
+  "--lat-gold": "#D4AF37",
+  "--lat-gold-glow": "rgba(212, 175, 55, 0.38)",
+  "--lat-cyan": "#5EEAD4",
+  "--lat-cyan-glow": "rgba(94, 234, 212, 0.32)",
+};
+
+const LiveActivityTicker = ({
+  messages = DEFAULT_MESSAGES,
+  speed = 34,
+  className = "",
+}: LiveActivityTickerProps) => {
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [staticIndex, setStaticIndex] = useState(0);
 
   useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
   }, []);
 
+  useEffect(() => {
+    if (!reducedMotion) return;
+    const id = window.setInterval(() => {
+      setStaticIndex((i) => (i + 1) % messages.length);
+    }, 4200);
+    return () => window.clearInterval(id);
+  }, [reducedMotion, messages.length]);
+
+  const wrapperStyle = {
+    ...ACCENT_VARS,
+    "--lat-duration": `${speed}s`,
+  } as CSSProperties;
+
+  const renderItem = (msg: TickerMessage, key: string) => (
+    <span key={key} className="lat-item inline-flex items-center shrink-0 px-4 sm:px-6">
+      <span aria-hidden="true" className="text-[11px] sm:text-[13px] leading-none mr-2 sm:mr-2.5">
+        {msg.icon}
+      </span>
+      <span className="font-sans font-medium text-[10px] sm:text-[11px] md:text-[12px] tracking-[0.2em] uppercase text-foreground/80 whitespace-nowrap drop-shadow-sm">
+        {msg.text}
+      </span>
+      <span aria-hidden="true" className="lat-dot ml-4 sm:ml-6" />
+    </span>
+  );
+
   return (
-    <section className="relative w-full min-h-[100svh] lg:min-h-[92vh] overflow-hidden bg-background grain flex flex-col">
-      
-      {/* Live Activity Ticker */}
-      <div className="absolute top-0 left-0 w-full z-30">
-        <LiveActivityTicker />
-      </div>
+    <div
+      className={`lat-wrap relative w-full flex items-stretch overflow-hidden border-y border-border/50 bg-background/70 backdrop-blur-[2px] ${className}`}
+      style={wrapperStyle}
+    >
+      {/* Scrolling region */}
+      <div className="relative flex-1 min-w-0 overflow-hidden h-8 sm:h-9 md:h-10" aria-hidden="true">
+        {/* Edge fade masks */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-8 sm:w-14 z-10 bg-gradient-to-r from-background to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-8 sm:w-14 z-10 bg-gradient-to-l from-background to-transparent" />
 
-      {/* Parallax bg */}
-      <div
-        className="absolute inset-0 will-change-transform"
-        style={{ transform: `translate3d(0, ${scrollY * 0.25}px, 0) scale(${1 + scrollY * 0.0003})` }}
-      >
-        <img
-          src={heroVault}
-          alt="The Mythical Vault vault"
-          className="w-full h-full object-cover opacity-80"
-          fetchPriority="high"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/30 to-background" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-transparent to-background/40" />
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 flex-1 flex flex-col justify-end px-6 lg:px-12 pt-28 pb-12 lg:pt-32 lg:pb-24">
-        <div className="max-w-4xl">
-          <HeroMessageRotator />
-
-          <h1
-            className="font-display text-[clamp(2rem,7vw,7.5rem)] leading-[1] tracking-[-0.03em] font-light text-foreground animate-fade-up"
-            style={{ animationDelay: "0.1s" }}
-          >
-            The marketplace
-            <br />
-            <span className="text-foreground/60">for the cards</span>
-            <br />
-            <span className="italic font-extralight">collectors actually want.</span>
-          </h1>
-
-          <p
-            className="mt-6 lg:mt-8 max-w-xl text-sm sm:text-base lg:text-lg text-foreground/70 leading-relaxed animate-fade-up"
-            style={{ animationDelay: "0.25s" }}
-          >
-
-            Every listing graded, authenticated, and insured end-to-end. No fakes, no flippers, no fluff — just provenance you can trust and prices set by the market.
-          </p>
-
-          <div className="mt-8 lg:mt-12 flex flex-wrap items-center gap-3 sm:gap-4 animate-fade-up" style={{ animationDelay: "0.4s" }}>
-            <Link
-              to="/category/all"
-              className="group inline-flex items-center gap-3 bg-foreground text-background px-5 sm:px-7 py-3 sm:py-4 text-xs sm:text-sm tracking-wider font-medium hover:bg-foreground/90 transition-all duration-300"
+        {reducedMotion ? (
+          <div className="flex items-center justify-center h-full px-8">
+            <span
+              key={staticIndex}
+              className="lat-fade-msg font-sans font-medium text-[10px] sm:text-[11px] md:text-[12px] tracking-[0.2em] uppercase text-foreground/80 whitespace-nowrap drop-shadow-sm"
             >
-              Explore the marketplace
-              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link
-              to="/about/our-story"
-              className="group inline-flex items-center gap-2 text-xs sm:text-sm text-foreground/80 hover:text-foreground transition-colors py-3 sm:py-4 border-b border-foreground/20 hover:border-foreground/60"
-            >
-              
-              
-            </Link>
+              <span className="mr-2">{messages[staticIndex].icon}</span>
+              {messages[staticIndex].text}
+            </span>
           </div>
-
-          {/* Trust strip */}
-          <div className="mt-10 lg:mt-16 flex flex-wrap items-center gap-x-6 sm:gap-x-10 gap-y-3 sm:gap-y-4 text-[10px] sm:text-xs font-mono tracking-wider text-muted-foreground animate-fade-up" style={{ animationDelay: "0.55s" }}>
-            <span className="flex items-center gap-2"><BadgeCheck size={14} className="text-verified" strokeWidth={1.8} /> PSA & BGS PARTNER</span>
-            <span>VERIFIED</span>
-            <span>LATEST</span>
-            <span>28 STATES · 8 UTs</span>
+        ) : (
+          <div className="lat-track flex items-center h-full">
+            <div className="flex items-center">
+              {messages.map((m, i) => renderItem(m, `a-${i}`))}
+            </div>
+            <div className="flex items-center">
+              {messages.map((m, i) => renderItem(m, `b-${i}`))}
+            </div>
           </div>
-
-        </div>
+        )}
       </div>
 
-      {/* Bottom scroll cue */}
-      <div className="absolute bottom-6 right-6 hidden lg:flex items-center gap-3 text-[10px] font-mono tracking-[0.3em] text-muted-foreground/70">
-        <span className="w-12 h-px bg-muted-foreground/40" />
-        SCROLL
-      </div>
-    </section>
+      <span className="sr-only">
+        Live activity: {messages.map((m) => m.text).join(". ")}.
+      </span>
+
+      <style>{`
+        .lat-track {
+          width: max-content;
+          animation: lat-scroll var(--lat-duration, 34s) linear infinite;
+          will-change: transform;
+        }
+        @keyframes lat-scroll {
+          from { transform: translate3d(0, 0, 0); }
+          to   { transform: translate3d(-50%, 0, 0); }
+        }
+        @media (hover: hover) and (pointer: fine) {
+          .lat-wrap:hover .lat-track { animation-play-state: paused; }
+        }
+        .lat-dot {
+          display: inline-block;
+          width: 3px;
+          height: 3px;
+          border-radius: 50%;
+          background: var(--lat-cyan);
+          box-shadow: 0 0 5px 1px var(--lat-cyan-glow);
+        }
+        .lat-item:nth-of-type(3n+1) .lat-dot {
+          background: var(--lat-gold);
+          box-shadow: 0 0 5px 1px var(--lat-gold-glow);
+        }
+        .lat-fade-msg {
+          animation: lat-fade-in 0.7s ease;
+        }
+        @keyframes lat-fade-in {
+          from { opacity: 0; transform: translateY(3px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .lat-track { animation: none !important; transform: none !important; }
+        }
+      `}</style>
+    </div>
   );
 };
 
-export default LargeHero;
+export default LiveActivityTicker;
