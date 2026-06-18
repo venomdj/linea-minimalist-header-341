@@ -11,10 +11,17 @@ export interface ActiveFilters {
   categories: string[];
   priceRanges: string[];
   grades: string[];
+  availability: string[];   // ← added
   sortBy: string;
 }
 
-const EMPTY_FILTERS: ActiveFilters = { categories: [], priceRanges: [], grades: [], sortBy: "featured" };
+const EMPTY_FILTERS: ActiveFilters = {
+  categories: [],
+  priceRanges: [],
+  grades: [],
+  availability: [],          // ← added
+  sortBy: "featured",
+};
 
 const Category = () => {
   const { category } = useParams();
