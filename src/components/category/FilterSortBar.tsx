@@ -30,6 +30,7 @@ interface FilterSortBarProps {
 const CATEGORIES = ["Pokemon", "One Piece", "Accessories"];
 const PRICE_RANGES = ["Under ₹10,000", "₹10,000 — ₹50,000", "₹50,000 — ₹1,00,000", "Over ₹1,00,000"];
 const GRADES = ["PSA 10", "PSA 9", "BGS 9.5", "Ungraded"];
+const AVAILABILITY = ["In Stock", "Out of Stock"];
 
 const FilterSortBar = ({
   filtersOpen,
@@ -42,9 +43,9 @@ const FilterSortBar = ({
   // Local draft — only committed on "Apply"
   const [draft, setDraft] = useState<ActiveFilters>(activeFilters);
 
-  const toggle = (key: keyof Pick<ActiveFilters, "categories" | "priceRanges" | "grades">, value: string) => {
+  const toggle = (key: keyof Pick<ActiveFilters, "categories" | "priceRanges" | "grades" | "availability">, value: string) => {
     setDraft((prev) => {
-      const arr = prev[key];
+      const arr = prev[key] ?? [];
       return {
         ...prev,
         [key]: arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value],
@@ -58,7 +59,7 @@ const FilterSortBar = ({
   };
 
   const clear = () => {
-    const reset: ActiveFilters = { categories: [], priceRanges: [], grades: [], sortBy: draft.sortBy };
+    const reset: ActiveFilters = { categories: [], priceRanges: [], grades: [], availability: [], sortBy: draft.sortBy };
     setDraft(reset);
     setActiveFilters(reset);
     setFiltersOpen(false);
@@ -67,7 +68,8 @@ const FilterSortBar = ({
   const activeCount =
     activeFilters.categories.length +
     activeFilters.priceRanges.length +
-    activeFilters.grades.length;
+    activeFilters.grades.length +
+    (activeFilters.availability?.length ?? 0);
 
   return (
     <section className="w-full px-6 mb-8 border-b border-border pb-4">
@@ -95,8 +97,31 @@ const FilterSortBar = ({
                 <SheetTitle className="text-lg font-light">Filters</SheetTitle>
               </SheetHeader>
 
-              {/* Scrollable filter sections — grows/shrinks with content, never pushes the footer off-screen */}
+              {/* Scrollable filter sections */}
               <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+
+                {/* Availability */}
+                <div>
+                  <h3 className="text-sm font-light mb-4 text-foreground">Availability</h3>
+                  <div className="space-y-3">
+                    {AVAILABILITY.map((status) => (
+                      <div key={status} className="flex items-center space-x-3">
+                        <Checkbox
+                          id={`avail-${status}`}
+                          checked={(draft.availability ?? []).includes(status)}
+                          onCheckedChange={() => toggle("availability", status)}
+                          className="border-border data-[state=checked]:bg-foreground data-[state=checked]:border-foreground"
+                        />
+                        <Label htmlFor={`avail-${status}`} className="text-sm font-light text-foreground cursor-pointer">
+                          {status}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator />
+
                 {/* Category */}
                 <div>
                   <h3 className="text-sm font-light mb-4 text-foreground">Category</h3>
@@ -162,8 +187,7 @@ const FilterSortBar = ({
                 </div>
               </div>
 
-              {/* Pinned footer — stays bottom-anchored to the sheet itself, not the content,
-                  and adds safe-area padding for devices with a home-indicator gesture bar */}
+              {/* Pinned footer */}
               <div
                 className="shrink-0 border-t border-border bg-background px-6 pt-4 flex flex-col gap-2"
                 style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
