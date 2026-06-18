@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useState } from "react";
+import { useRef, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import Autoplay from "embla-carousel-autoplay";
@@ -21,15 +21,34 @@ const ProductCarousel = () => {
   const hasAnimated = useRef(false);
   const [api, setApi] = useState<CarouselApi>();
 
-  // Autoplay plugin — pauses on hover/drag, resumes after 4 s idle
-  const autoplay = useRef(
-    Autoplay({ delay: 3200, stopOnInteraction: true, stopOnMouseEnter: true })
-  );
+  // Autoplay plugin — pauses on hover/drag, auto-resumes afterward.
+  // stopOnInteraction MUST be false: with `true`, the plugin kills autoplay
+  // permanently on any drag/click/keyboard-nav, and there's no reliable way
+  // to revive it from outside (keyboard nav fires no pointer event at all,
+  // and drags that release outside the carousel's DOM bounds never trigger
+  // a bubbling pointerup either). `false` lets the plugin manage its own
+  // pause/resume, which is what we actually want.
+  const autoplayRef = useRef<ReturnType<typeof Autoplay>>();
+  if (!autoplayRef.current) {
+    autoplayRef.current = Autoplay({
+      delay: 3200,
+      stopOnInteraction: false,
+      stopOnMouseEnter: true,
+    });
+  }
+  const autoplay = autoplayRef;
 
-  // Resume autoplay after user interaction settles
-  const handlePointerUp = useCallback(() => {
-    if (autoplay.current?.reset) autoplay.current.reset();
-  }, []);
+  // Stable reference so Embla never sees a "changed" options object on re-render
+  const carouselOpts = useMemo(
+    () => ({
+      align: "center" as const,
+      loop: true,
+      dragFree: false,
+      duration: 28,
+      skipSnaps: false,
+    }),
+    []
+  );
 
   return (
     <section ref={ref} className="reveal w-full py-16 md:py-20 lg:py-28">
@@ -88,17 +107,10 @@ const ProductCarousel = () => {
         <>
           <Carousel
             setApi={setApi}
-            opts={{
-              align: "center",
-              loop: true,
-              dragFree: false,
-              duration: 28,          // lower = snappier settle (Embla uses friction-based easing)
-              skipSnaps: false,
-            }}
+            opts={carouselOpts}
             plugins={[autoplay.current]}
             className="w-full"
             aria-label="Featured products"
-            onPointerUp={handlePointerUp}
           >
             <div className="relative">
               {/* Left fade edge */}
