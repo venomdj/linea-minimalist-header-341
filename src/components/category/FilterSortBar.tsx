@@ -87,12 +87,16 @@ const FilterSortBar = ({
               </Button>
             </SheetTrigger>
 
-            <SheetContent side="right" className="w-80 bg-background border-none shadow-none">
-              <SheetHeader className="mb-6 border-b border-border pb-4">
+            <SheetContent
+              side="right"
+              className="w-80 bg-background border-none shadow-none p-0 flex flex-col h-[100dvh]"
+            >
+              <SheetHeader className="shrink-0 px-6 pt-6 pb-4 border-b border-border">
                 <SheetTitle className="text-lg font-light">Filters</SheetTitle>
               </SheetHeader>
 
-              <div className="space-y-8">
+              {/* Scrollable filter sections — grows/shrinks with content, never pushes the footer off-screen */}
+              <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
                 {/* Category */}
                 <div>
                   <h3 className="text-sm font-light mb-4 text-foreground">Category</h3>
@@ -156,26 +160,29 @@ const FilterSortBar = ({
                     ))}
                   </div>
                 </div>
+              </div>
 
-                <Separator />
-
-                <div className="flex flex-col gap-2 pt-2">
-                  <Button
-                    onClick={apply}
-                    size="sm"
-                    className="w-full font-normal"
-                  >
-                    Apply Filters
-                  </Button>
-                  <Button
-                    onClick={clear}
-                    variant="ghost"
-                    size="sm"
-                    className="w-full font-light hover:bg-transparent hover:underline"
-                  >
-                    Clear All
-                  </Button>
-                </div>
+              {/* Pinned footer — stays bottom-anchored to the sheet itself, not the content,
+                  and adds safe-area padding for devices with a home-indicator gesture bar */}
+              <div
+                className="shrink-0 border-t border-border bg-background px-6 pt-4 flex flex-col gap-2"
+                style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+              >
+                <Button
+                  onClick={apply}
+                  size="sm"
+                  className="w-full font-normal"
+                >
+                  Apply Filters
+                </Button>
+                <Button
+                  onClick={clear}
+                  variant="ghost"
+                  size="sm"
+                  className="w-full font-light hover:bg-transparent hover:underline"
+                >
+                  Clear All
+                </Button>
               </div>
             </SheetContent>
           </Sheet>
