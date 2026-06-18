@@ -38,7 +38,7 @@ const ProductCarousel = () => {
   const autoplayRef = useRef<ReturnType<typeof Autoplay>>();
   if (!autoplayRef.current) {
     autoplayRef.current = Autoplay({
-      delay: 1200,
+      delay: 1600,
       stopOnInteraction: false,
       stopOnMouseEnter: true,
       stopOnFocusIn: false,
