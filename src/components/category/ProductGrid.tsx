@@ -80,7 +80,20 @@ const ProductGrid = ({ activeCategory = null, activeFilters }: Props) => {
       );
     }
 
-    // 5. Sort
+    // 5. Filter panel — availability
+    if (activeFilters?.availability?.length) {
+      list = list.filter((p) => {
+        const inStock = p.inStock ?? p.in_stock ?? p.available ?? p.stock > 0;
+        if (activeFilters.availability.includes("In Stock") && activeFilters.availability.includes("Out of Stock")) {
+          return true; // both selected = show all
+        }
+        if (activeFilters.availability.includes("In Stock")) return inStock;
+        if (activeFilters.availability.includes("Out of Stock")) return !inStock;
+        return true;
+      });
+    }
+
+    // 6. Sort
     const sort = activeFilters?.sortBy ?? "featured";
     if (sort === "price-low")  list = [...list].sort((a, b) => a.price - b.price);
     if (sort === "price-high") list = [...list].sort((a, b) => b.price - a.price);
