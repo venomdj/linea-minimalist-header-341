@@ -1,4 +1,4 @@
-import { useRef, useMemo, useState } from "react";
+import { useRef, useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import Autoplay from "embla-carousel-autoplay";
@@ -28,15 +28,32 @@ const ProductCarousel = () => {
   // and drags that release outside the carousel's DOM bounds never trigger
   // a bubbling pointerup either). `false` lets the plugin manage its own
   // pause/resume, which is what we actually want.
+  //
+  // stopOnFocusIn defaults to TRUE in embla-carousel-autoplay. If anything
+  // on the page (router focus-management, a skip-link, etc.) programmatically
+  // focuses an element inside the carousel right after mount, autoplay
+  // freezes before its first tick and only resumes on focusout — i.e. it
+  // looks dead until the user clicks/tabs away. Disabling it means autoplay
+  // doesn't wait on focus state at all.
   const autoplayRef = useRef<ReturnType<typeof Autoplay>>();
   if (!autoplayRef.current) {
     autoplayRef.current = Autoplay({
       delay: 3200,
       stopOnInteraction: false,
       stopOnMouseEnter: true,
+      stopOnFocusIn: false,
     });
   }
   const autoplay = autoplayRef;
+
+  // Failsafe: explicitly kick off autoplay as soon as the Embla API is ready,
+  // instead of relying solely on the plugin's internal playOnInit. Guards
+  // against any other init-order/timing issue silently preventing the
+  // first auto-scroll.
+  useEffect(() => {
+    if (!api) return;
+    autoplay.current?.play();
+  }, [api]);
 
   // Stable reference so Embla never sees a "changed" options object on re-render
   const carouselOpts = useMemo(
