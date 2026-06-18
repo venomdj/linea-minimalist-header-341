@@ -79,41 +79,44 @@ const LiveActivityTicker = ({
     "--lat-duration": `${speed}s`,
   } as CSSProperties;
 
-  const renderItem = (msg: TickerMessage, key: string) => (
-    <span key={key} className="lat-item inline-flex items-center shrink-0 px-4 sm:px-6">
-      <span aria-hidden="true" className="text-[11px] sm:text-[13px] leading-none mr-2 sm:mr-2.5">
-        {msg.icon}
+  // Split message text into an optional bolded "name" prefix and the rest.
+  // Convention: if the text contains " just " or starts with a proper noun phrase
+  // before a verb, we boldface the first word(s) up to the first verb keyword.
+  const splitText = (text: string) => {
+    const verbMatch = text.match(/^(.+?)\s+(just|shipped|joined|authenticated|updated|sold)\s/i);
+    if (verbMatch) {
+      const nameEnd = text.indexOf(verbMatch[2]);
+      return { bold: text.slice(0, nameEnd).trim(), rest: text.slice(nameEnd).trim() };
+    }
+    return { bold: null, rest: text };
+  };
+
+  const renderItem = (msg: TickerMessage, key: string) => {
+    const { bold, rest } = splitText(msg.text);
+    return (
+      <span key={key} className="lat-item inline-flex items-center shrink-0 px-5 sm:px-7">
+        <span aria-hidden="true" className="text-[11px] sm:text-[12px] leading-none mr-2.5">
+          {msg.icon}
+        </span>
+        <span className="font-mono text-[9px] sm:text-[10px] md:text-[10.5px] tracking-[0.18em] uppercase whitespace-nowrap">
+          {bold && (
+            <span className="lat-name" style={{ color: "var(--lat-gold)" }}>
+              {bold}{" "}
+            </span>
+          )}
+          <span className="text-foreground/60">{rest}</span>
+        </span>
+        <span aria-hidden="true" className="lat-sep mx-4 sm:mx-6 text-foreground/20 font-mono text-[10px] tracking-widest">·</span>
       </span>
-      <span className="font-mono text-[9.5px] sm:text-[10.5px] md:text-[11px] tracking-[0.14em] uppercase text-foreground/75 whitespace-nowrap">
-        {msg.text}
-      </span>
-      <span aria-hidden="true" className="lat-dot ml-4 sm:ml-6" />
-    </span>
-  );
+    );
+  };
 
   return (
     <div
-      className={`lat-wrap relative w-full flex items-stretch overflow-hidden border-y border-border/50 bg-background/70 backdrop-blur-[2px] ${className}`}
+      className={`lat-wrap relative w-full flex items-stretch overflow-hidden border-y border-border/30 bg-background/60 backdrop-blur-[2px] ${className}`}
       style={wrapperStyle}
     >
-      {/* Fixed, non-scrolling marker — anchors the strip like an exchange ticker symbol */}
-      <div className="flex items-center gap-2 px-3 sm:px-4 border-r border-border/50 shrink-0 z-20 bg-background">
-        <span className="relative flex h-[5px] w-[5px] sm:h-1.5 sm:w-1.5">
-          <span className="lat-pulse absolute inset-0 rounded-full" />
-          <span
-            className="relative inline-flex h-full w-full rounded-full"
-            style={{ background: "var(--lat-gold)" }}
-          />
-        </span>
-        <span
-          className="font-mono text-[9px] sm:text-[10px] tracking-[0.22em] uppercase"
-          style={{ color: "var(--lat-cyan)" }}
-        >
-          Live
-        </span>
-      </div>
-
-      {/* Scrolling region */}
+      {/* Scrolling region — no Live badge, full width */}
       <div className="relative flex-1 min-w-0 overflow-hidden h-8 sm:h-9 md:h-10" aria-hidden="true">
         {/* Edge fade masks — messages ease in/out rather than cutting off */}
         <div className="pointer-events-none absolute inset-y-0 left-0 w-8 sm:w-14 z-10 bg-gradient-to-r from-background to-transparent" />
@@ -123,10 +126,15 @@ const LiveActivityTicker = ({
           <div className="flex items-center justify-center h-full px-8">
             <span
               key={staticIndex}
-              className="lat-fade-msg font-mono text-[9.5px] sm:text-[10.5px] md:text-[11px] tracking-[0.14em] uppercase text-foreground/75 whitespace-nowrap"
+              className="lat-fade-msg font-mono text-[9px] sm:text-[10px] md:text-[10.5px] tracking-[0.18em] uppercase whitespace-nowrap"
             >
-              <span className="mr-2">{messages[staticIndex].icon}</span>
-              {messages[staticIndex].text}
+              <span className="mr-2.5">{messages[staticIndex].icon}</span>
+              {(() => {
+                const { bold, rest } = splitText(messages[staticIndex].text);
+                return bold
+                  ? <><span style={{ color: "var(--lat-gold)" }}>{bold} </span><span className="text-foreground/60">{rest}</span></>
+                  : <span className="text-foreground/60">{rest}</span>;
+              })()}
             </span>
           </div>
         ) : (
@@ -161,25 +169,10 @@ const LiveActivityTicker = ({
           .lat-wrap:hover .lat-track { animation-play-state: paused; }
         }
         .lat-pulse {
-          background: var(--lat-gold-glow);
-          animation: lat-pulse-ring 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes lat-pulse-ring {
-          0%, 100% { opacity: 0.55; transform: scale(1); }
-          50% { opacity: 0; transform: scale(2.4); }
+          display: none;
         }
         .lat-dot {
-          display: inline-block;
-          width: 3px;
-          height: 3px;
-          border-radius: 50%;
-          background: var(--lat-cyan);
-          box-shadow: 0 0 5px 1px var(--lat-cyan-glow);
-        }
-        /* Alternate every third divider to gold for a quiet two-tone rhythm */
-        .lat-item:nth-of-type(3n+1) .lat-dot {
-          background: var(--lat-gold);
-          box-shadow: 0 0 5px 1px var(--lat-gold-glow);
+          display: none;
         }
         .lat-fade-msg {
           animation: lat-fade-in 0.7s ease;
