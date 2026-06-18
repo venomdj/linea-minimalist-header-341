@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, BadgeCheck } from "lucide-react";
 import heroVault from "@/assets/hero-vault.jpg";
 import { useAuth } from "@/context/AuthContext";
+import LiveActivityTicker from "../ui/LiveActivityTicker";
 
 const HOLD_MS = 2600;   // how long each message stays fully visible
 const FADE_MS = 650;    // fade/blur transition duration
@@ -74,6 +75,12 @@ const LargeHero = () => {
 
   return (
     <section className="relative w-full min-h-[100svh] lg:min-h-[92vh] overflow-hidden bg-background grain flex flex-col">
+      
+      {/* Live Activity Ticker */}
+      <div className="absolute top-0 left-0 w-full z-30">
+        <LiveActivityTicker />
+      </div>
+
       {/* Parallax bg */}
       <div
         className="absolute inset-0 will-change-transform"
