@@ -346,6 +346,19 @@ const phone = raw.length === 10 ? `91${raw}` : raw;
                     </span>
                   </td>
                   <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
+                    {order.status === 'pending' && (
+                      <button
+                        onClick={async () => {
+                          if (!window.confirm(`Approve order ${order.order_number}? This will deduct stock.`)) return;
+                          const ok = await updateOrderStatusWithTracking(order.id, 'confirmed');
+                          if (ok) showToast(`Order ${order.order_number} approved — stock updated.`);
+                          else showToast('Approval failed — check stock availability.');
+                        }}
+                        style={{ ...btnPrimary, padding: '4px 10px', fontSize: 11, marginRight: 6, background: '#16a34a', borderColor: '#16a34a' }}
+                      >
+                        ✓ Approve
+                      </button>
+                    )}
                     <button onClick={() => openEdit(order)} style={{ ...btnGhost, marginRight: 6, padding: '4px 10px', fontSize: 11 }}>Edit</button>
                     <button
                       onClick={() => handleDelete(order.id)}
@@ -354,6 +367,7 @@ const phone = raw.length === 10 ? `91${raw}` : raw;
                     >
                       {deleting === order.id ? '…' : 'Del'}
                     </button>
+
                     {/* WhatsApp dropdown */}
                     <div style={{ position: 'relative', display: 'inline-block' }}>
                       <button

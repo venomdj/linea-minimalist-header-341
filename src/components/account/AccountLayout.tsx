@@ -6,11 +6,13 @@ import Footer from "@/components/footer/Footer";
 import { useAuth } from "@/context/AuthContext";
 
 const navLinks = [
-  { href: "/account",          label: "Dashboard",     icon: LayoutDashboard },
-  { href: "/account/profile",  label: "Profile",       icon: User },
-  { href: "/account/orders",   label: "My Orders",     icon: ShoppingBag },
-  { href: "/account/settings", label: "Settings",      icon: Settings },
+  { href: "/account",           label: "Dashboard",     icon: LayoutDashboard },
+  { href: "/account/profile",   label: "Profile",       icon: User },
+  { href: "/account/orders",    label: "My Orders",     icon: ShoppingBag },
+  { href: "/account/addresses", label: "Addresses",     icon: MapPin },
+  { href: "/account/settings",  label: "Settings",      icon: Settings },
 ];
+
 
 interface Props {
   children: React.ReactNode;

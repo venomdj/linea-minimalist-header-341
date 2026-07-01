@@ -28,6 +28,8 @@ import Profile from "./pages/account/Profile";
 import MyOrders from "./pages/account/MyOrders";
 import OrderDetail from "./pages/account/OrderDetail";
 import AccountSettings from "./pages/account/AccountSettings";
+import Addresses from "./pages/account/Addresses";
+
 
 const queryClient = new QueryClient();
 
@@ -69,7 +71,9 @@ function AppRoutes() {
         <Route path="/account/profile" element={<UserProtectedRoute><Profile /></UserProtectedRoute>} />
         <Route path="/account/orders" element={<UserProtectedRoute><MyOrders /></UserProtectedRoute>} />
         <Route path="/account/orders/:orderId" element={<UserProtectedRoute><OrderDetail /></UserProtectedRoute>} />
+        <Route path="/account/addresses" element={<UserProtectedRoute><Addresses /></UserProtectedRoute>} />
         <Route path="/account/settings" element={<UserProtectedRoute><AccountSettings /></UserProtectedRoute>} />
+
 
         {/* Admin */}
         <Route path="/admin/login" element={<AdminLogin />} />
