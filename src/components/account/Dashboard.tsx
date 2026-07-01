@@ -1,6 +1,6 @@
 // src/pages/account/Dashboard.tsx
 import { Link } from "react-router-dom";
-import { ShoppingBag, User, Settings, ArrowRight, Package, BadgeCheck, Clock } from "lucide-react";
+import { ShoppingBag, User, Settings, ArrowRight, Package, BadgeCheck, Clock, MapPin } from "lucide-react";
 import AccountLayout from "@/components/account/AccountLayout";
 import { useAuth } from "@/context/AuthContext";
 import { useMyOrders } from "@/hooks/useOrders";
