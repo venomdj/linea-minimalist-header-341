@@ -138,7 +138,7 @@ export default function Addresses() {
                 <div key={key}>
                   <label className="block text-[10px] font-mono uppercase tracking-widest text-zinc-500 mb-1">{label}</label>
                   <input
-                    value={(editing as Record<string, string>)[key] ?? ""}
+                    value={(editing as unknown as Record<string, string>)[key] ?? ""}
                     onChange={(e) => setEditing({ ...editing, [key]: e.target.value })}
                     className="w-full bg-background border border-zinc-800 focus:border-accent/60 text-white text-sm font-mono px-3 py-2 outline-none transition-colors"
                   />
