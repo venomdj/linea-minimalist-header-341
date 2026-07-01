@@ -83,7 +83,7 @@ const ProductGrid = ({ activeCategory = null, activeFilters }: Props) => {
     // 5. Filter panel — availability
     if (activeFilters?.availability?.length) {
       list = list.filter((p) => {
-        const inStock = p.inStock ?? p.in_stock ?? p.available ?? p.stock > 0;
+        const inStock = p.inStock ?? p.stock > 0;
         if (activeFilters.availability.includes("In Stock") && activeFilters.availability.includes("Out of Stock")) {
           return true; // both selected = show all
         }
