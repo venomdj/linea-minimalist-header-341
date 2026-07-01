@@ -246,7 +246,7 @@ const Navigation = () => {
                     {searchResults.map((p) => (
                       <button
                         key={p.id}
-                        onClick={() => goToProduct(p.slug)}
+                        onClick={() => goToProduct(p.id)}
                         className="w-full flex items-center gap-4 py-3 text-left hover:bg-foreground/[0.03] px-2 transition-colors"
                       >
                         <img src={p.image} alt={p.name} className="w-12 h-12 object-cover border border-border flex-shrink-0" />
