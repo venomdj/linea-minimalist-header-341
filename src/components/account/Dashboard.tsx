@@ -93,11 +93,13 @@ export default function Dashboard() {
         </div>
 
         {/* Quick links */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { to: "/account/profile",  icon: User,        label: "Edit Profile" },
-            { to: "/account/orders",   icon: ShoppingBag, label: "All Orders" },
-            { to: "/account/settings", icon: Settings,    label: "Settings" },
+            { to: "/account/profile",   icon: User,        label: "Edit Profile" },
+            { to: "/account/orders",    icon: ShoppingBag, label: "All Orders" },
+            { to: "/account/addresses", icon: MapPin,      label: "Addresses" },
+            { to: "/account/settings",  icon: Settings,    label: "Settings" },
+
           ].map(({ to, icon: Icon, label }) => (
             <Link key={to} to={to} className="flex items-center gap-3 border border-zinc-800 bg-zinc-950 px-4 py-3.5 hover:bg-zinc-900 hover:border-accent/40 transition-colors group">
               <Icon size={15} strokeWidth={1.5} className="text-zinc-400 group-hover:text-accent transition-colors" />
