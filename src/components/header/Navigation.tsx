@@ -1,10 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Search, Heart, ShoppingBag as BagIcon, X, Menu, LogIn, User, ChevronRight } from "lucide-react";
 import ShoppingBag from "./ShoppingBag";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { useProducts } from "@/hooks/useProducts";
+
 
 const navItems = [
   { name: "Marketplace", href: "/category/all", sub: ["All Cards", "New Listings", "Trending", "Auctions Ending"] },
@@ -25,10 +27,40 @@ const Navigation = () => {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const [search, setSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [mobile, setMobile] = useState(false);
   const [bagOpen, setBagOpen] = useState(false);
   const { items, count, setQty } = useCart();
   const { user } = useAuth();
+  const { products } = useProducts();
+
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    return products
+      .filter((p) =>
+        [p.name, p.series, p.set, p.grade, p.rarity]
+          .filter(Boolean)
+          .some((f) => String(f).toLowerCase().includes(q))
+      )
+      .slice(0, 8);
+  }, [searchQuery, products]);
+
+  const closeSearch = () => {
+    setSearch(false);
+    setSearchQuery("");
+  };
+
+  const goToProduct = (slug: string) => {
+    closeSearch();
+    navigate(`/product/${slug}`);
+  };
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchResults.length > 0) goToProduct(searchResults[0].slug);
+  };
+
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -189,26 +221,67 @@ const Navigation = () => {
         {search && (
           <div className="absolute top-full left-0 right-0 glass-strong border-t border-border/40 animate-fade-in">
             <div className="px-6 py-10 max-w-3xl mx-auto">
-              <div className="flex items-center border-b border-border pb-3">
+              <form onSubmit={submitSearch} className="flex items-center border-b border-border pb-3">
                 <Search size={18} className="text-muted-foreground mr-3" strokeWidth={1.5} />
                 <input
                   autoFocus
                   type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Escape") closeSearch(); }}
                   placeholder="Search by card, series, or grade…"
                   className="flex-1 bg-transparent outline-none text-base text-foreground placeholder:text-muted-foreground/60 font-light"
                 />
-              </div>
-              <p className="eyebrow mt-6 mb-3">Trending searches</p>
-              <div className="flex flex-wrap gap-2">
-                {["PSA 10", "1st Edition", "Holofoil", "Promo", "Grail Tier"].map((s) => (
-                  <button key={s} className="text-xs text-foreground/80 hover:text-foreground border border-border hover:border-foreground/40 px-3 py-1.5 rounded-full transition-colors font-mono tracking-wider">
-                    {s}
+                {searchQuery && (
+                  <button type="button" onClick={() => setSearchQuery("")} className="text-muted-foreground hover:text-foreground p-1" aria-label="Clear">
+                    <X size={16} />
                   </button>
-                ))}
-              </div>
+                )}
+              </form>
+
+              {searchQuery.trim() ? (
+                searchResults.length > 0 ? (
+                  <div className="mt-4 divide-y divide-border/40 max-h-[60vh] overflow-y-auto">
+                    {searchResults.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => goToProduct(p.slug)}
+                        className="w-full flex items-center gap-4 py-3 text-left hover:bg-foreground/[0.03] px-2 transition-colors"
+                      >
+                        <img src={p.image} alt={p.name} className="w-12 h-12 object-cover border border-border flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground truncate">{p.name}</p>
+                          <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mt-0.5 truncate">
+                            {p.series} · {p.grade}
+                          </p>
+                        </div>
+                        <span className="text-sm font-mono text-foreground flex-shrink-0">₹{p.price.toLocaleString("en-IN")}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-6 text-sm text-muted-foreground font-mono">No results for “{searchQuery}”.</p>
+                )
+              ) : (
+                <>
+                  <p className="eyebrow mt-6 mb-3">Trending searches</p>
+                  <div className="flex flex-wrap gap-2">
+                    {["PSA 10", "1st Edition", "Holofoil", "Promo", "Grail Tier"].map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setSearchQuery(s)}
+                        className="text-xs text-foreground/80 hover:text-foreground border border-border hover:border-foreground/40 px-3 py-1.5 rounded-full transition-colors font-mono tracking-wider"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
+
 
         {/* Menu — all screen sizes */}
         {mobile && (
