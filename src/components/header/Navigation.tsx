@@ -27,10 +27,40 @@ const Navigation = () => {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const [search, setSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [mobile, setMobile] = useState(false);
   const [bagOpen, setBagOpen] = useState(false);
   const { items, count, setQty } = useCart();
   const { user } = useAuth();
+  const { products } = useProducts();
+
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    return products
+      .filter((p) =>
+        [p.name, p.series, p.set, p.grade, p.rarity]
+          .filter(Boolean)
+          .some((f) => String(f).toLowerCase().includes(q))
+      )
+      .slice(0, 8);
+  }, [searchQuery, products]);
+
+  const closeSearch = () => {
+    setSearch(false);
+    setSearchQuery("");
+  };
+
+  const goToProduct = (slug: string) => {
+    closeSearch();
+    navigate(`/product/${slug}`);
+  };
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchResults.length > 0) goToProduct(searchResults[0].slug);
+  };
+
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
