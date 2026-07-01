@@ -28,6 +28,8 @@ import Profile from "./pages/account/Profile";
 import MyOrders from "./pages/account/MyOrders";
 import OrderDetail from "./pages/account/OrderDetail";
 import AccountSettings from "./pages/account/AccountSettings";
+import Addresses from "./pages/account/Addresses";
+
 
 const queryClient = new QueryClient();
 
