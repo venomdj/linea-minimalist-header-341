@@ -51,15 +51,16 @@ const Navigation = () => {
     setSearchQuery("");
   };
 
-  const goToProduct = (slug: string) => {
+  const goToProduct = (id: string | number) => {
     closeSearch();
-    navigate(`/product/${slug}`);
+    navigate(`/product/${id}`);
   };
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchResults.length > 0) goToProduct(searchResults[0].slug);
+    if (searchResults.length > 0) goToProduct(searchResults[0].id);
   };
+
 
 
   useEffect(() => {
