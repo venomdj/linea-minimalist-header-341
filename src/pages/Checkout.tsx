@@ -78,7 +78,7 @@ type FormErrors = Partial<Record<keyof BuyerForm, string>>;
 
 // ─── Shipping options ─────────────────────────────────────────────────────────
 export const shippingOptions = [
-  { id: "standard", label: "Standard · Insured",           eta: "5–7 business days", price: 150 },
+  { id: "standard", label: "Standard · Insured",           eta: "5–7 business days", price: 120 },
   { id: "express",  label: "Express · Signature required", eta: "2–3 business days", price: 250 },
 ] as const;
 
@@ -687,50 +687,6 @@ const Checkout = () => {
                 </RadioGroup>
               </section>
 
-              {/* Screenshot Upload — shown after payment step started */}
-              {currentStep === 2 && (
-                <section className="border border-border bg-surface-1 p-6 md:p-8">
-                  <SectionHeader title="Payment Screenshot" step="04" />
-                  <p className="text-sm text-muted-foreground mb-5">
-                    After paying via UPI, upload your payment screenshot here to confirm your order.
-                  </p>
-                  <Field label="Payment Screenshot *" error={errors.screenshotName}>
-                    {screenshotPreview ? (
-                      <div className="flex items-center gap-3 border border-border bg-background p-3">
-                        <img src={screenshotPreview} alt="Payment screenshot preview"
-                          className="w-16 h-16 object-cover" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs text-foreground truncate">{form.screenshotName}</p>
-                          <p className="text-[10px] font-mono tracking-wider text-verified mt-0.5">
-                            UPLOADED · READY FOR VERIFICATION
-                          </p>
-                        </div>
-                        <button type="button" onClick={() => onScreenshotChange(null)}
-                          className="text-muted-foreground hover:text-destructive transition-colors p-2"
-                          aria-label="Remove screenshot">
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ) : (
-                      <label className="flex flex-col items-center justify-center gap-2 py-10 border border-dashed border-border bg-background hover:border-foreground/40 cursor-pointer transition-colors">
-                        <Upload size={22} className="text-muted-foreground" />
-                        <span className="text-xs font-mono tracking-wider text-muted-foreground">UPLOAD PAYMENT SCREENSHOT</span>
-                        <span className="text-[10px] font-mono tracking-wider text-muted-foreground/70">PNG / JPG · MAX 5 MB</span>
-                        <input type="file" accept="image/*" className="hidden"
-                          onChange={(e) => onScreenshotChange(e.target.files?.[0] ?? null)} />
-                      </label>
-                    )}
-                  </Field>
-
-                  <div className="mt-5 flex items-start gap-3 border border-dashed border-border p-4 text-[11px] font-mono tracking-wider text-muted-foreground">
-                    <ShieldCheck size={14} className="mt-0.5 text-verified shrink-0" />
-                    <p className="leading-relaxed">
-                      PAYMENTS ARE MANUALLY VERIFIED WITHIN 2 HOURS. ORDER STATUS WILL REMAIN
-                      "VERIFICATION PENDING" UNTIL OUR TEAM CONFIRMS THE UPI TRANSACTION.
-                    </p>
-                  </div>
-                </section>
-              )}
             </div>
 
             {/* ── Right column: Order Summary ── */}
