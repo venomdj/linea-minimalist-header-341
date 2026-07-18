@@ -61,7 +61,7 @@ export default function OrderTimeline({ order, compact = false }: Props) {
             <div className="flex flex-col items-center">
               <div
                 className={`w-8 h-8 rounded-full border flex items-center justify-center text-sm flex-shrink-0 transition-all ${
-                  done    ? "border-zinc-500 bg-zinc-800 text-zinc-300"
+                  done    ? "border-green-500 bg-green-500/20 text-green-400"
                   : current ? "border-zinc-300 bg-zinc-900 text-white ring-2 ring-zinc-700 ring-offset-1 ring-offset-zinc-950"
                   : "border-zinc-800 bg-zinc-950 text-zinc-700"
                 }`}
@@ -69,7 +69,7 @@ export default function OrderTimeline({ order, compact = false }: Props) {
                 {done ? "✓" : stage.icon}
               </div>
               {i < ORDER_STAGES.length - 1 && (
-                <div className={`w-px flex-1 mt-1 mb-1 min-h-[28px] ${done ? "bg-zinc-600" : "bg-zinc-800"}`} />
+                <div className={`w-px flex-1 mt-1 mb-1 min-h-[28px] ${done ? "bg-green-500" : "bg-zinc-800"}`} />
               )}
             </div>
 
