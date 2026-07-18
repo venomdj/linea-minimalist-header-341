@@ -152,6 +152,7 @@ const Checkout = () => {
   const [screenshotPreview, setScreenshotPreview] = useState<string>("");
   const [hasSavedDetails,   setHasSavedDetails]   = useState(false);
   const [showUpiModal,      setShowUpiModal]       = useState(false);
+  const [showScreenshotModal, setShowScreenshotModal] = useState(false);
   const [currentStep,       setCurrentStep]        = useState<1 | 2>(1); // 1=shipping, 2=payment
   const [timeLeft,          setTimeLeft]           = useState(RESERVATION_MINUTES * 60); // seconds
 
@@ -268,6 +269,10 @@ const Checkout = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    await submitOrder();
+  };
+
+  const submitOrder = async () => {
     if (items.length === 0) { toast.error("Your bag is empty"); return; }
 
     const parsed = buyerSchema.safeParse(form);
@@ -367,6 +372,7 @@ const Checkout = () => {
         email: form.email, fullName: form.fullName, phone: form.phone,
       });
       setShowUpiModal(false);
+      setShowScreenshotModal(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
       clear();
       toast.success("Order received — verification pending");
@@ -899,7 +905,25 @@ const Checkout = () => {
           merchantName={UPI_MERCHANT_NAME}
           onCopy={copy}
           onClose={() => setShowUpiModal(false)}
-          onConfirmed={() => { setShowUpiModal(false); setCurrentStep(2); }}
+          onConfirmed={() => {
+            setShowUpiModal(false);
+            setCurrentStep(2);
+            setShowScreenshotModal(true);
+          }}
+        />
+      )}
+
+      {/* ── Screenshot Confirmation Modal ── */}
+      {showScreenshotModal && (
+        <ScreenshotModal
+          total={pricing.total}
+          screenshotPreview={screenshotPreview}
+          screenshotName={form.screenshotName}
+          error={errors.screenshotName}
+          submitting={submitting}
+          onScreenshotChange={onScreenshotChange}
+          onGoBack={() => { setShowScreenshotModal(false); setShowUpiModal(true); }}
+          onConfirm={submitOrder}
         />
       )}
     </div>
@@ -1059,6 +1083,116 @@ const UpiModal = ({
             className="w-full h-13 rounded-none bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.18em] py-4">
             <Check size={14} className="mr-1.5" /> I HAVE PAID · SUBMIT SCREENSHOT
           </Button>
+
+          <p className="text-[11px] font-mono tracking-wider text-muted-foreground text-center">
+            Your order won't be confirmed until our team verifies the payment.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Screenshot Confirmation Modal ─────────────────────────────────────────────
+const ScreenshotModal = ({
+  total, screenshotPreview, screenshotName, error, submitting,
+  onScreenshotChange, onGoBack, onConfirm,
+}: {
+  total: number;
+  screenshotPreview: string;
+  screenshotName: string;
+  error?: string;
+  submitting: boolean;
+  onScreenshotChange: (file: File | null) => void;
+  onGoBack: () => void;
+  onConfirm: () => void;
+}) => {
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      role="dialog" aria-modal="true" aria-label="Confirm Payment">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+
+      {/* Sheet/Modal */}
+      <div className="relative w-full sm:max-w-lg bg-background border border-border sm:border shadow-2xl max-h-[95dvh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-border sticky top-0 bg-background z-10">
+          <div>
+            <p className="eyebrow mb-0.5">Last Step</p>
+            <h2 className="font-display text-xl text-foreground tracking-tight">Confirm Your Payment</h2>
+          </div>
+          <button type="button" onClick={onGoBack}
+            className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Close">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <p className="text-sm text-muted-foreground">
+            Upload a screenshot of your successful UPI payment of{" "}
+            <span className="text-foreground">{formatPrice(total)}</span> to confirm your order.
+          </p>
+
+          <Field label="Payment Screenshot *" error={error}>
+            {screenshotPreview ? (
+              <div className="flex items-center gap-3 border border-border bg-surface-1 p-3">
+                <img src={screenshotPreview} alt="Payment screenshot preview"
+                  className="w-16 h-16 object-cover" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-foreground truncate">{screenshotName}</p>
+                  <p className="text-[10px] font-mono tracking-wider text-verified mt-0.5">
+                    UPLOADED · READY FOR VERIFICATION
+                  </p>
+                </div>
+                <button type="button" onClick={() => onScreenshotChange(null)}
+                  className="text-muted-foreground hover:text-destructive transition-colors p-2"
+                  aria-label="Remove screenshot">
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center gap-2 py-10 border border-dashed border-border bg-surface-1 hover:border-foreground/40 cursor-pointer transition-colors">
+                <Upload size={22} className="text-muted-foreground" />
+                <span className="text-xs font-mono tracking-wider text-muted-foreground">UPLOAD PAYMENT SCREENSHOT</span>
+                <span className="text-[10px] font-mono tracking-wider text-muted-foreground/70">PNG / JPG · MAX 5 MB</span>
+                <input type="file" accept="image/*" className="hidden"
+                  onChange={(e) => onScreenshotChange(e.target.files?.[0] ?? null)} />
+              </label>
+            )}
+          </Field>
+
+          <div className="flex items-start gap-3 border border-dashed border-border p-4 text-[11px] font-mono tracking-wider text-muted-foreground">
+            <ShieldCheck size={14} className="mt-0.5 text-verified shrink-0" />
+            <p className="leading-relaxed">
+              PAYMENTS ARE MANUALLY VERIFIED WITHIN 2 HOURS. ORDER STATUS WILL REMAIN
+              "VERIFICATION PENDING" UNTIL OUR TEAM CONFIRMS THE UPI TRANSACTION.
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-col gap-3">
+            <Button
+              type="button"
+              onClick={onConfirm}
+              disabled={submitting || !screenshotName}
+              className="w-full h-13 rounded-none bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.18em] py-4">
+              {submitting ? "PROCESSING…" : `CONFIRM ORDER · ${formatPrice(total)}`}
+            </Button>
+            <button
+              type="button"
+              onClick={onGoBack}
+              className="w-full text-center text-[11px] font-mono tracking-wider text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4 py-1">
+              GO BACK TO QR CODE
+            </button>
+          </div>
 
           <p className="text-[11px] font-mono tracking-wider text-muted-foreground text-center">
             Your order won't be confirmed until our team verifies the payment.
