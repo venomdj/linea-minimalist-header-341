@@ -137,8 +137,7 @@ export default function MyOrders() {
 
 function EmptyOrdersHero() {
   const { products } = useProducts();
-  const featured = products.filter(p => p.featured).slice(0, 3);
-  const recommended = (featured.length ? featured : products.slice(0, 3));
+  const recommended = products.slice(0, 3);
 
   return (
     <div className="space-y-6">
