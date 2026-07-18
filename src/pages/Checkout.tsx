@@ -23,6 +23,9 @@ import {
   RefreshCw,
   AlertCircle,
   Zap,
+  Mail,
+  User,
+  MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -421,7 +424,7 @@ const Checkout = () => {
               </p>
             </div>
 
-            <div className="border border-border bg-surface-1 p-6 md:p-8 mb-8">
+            <div className="border border-border/60 bg-surface-1 rounded-xl shadow-card p-6 md:p-9 mb-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <p className="eyebrow mb-2">Order ID</p>
@@ -444,7 +447,7 @@ const Checkout = () => {
               </div>
             </div>
 
-            <div className="border border-border bg-surface-1 p-6 md:p-8 mb-8">
+            <div className="border border-border/60 bg-surface-1 rounded-xl shadow-card p-6 md:p-9 mb-8">
               <div className="flex items-baseline justify-between mb-6">
                 <h2 className="font-display text-lg text-foreground tracking-tight">Order Tracking</h2>
                 <span className="eyebrow text-[hsl(38,92%,60%)] flex items-center gap-1.5">
@@ -476,13 +479,13 @@ const Checkout = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Button asChild className="h-12 rounded-none bg-[#25D366] text-black hover:bg-[#25D366]/90 text-xs tracking-[0.18em]">
+              <Button asChild className="h-12 rounded-lg bg-[#25D366] text-black hover:bg-[#25D366]/90 text-xs tracking-[0.18em]">
                 <a href={waLink} target="_blank" rel="noreferrer">
                   <MessageCircle size={15} /> CONFIRM ON WHATSAPP
                 </a>
               </Button>
               <Button onClick={() => navigate("/")} variant="outline"
-                className="h-12 rounded-none border-border hover:border-foreground/40 bg-transparent text-xs tracking-[0.18em]">
+                className="h-12 rounded-lg border-border/70 hover:border-accent/50 hover:bg-surface-2 bg-transparent text-xs tracking-[0.18em]">
                 <PackageSearch size={15} /> CONTINUE BROWSING
               </Button>
             </div>
@@ -532,18 +535,23 @@ const Checkout = () => {
 
       <main className="flex-1 pt-8 pb-28 md:pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="mb-8">
-            <p className="eyebrow mb-2">Secure Checkout</p>
-            <h1 className="font-display text-3xl md:text-4xl text-foreground tracking-tight">
+          <div className="mb-9">
+            <p className="eyebrow mb-3 flex items-center gap-2">
+              <span className="w-4 h-px bg-accent/60" /> Secure Checkout
+            </p>
+            <h1 className="font-display text-4xl md:text-5xl text-foreground tracking-tight leading-[1.05]">
               Complete your acquisition
             </h1>
+            <p className="text-sm text-muted-foreground mt-3 max-w-md">
+              A few details and you're set — every payment is manually verified before dispatch.
+            </p>
           </div>
 
           {/* Trust badges */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
             {TRUST_BADGES.map(({ icon: Icon, label }) => (
-              <div key={label} className="flex items-center gap-2.5 border border-border bg-surface-1 px-3 py-3">
-                <Icon size={14} className="text-verified shrink-0" />
+              <div key={label} className="flex items-center gap-2.5 border border-border/60 bg-surface-1 rounded-lg px-4 py-3.5 shadow-card hover-lift">
+                <Icon size={15} className="text-verified shrink-0" />
                 <span className="text-[11px] font-mono tracking-wider text-muted-foreground leading-tight">{label}</span>
               </div>
             ))}
@@ -554,30 +562,36 @@ const Checkout = () => {
             <div className="lg:col-span-2 space-y-8">
 
               {/* Contact */}
-              <section className="border border-border bg-surface-1 p-6 md:p-8">
+              <section className="border border-border/60 bg-surface-1 rounded-xl shadow-card p-6 md:p-9">
                 <SectionHeader title="Contact" step="01" />
                 <div className="space-y-5">
                   <Field label="Email *" error={errors.email}>
-                    <Input type="email" value={form.email} onChange={(e) => update("email", e.target.value)}
-                      placeholder="you@example.com"
-                      className="rounded-none bg-background border-border h-12 text-base md:text-sm"
-                      autoComplete="email" />
+                    <div className="relative">
+                      <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/60 pointer-events-none" />
+                      <Input type="email" value={form.email} onChange={(e) => update("email", e.target.value)}
+                        placeholder="you@example.com"
+                        className="rounded-lg bg-background/70 border-border/70 h-12 pl-10 text-base md:text-sm transition-colors hover:border-border focus-visible:border-accent/50"
+                        autoComplete="email" />
+                    </div>
                   </Field>
                   <Field label="Full Name *" error={errors.fullName}>
-                    <Input value={form.fullName} onChange={(e) => update("fullName", e.target.value)}
-                      placeholder="As per government ID"
-                      className="rounded-none bg-background border-border h-12 text-base md:text-sm"
-                      autoComplete="name" />
+                    <div className="relative">
+                      <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/60 pointer-events-none" />
+                      <Input value={form.fullName} onChange={(e) => update("fullName", e.target.value)}
+                        placeholder="As per government ID"
+                        className="rounded-lg bg-background/70 border-border/70 h-12 pl-10 text-base md:text-sm transition-colors hover:border-border focus-visible:border-accent/50"
+                        autoComplete="name" />
+                    </div>
                   </Field>
                   <Field label="Mobile Number *" error={errors.phone}>
                     <div className="flex">
-                      <span className="inline-flex items-center px-3 h-12 border border-r-0 border-border bg-surface-2 text-sm font-mono text-muted-foreground">
+                      <span className="inline-flex items-center px-3 h-12 rounded-l-lg border border-r-0 border-border/70 bg-surface-2 text-sm font-mono text-muted-foreground">
                         +91
                       </span>
                       <Input type="tel" inputMode="numeric" value={form.phone}
                         onChange={(e) => update("phone", e.target.value.replace(/\D/g, "").slice(0, 10))}
                         placeholder="98765 43210" maxLength={10}
-                        className="rounded-none bg-background border-border h-12 flex-1 text-base md:text-sm"
+                        className="rounded-l-none rounded-r-lg bg-background/70 border-border/70 h-12 flex-1 text-base md:text-sm transition-colors hover:border-border focus-visible:border-accent/50"
                         autoComplete="tel-national" />
                     </div>
                   </Field>
@@ -585,7 +599,7 @@ const Checkout = () => {
               </section>
 
               {/* Shipping Address */}
-              <section className="border border-border bg-surface-1 p-6 md:p-8">
+              <section className="border border-border/60 bg-surface-1 rounded-xl shadow-card p-6 md:p-9">
                 <SectionHeader
                   title="Shipping Address"
                   step="02"
@@ -598,41 +612,44 @@ const Checkout = () => {
                 />
 
                 {hasSavedDetails && (
-                  <div className="mb-5 flex items-center gap-2 border border-verified/30 bg-verified/5 px-3 py-2 text-[11px] font-mono tracking-wider text-verified">
+                  <div className="mb-5 flex items-center gap-2 border border-verified/30 bg-verified/5 rounded-lg px-3.5 py-2.5 text-[11px] font-mono tracking-wider text-verified">
                     <Check size={12} /> SAVED DETAILS LOADED · EDIT FREELY
                   </div>
                 )}
 
                 <div className="space-y-5">
                   <Field label="Address *" error={errors.address}>
-                    <Input value={form.address} onChange={(e) => update("address", e.target.value)}
-                      placeholder="House no., building, street"
-                      className="rounded-none bg-background border-border h-12 text-base md:text-sm"
-                      autoComplete="address-line1" />
+                    <div className="relative">
+                      <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/60 pointer-events-none" />
+                      <Input value={form.address} onChange={(e) => update("address", e.target.value)}
+                        placeholder="House no., building, street"
+                        className="rounded-lg bg-background/70 border-border/70 h-12 pl-10 text-base md:text-sm transition-colors hover:border-border focus-visible:border-accent/50"
+                        autoComplete="address-line1" />
+                    </div>
                   </Field>
                   <Field label="Locality, landmark (optional)" error={errors.address2}>
                     <Input value={form.address2 ?? ""} onChange={(e) => update("address2", e.target.value)}
-                      className="rounded-none bg-background border-border h-12 text-base md:text-sm"
+                      className="rounded-lg bg-background/70 border-border/70 h-12 text-base md:text-sm transition-colors hover:border-border focus-visible:border-accent/50"
                       autoComplete="address-line2" />
                   </Field>
                   <div className="grid grid-cols-2 gap-4">
                     <Field label="City *" error={errors.city}>
                       <Input value={form.city} onChange={(e) => update("city", e.target.value)}
-                        className="rounded-none bg-background border-border h-12 text-base md:text-sm"
+                        className="rounded-lg bg-background/70 border-border/70 h-12 text-base md:text-sm transition-colors hover:border-border focus-visible:border-accent/50"
                         autoComplete="address-level2" />
                     </Field>
                     <Field label="Pincode *" error={errors.pincode}>
                       <Input inputMode="numeric" value={form.pincode}
                         onChange={(e) => update("pincode", e.target.value.replace(/\D/g, "").slice(0, 6))}
                         placeholder="400001" maxLength={6}
-                        className="rounded-none bg-background border-border h-12 text-base md:text-sm"
+                        className="rounded-lg bg-background/70 border-border/70 h-12 text-base md:text-sm transition-colors hover:border-border focus-visible:border-accent/50"
                         autoComplete="postal-code" />
                     </Field>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <Field label="State *" error={errors.state}>
                       <Select value={form.state} onValueChange={(v) => update("state", v as IndianState)}>
-                        <SelectTrigger className="rounded-none bg-background border-border h-12 text-base md:text-sm">
+                        <SelectTrigger className="rounded-lg bg-background/70 border-border/70 h-12 text-base md:text-sm transition-colors hover:border-border focus-visible:border-accent/50">
                           <SelectValue placeholder="Select state" />
                         </SelectTrigger>
                         <SelectContent className="max-h-72">
@@ -644,17 +661,17 @@ const Checkout = () => {
                     </Field>
                     <Field label="Country">
                       <Input value="India" disabled
-                        className="rounded-none bg-background border-border h-12 text-base md:text-sm" />
+                        className="rounded-lg bg-background/70 border-border/70 h-12 text-base md:text-sm transition-colors hover:border-border focus-visible:border-accent/50" />
                     </Field>
                   </div>
                 </div>
 
-                <div className="mt-6 pt-5 border-t border-border flex items-center justify-between gap-4 flex-wrap">
+                <div className="mt-6 pt-5 border-t border-border/70 flex items-center justify-between gap-4 flex-wrap">
                   <p className="text-[11px] font-mono tracking-wider text-muted-foreground">
                     SAVE THESE DETAILS FOR FASTER CHECKOUT NEXT TIME
                   </p>
                   <Button type="button" onClick={saveDetails} variant="outline" size="sm"
-                    className="rounded-none border-border hover:border-foreground/40 bg-transparent text-[11px] tracking-wider">
+                    className="rounded-lg border-border/70 hover:border-accent/50 hover:bg-surface-2 bg-transparent text-[11px] tracking-wider">
                     <BookmarkPlus size={12} />{" "}
                     {hasSavedDetails ? "UPDATE SAVED DETAILS" : "SAVE FOR NEXT TIME"}
                   </Button>
@@ -662,17 +679,17 @@ const Checkout = () => {
               </section>
 
               {/* Shipping Method */}
-              <section className="border border-border bg-surface-1 p-6 md:p-8">
+              <section className="border border-border/60 bg-surface-1 rounded-xl shadow-card p-6 md:p-9">
                 <SectionHeader title="Shipping Method" step="03" />
                 <RadioGroup value={form.shipping}
                   onValueChange={(v) => update("shipping", v as ShippingId)}
                   className="space-y-3">
                   {shippingOptions.map((opt) => (
                     <label key={opt.id} htmlFor={`ship-${opt.id}`}
-                      className={`flex items-center justify-between p-4 border cursor-pointer transition-colors ${
+                      className={`flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors ${
                         form.shipping === opt.id
-                          ? "border-foreground/40 bg-surface-2"
-                          : "border-border hover:border-foreground/20"
+                          ? "border-accent/50 bg-accent/5"
+                          : "border-border/70 hover:border-border hover:bg-surface-2"
                       }`}>
                       <div className="flex items-center gap-3">
                         <RadioGroupItem id={`ship-${opt.id}`} value={opt.id} />
@@ -691,9 +708,10 @@ const Checkout = () => {
 
             {/* ── Right column: Order Summary ── */}
             <aside className="lg:col-span-1">
-              <div className="border border-border bg-surface-1 p-6 md:p-8 sticky top-24 space-y-6">
+              <div className="border border-accent/25 bg-surface-1 rounded-xl shadow-elevated p-6 md:p-8 sticky top-24 space-y-6 relative overflow-hidden">
+                <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-accent/70 to-transparent" />
                 <div className="flex items-baseline justify-between">
-                  <h2 className="font-display text-lg text-foreground tracking-tight">Order Summary</h2>
+                  <h2 className="font-display text-xl text-foreground tracking-tight">Order Summary</h2>
                   <span className="eyebrow">{items.length} item{items.length !== 1 ? "s" : ""}</span>
                 </div>
 
@@ -701,7 +719,7 @@ const Checkout = () => {
                   <div className="text-center py-10 space-y-4">
                     <p className="text-sm text-muted-foreground">Your bag is empty.</p>
                     <Button asChild variant="outline"
-                      className="rounded-none border-border hover:border-foreground/40 bg-transparent text-xs tracking-wider">
+                      className="rounded-lg border-border/70 hover:border-accent/50 hover:bg-surface-2 bg-transparent text-xs tracking-wider">
                       <Link to="/category/all">BROWSE MARKETPLACE</Link>
                     </Button>
                   </div>
@@ -710,7 +728,7 @@ const Checkout = () => {
                     <ul className="space-y-5 max-h-[320px] overflow-y-auto pr-1">
                       {items.map((item) => (
                         <li key={item.id} className="flex gap-4">
-                          <div className="w-14 h-18 bg-surface-2 overflow-hidden shrink-0">
+                          <div className="w-14 h-18 bg-surface-2 overflow-hidden shrink-0 rounded-md border border-border/50">
                             <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -719,14 +737,14 @@ const Checkout = () => {
                             <div className="mt-2 flex items-center gap-2">
                               <button type="button" onClick={() => setQty(item.id, item.quantity - 1)}
                                 aria-label="Decrease"
-                                className="w-7 h-7 border border-border hover:border-foreground/40 flex items-center justify-center">
+                                className="w-7 h-7 rounded-md border border-border hover:border-accent/50 hover:bg-surface-2 flex items-center justify-center transition-colors">
                                 <Minus size={11} />
                               </button>
                               <span className="text-xs font-mono tabular-nums min-w-[2ch] text-center">{item.quantity}</span>
                               <button type="button" onClick={() => setQty(item.id, item.quantity + 1)}
                                 disabled={item.stock != null && item.quantity >= item.stock}
                                 aria-label="Increase"
-                                className="w-7 h-7 border border-border hover:border-foreground/40 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-border"
+                                className="w-7 h-7 rounded-md border border-border hover:border-accent/50 hover:bg-surface-2 flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-border disabled:hover:bg-transparent"
                                 title={item.stock != null && item.quantity >= item.stock ? `Only ${item.stock} in stock` : undefined}>
                                 <Plus size={11} />
                               </button>
@@ -747,7 +765,7 @@ const Checkout = () => {
                     </ul>
 
                     {/* Price breakdown */}
-                    <div className="border-t border-border pt-5 space-y-2.5 text-sm">
+                    <div className="border-t border-border/70 pt-5 space-y-3 text-sm">
                       <Row label="Base price (excl. GST)" value={formatPrice(pricing.taxableValue)} />
                       {pricing.sameState ? (
                         <>
@@ -766,20 +784,20 @@ const Checkout = () => {
                     </div>
 
                     {/* Total */}
-                    <div className="border-t border-border pt-5">
+                    <div className="border-t border-border/70 pt-5">
                       <div className="flex items-baseline justify-between">
                         <span className="text-sm text-foreground">Total payable</span>
-                        <span className="font-display text-3xl text-foreground tabular-nums">
+                        <span className="font-display text-4xl text-foreground tabular-nums text-glow-gold">
                           {formatPrice(pricing.total)}
                         </span>
                       </div>
-                      <p className="text-[11px] font-mono tracking-wider text-muted-foreground mt-1">
+                      <p className="text-[11px] font-mono tracking-wider text-muted-foreground mt-1.5">
                         Inclusive of all taxes · GSTIN 27AAACA1234F1Z5
                       </p>
                     </div>
 
                     {hasOutOfStockItems && (
-                      <div className="flex items-start gap-2 border border-destructive/40 bg-destructive/5 p-3 text-[11px] font-mono tracking-wider text-destructive">
+                      <div className="flex items-start gap-2 border border-destructive/40 bg-destructive/5 rounded-lg p-3 text-[11px] font-mono tracking-wider text-destructive">
                         <span>⚠</span>
                         <span>Some items are out of stock. Remove them before placing your order.</span>
                       </div>
@@ -791,16 +809,16 @@ const Checkout = () => {
                         type="button"
                         onClick={proceedToPayment}
                         disabled={hasOutOfStockItems || isExpired}
-                        className="w-full h-13 rounded-none bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.18em] py-4">
-                        <Zap size={14} className="mr-1" />
+                        className="w-full h-14 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 text-sm font-medium tracking-[0.08em] shadow-[0_8px_28px_-8px_hsl(var(--accent)/0.55)] hover:shadow-[0_10px_34px_-6px_hsl(var(--accent)/0.65)] transition-shadow">
+                        <Zap size={16} className="mr-1.5" />
                         PAY WITH UPI · {formatPrice(pricing.total)}
-                        <ChevronRight size={14} className="ml-1" />
+                        <ChevronRight size={16} className="ml-1.5" />
                       </Button>
                     ) : (
                       <Button
                         type="submit"
                         disabled={submitting || hasOutOfStockItems}
-                        className="w-full h-13 rounded-none bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.18em] py-4">
+                        className="w-full h-14 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 text-sm font-medium tracking-[0.08em] shadow-[0_8px_28px_-8px_hsl(var(--accent)/0.55)] hover:shadow-[0_10px_34px_-6px_hsl(var(--accent)/0.65)] transition-shadow">
                         {submitting ? "PROCESSING…" : `CONFIRM ORDER · ${formatPrice(pricing.total)}`}
                       </Button>
                     )}
@@ -814,10 +832,10 @@ const Checkout = () => {
                       </button>
                     )}
 
-                    <ul className="space-y-2 pt-1 text-[11px] font-mono tracking-wider text-muted-foreground">
-                      <li className="flex items-center gap-2"><ShieldCheck size={12} className="text-verified" /> ESCROW PROTECTED</li>
-                      <li className="flex items-center gap-2"><Truck size={12} className="text-verified" /> INSURED PAN-INDIA SHIPPING</li>
-                      <li className="flex items-center gap-2"><Lock size={12} className="text-verified" /> MANUALLY VERIFIED UPI</li>
+                    <ul className="space-y-2.5 pt-2 text-[11px] font-mono tracking-wider text-muted-foreground">
+                      <li className="flex items-center gap-2.5"><ShieldCheck size={13} className="text-verified" /> ESCROW PROTECTED</li>
+                      <li className="flex items-center gap-2.5"><Truck size={13} className="text-verified" /> INSURED PAN-INDIA SHIPPING</li>
+                      <li className="flex items-center gap-2.5"><Lock size={13} className="text-verified" /> MANUALLY VERIFIED UPI</li>
                     </ul>
                   </>
                 )}
@@ -838,14 +856,14 @@ const Checkout = () => {
             type="button"
             onClick={proceedToPayment}
             disabled={hasOutOfStockItems || isExpired || items.length === 0}
-            className="rounded-none bg-foreground text-background hover:bg-foreground/90 text-[11px] tracking-[0.18em] h-12 px-5 shrink-0">
+            className="rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 text-[11px] font-medium tracking-[0.1em] h-12 px-5 shrink-0 shadow-[0_6px_20px_-6px_hsl(var(--accent)/0.6)]">
             <Zap size={13} className="mr-1" /> PAY WITH UPI
           </Button>
         ) : (
           <Button
             type="button"
             onClick={() => setShowUpiModal(true)}
-            className="rounded-none bg-foreground text-background hover:bg-foreground/90 text-[11px] tracking-[0.18em] h-12 px-5 shrink-0">
+            className="rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 text-[11px] font-medium tracking-[0.1em] h-12 px-5 shrink-0 shadow-[0_6px_20px_-6px_hsl(var(--accent)/0.6)]">
             VIEW QR CODE
           </Button>
         )}
@@ -888,8 +906,8 @@ const Checkout = () => {
 
 // ─── Progress Bar ─────────────────────────────────────────────────────────────
 const ProgressBar = ({ activeIndex }: { activeIndex: number }) => (
-  <div className="border-b border-border bg-surface-1">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
+  <div className="border-b border-border/70 bg-surface-1">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5">
       <ol className="flex items-center gap-0">
         {STEPS.map((step, i) => {
           const isDone   = i < activeIndex;
@@ -897,12 +915,12 @@ const ProgressBar = ({ activeIndex }: { activeIndex: number }) => (
           return (
             <li key={step} className="flex items-center">
               <div className="flex items-center gap-2">
-                <div className={`w-5 h-5 rounded-full border flex items-center justify-center text-[9px] font-mono transition-colors ${
+                <div className={`w-6 h-6 rounded-full border flex items-center justify-center text-[9px] font-mono transition-colors ${
                   isDone   ? "bg-verified/20 border-verified text-verified"
-                  : isActive ? "border-foreground text-foreground"
+                  : isActive ? "border-accent text-accent shadow-[0_0_0_3px_hsl(var(--accent)/0.15)]"
                   : "border-border text-muted-foreground"
                 }`}>
-                  {isDone ? <Check size={9} /> : i + 1}
+                  {isDone ? <Check size={10} /> : i + 1}
                 </div>
                 <span className={`text-[11px] font-mono tracking-wider hidden sm:block ${
                   isActive ? "text-foreground" : isDone ? "text-verified" : "text-muted-foreground"
@@ -943,7 +961,7 @@ const UpiModal = ({
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       {/* Sheet/Modal */}
-      <div className="relative w-full sm:max-w-lg bg-background border border-border sm:border shadow-2xl max-h-[95dvh] overflow-y-auto">
+      <div className="relative w-full sm:max-w-lg bg-background border border-border/70 sm:border rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[95dvh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-border sticky top-0 bg-background z-10">
           <div>
@@ -959,7 +977,7 @@ const UpiModal = ({
 
         <div className="p-6 space-y-6">
           {/* Amount hero */}
-          <div className="border border-border bg-surface-1 p-5 text-center">
+          <div className="border border-accent/20 bg-surface-1 rounded-xl p-5 text-center">
             <p className="eyebrow mb-2">Amount to Pay</p>
             <p className="font-display text-4xl text-foreground tabular-nums">{formatPrice(total)}</p>
             <p className="text-[11px] font-mono tracking-wider text-muted-foreground mt-1.5">EXACT AMOUNT · DO NOT CHANGE</p>
@@ -967,7 +985,7 @@ const UpiModal = ({
 
           {/* QR code */}
           <div className="flex flex-col items-center gap-3">
-            <div className="bg-white p-3 border border-border inline-block">
+            <div className="bg-white p-3 border border-border rounded-lg inline-block">
               <img src={qrUrl} alt="UPI payment QR code" className="w-[200px] h-[200px] sm:w-[240px] sm:h-[240px] block" />
             </div>
             <p className="text-[11px] font-mono tracking-wider text-muted-foreground text-center">
@@ -976,7 +994,7 @@ const UpiModal = ({
           </div>
 
           {/* UPI ID + copy */}
-          <div className="border border-border bg-surface-1 p-4 space-y-3">
+          <div className="border border-border/70 bg-surface-1 rounded-lg p-4 space-y-3">
             <div>
               <p className="eyebrow mb-1">Pay To</p>
               <p className="text-sm text-foreground">{merchantName}</p>
@@ -987,7 +1005,7 @@ const UpiModal = ({
                 <p className="font-mono text-sm text-foreground truncate">{upiId}</p>
               </div>
               <button type="button" onClick={() => onCopy(upiId, "UPI ID")}
-                className="flex items-center gap-1.5 border border-border bg-transparent hover:border-foreground/40 transition-colors px-3 h-8 text-[11px] font-mono tracking-wider text-foreground shrink-0">
+                className="flex items-center gap-1.5 rounded-md border border-border/70 bg-transparent hover:border-accent/50 hover:bg-surface-2 transition-colors px-3 h-8 text-[11px] font-mono tracking-wider text-foreground shrink-0">
                 <Copy size={11} /> COPY
               </button>
             </div>
@@ -997,7 +1015,7 @@ const UpiModal = ({
                 <p className="font-display text-xl text-foreground tabular-nums">{formatPrice(total)}</p>
               </div>
               <button type="button" onClick={() => onCopy(total.toString(), "Amount")}
-                className="flex items-center gap-1.5 border border-border bg-transparent hover:border-foreground/40 transition-colors px-3 h-8 text-[11px] font-mono tracking-wider text-foreground shrink-0">
+                className="flex items-center gap-1.5 rounded-md border border-border/70 bg-transparent hover:border-accent/50 hover:bg-surface-2 transition-colors px-3 h-8 text-[11px] font-mono tracking-wider text-foreground shrink-0">
                 <Copy size={11} /> COPY
               </button>
             </div>
@@ -1009,7 +1027,7 @@ const UpiModal = ({
             <div className="grid grid-cols-4 gap-2">
               {UPI_APPS.map((app) => (
                 <a key={app.name} href={app.scheme(upiLink)} rel="noreferrer"
-                  className="flex flex-col items-center justify-center gap-1.5 border border-border bg-surface-1 hover:border-foreground/40 transition-colors py-3 text-[10px] font-mono tracking-wider text-muted-foreground hover:text-foreground">
+                  className="flex flex-col items-center justify-center gap-1.5 rounded-lg border border-border/70 bg-surface-1 hover:border-accent/50 hover:bg-surface-2 transition-colors py-3 text-[10px] font-mono tracking-wider text-muted-foreground hover:text-foreground">
                   <Smartphone size={16} />
                   {app.name}
                 </a>
@@ -1036,7 +1054,7 @@ const UpiModal = ({
           <Button
             type="button"
             onClick={onConfirmed}
-            className="w-full h-13 rounded-none bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.18em] py-4">
+            className="w-full h-14 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 text-sm font-medium tracking-[0.08em] shadow-[0_8px_28px_-8px_hsl(var(--accent)/0.55)] hover:shadow-[0_10px_34px_-6px_hsl(var(--accent)/0.65)] transition-shadow">
             <Check size={14} className="mr-1.5" /> I HAVE PAID · SUBMIT SCREENSHOT
           </Button>
 
@@ -1077,7 +1095,7 @@ const ScreenshotModal = ({
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
       {/* Sheet/Modal */}
-      <div className="relative w-full sm:max-w-lg bg-background border border-border sm:border shadow-2xl max-h-[95dvh] overflow-y-auto">
+      <div className="relative w-full sm:max-w-lg bg-background border border-border/70 sm:border rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[95dvh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-border sticky top-0 bg-background z-10">
           <div>
@@ -1099,7 +1117,7 @@ const ScreenshotModal = ({
 
           <Field label="Payment Screenshot *" error={error}>
             {screenshotPreview ? (
-              <div className="flex items-center gap-3 border border-border bg-surface-1 p-3">
+              <div className="flex items-center gap-3 rounded-lg border border-verified/30 bg-verified/5 p-3">
                 <img src={screenshotPreview} alt="Payment screenshot preview"
                   className="w-16 h-16 object-cover" />
                 <div className="flex-1 min-w-0">
@@ -1115,7 +1133,7 @@ const ScreenshotModal = ({
                 </button>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center gap-2 py-10 border border-dashed border-border bg-surface-1 hover:border-foreground/40 cursor-pointer transition-colors">
+              <label className="flex flex-col items-center justify-center gap-2 py-10 rounded-lg border border-dashed border-border bg-surface-1 hover:border-accent/50 hover:bg-surface-2 cursor-pointer transition-colors">
                 <Upload size={22} className="text-muted-foreground" />
                 <span className="text-xs font-mono tracking-wider text-muted-foreground">UPLOAD PAYMENT SCREENSHOT</span>
                 <span className="text-[10px] font-mono tracking-wider text-muted-foreground/70">PNG / JPG · MAX 5 MB</span>
@@ -1125,7 +1143,7 @@ const ScreenshotModal = ({
             )}
           </Field>
 
-          <div className="flex items-start gap-3 border border-dashed border-border p-4 text-[11px] font-mono tracking-wider text-muted-foreground">
+          <div className="flex items-start gap-3 rounded-lg border border-dashed border-border p-4 text-[11px] font-mono tracking-wider text-muted-foreground">
             <ShieldCheck size={14} className="mt-0.5 text-verified shrink-0" />
             <p className="leading-relaxed">
               PAYMENTS ARE MANUALLY VERIFIED WITHIN 2 HOURS. ORDER STATUS WILL REMAIN
@@ -1139,7 +1157,7 @@ const ScreenshotModal = ({
               type="button"
               onClick={onConfirm}
               disabled={submitting || !screenshotName}
-              className="w-full h-13 rounded-none bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.18em] py-4">
+              className="w-full h-14 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 text-sm font-medium tracking-[0.08em] shadow-[0_8px_28px_-8px_hsl(var(--accent)/0.55)] hover:shadow-[0_10px_34px_-6px_hsl(var(--accent)/0.65)] transition-shadow disabled:opacity-50 disabled:shadow-none">
               {submitting ? "PROCESSING…" : `CONFIRM ORDER · ${formatPrice(total)}`}
             </Button>
             <button
@@ -1163,11 +1181,15 @@ const ScreenshotModal = ({
 const SectionHeader = ({
   title, step, actions,
 }: { title: string; step: string; actions?: React.ReactNode }) => (
-  <header className="flex items-baseline justify-between mb-6">
-    <h2 className="font-display text-lg text-foreground tracking-tight">{title}</h2>
+  <header className="flex items-center justify-between mb-7">
+    <h2 className="font-display text-xl md:text-2xl text-foreground tracking-tight">{title}</h2>
     <div className="flex items-center gap-3">
       {actions}
-      <span className="eyebrow">Step {step}</span>
+      <span className="eyebrow flex items-center gap-1.5">
+        <span className="w-5 h-5 rounded-full border border-accent/40 bg-accent/10 text-accent flex items-center justify-center text-[10px] font-mono not-italic">
+          {step}
+        </span>
+      </span>
     </div>
   </header>
 );
@@ -1177,14 +1199,14 @@ const Field = ({
   label, error, children,
 }: { label: string; error?: string; children: React.ReactNode }) => (
   <div>
-    <Label className="eyebrow block mb-2">{label}</Label>
+    <Label className="eyebrow block mb-2.5">{label}</Label>
     {children}
-    {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}
+    {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
   </div>
 );
 
 const Row = ({ label, value, muted }: { label: string; value: string; muted?: boolean }) => (
-  <div className="flex justify-between">
+  <div className="flex justify-between items-center">
     <span className="text-muted-foreground">{label}</span>
     <span className={`tabular-nums font-mono ${muted ? "text-muted-foreground" : "text-foreground"}`}>{value}</span>
   </div>
