@@ -1,18 +1,25 @@
 // src/components/account/AccountLayout.tsx
 import { Link, useLocation, Navigate } from "react-router-dom";
-import { LayoutDashboard, User, ShoppingBag, MapPin, Settings, LogOut, ChevronRight } from "lucide-react";
+import {
+  LayoutDashboard,
+  User,
+  ShoppingBag,
+  MapPin,
+  Settings,
+  LogOut,
+  ChevronRight,
+} from "lucide-react";
 import Header from "@/components/header/Header";
 import Footer from "@/components/footer/Footer";
 import { useAuth } from "@/context/AuthContext";
 
 const navLinks = [
-  { href: "/account",           label: "Dashboard",     icon: LayoutDashboard },
-  { href: "/account/profile",   label: "Profile",       icon: User },
-  { href: "/account/orders",    label: "My Orders",     icon: ShoppingBag },
-  { href: "/account/addresses", label: "Addresses",     icon: MapPin },
-  { href: "/account/settings",  label: "Settings",      icon: Settings },
+  { href: "/account",           label: "Dashboard",  icon: LayoutDashboard, desc: "Overview" },
+  { href: "/account/profile",   label: "Profile",    icon: User,            desc: "Personal details" },
+  { href: "/account/orders",    label: "Orders",     icon: ShoppingBag,     desc: "Track & history" },
+  { href: "/account/addresses", label: "Addresses",  icon: MapPin,          desc: "Saved locations" },
+  { href: "/account/settings",  label: "Settings",   icon: Settings,        desc: "Preferences" },
 ];
-
 
 interface Props {
   children: React.ReactNode;
@@ -26,7 +33,7 @@ export default function AccountLayout({ children, title }: Props) {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-zinc-700 border-t-zinc-300 rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
       </div>
     );
   }
@@ -41,14 +48,14 @@ export default function AccountLayout({ children, title }: Props) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <main className="flex-1 pt-8 pb-20">
+      <main className="flex-1 pt-6 sm:pt-10 pb-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
 
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-[12px] font-mono tracking-widest text-muted-foreground mb-8 uppercase">
-            <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
+          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-[11px] font-mono tracking-[0.2em] text-muted-foreground mb-6 uppercase">
+            <Link to="/" className="hover:text-accent transition-colors">Home</Link>
             <ChevronRight size={10} />
-            <Link to="/account" className="hover:text-foreground transition-colors">My Account</Link>
+            <Link to="/account" className="hover:text-accent transition-colors">Account</Link>
             {title && (
               <>
                 <ChevronRight size={10} />
@@ -57,60 +64,90 @@ export default function AccountLayout({ children, title }: Props) {
             )}
           </nav>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 lg:gap-10">
 
-            {/* Sidebar */}
-            <aside>
-              {/* Profile card — vault access card */}
-              <div className="relative border border-accent/25 bg-zinc-950 p-5 mb-4 shine overflow-hidden">
-                <span className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
-                <div className="flex items-center gap-3 mb-4">
+            {/* Sidebar / Modern nav cards */}
+            <aside className="lg:sticky lg:top-24 lg:self-start space-y-3">
+
+              {/* Profile card — luxury vault pass */}
+              <div className="relative rounded-2xl border border-accent/20 bg-gradient-to-br from-zinc-950 via-zinc-950 to-zinc-900/60 p-5 overflow-hidden shadow-[0_8px_32px_-12px_rgba(0,0,0,0.6)]">
+                <span className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-accent/[0.08] blur-3xl" />
+                <div className="relative flex items-center gap-3.5">
                   {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt={displayName} className="w-11 h-11 rounded-full object-cover border-2 border-accent/40" />
+                    <img
+                      src={profile.avatar_url}
+                      alt={displayName}
+                      className="w-14 h-14 rounded-full object-cover ring-2 ring-accent/40 ring-offset-2 ring-offset-zinc-950"
+                    />
                   ) : (
-                    <div className="w-11 h-11 rounded-full bg-accent/10 border-2 border-accent/40 flex items-center justify-center text-sm font-display font-semibold text-accent">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-accent/30 to-accent/5 ring-2 ring-accent/40 ring-offset-2 ring-offset-zinc-950 flex items-center justify-center text-base font-display font-semibold text-accent">
                       {initials}
                     </div>
                   )}
-                  <div className="min-w-0">
-                    <p className="text-[15px] font-display font-medium text-white truncate">{displayName}</p>
-                    <p className="text-[11px] font-mono text-zinc-500 truncate">{user.email}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-mono tracking-[0.18em] text-accent/80 uppercase mb-0.5">Welcome</p>
+                    <p className="text-base font-display font-medium text-white truncate leading-tight">{displayName}</p>
+                    <p className="text-[11px] font-mono text-zinc-500 truncate mt-0.5">{user.email}</p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between border-t border-zinc-800 pt-3">
-                  <span className="px-2.5 py-1 text-[9px] font-mono tracking-[0.18em] uppercase border border-rarity-legendary/50 text-rarity-legendary bg-background/40">
+                <div className="relative mt-4 pt-4 border-t border-zinc-800/80 flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-mono tracking-[0.18em] uppercase border border-accent/40 text-accent bg-accent/[0.05]">
+                    <span className="w-1 h-1 rounded-full bg-accent dot-glow-gold" />
                     Vault Member
                   </span>
+                  <Link to="/account/profile" className="text-[10px] font-mono tracking-widest text-zinc-500 hover:text-accent transition-colors uppercase">
+                    Edit
+                  </Link>
                 </div>
               </div>
 
-              {/* Nav links */}
-              <nav className="border border-zinc-800 bg-zinc-950 overflow-hidden">
-                {navLinks.map(({ href, label, icon: Icon }) => {
+              {/* Nav — mobile horizontal scroll, desktop stacked cards */}
+              <nav
+                aria-label="Account navigation"
+                className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible -mx-4 px-4 lg:mx-0 lg:px-0 pb-2 lg:pb-0 scrollbar-none"
+              >
+                {navLinks.map(({ href, label, icon: Icon, desc }) => {
                   const active = location.pathname === href;
                   return (
                     <Link
                       key={href}
                       to={href}
-                      className={`relative flex items-center gap-3 px-4 py-3 text-[13px] border-b border-zinc-800 last:border-0 transition-colors ${
+                      aria-current={active ? "page" : undefined}
+                      className={`group relative flex items-center gap-3 rounded-xl border px-4 py-3 min-w-[180px] lg:min-w-0 flex-shrink-0 transition-all duration-300 ${
                         active
-                          ? "bg-accent/[0.07] text-white"
-                          : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+                          ? "border-accent/40 bg-gradient-to-r from-accent/[0.08] to-transparent shadow-[inset_0_0_0_1px_rgba(0,0,0,0)]"
+                          : "border-zinc-800/80 bg-zinc-950/60 hover:border-zinc-700 hover:bg-zinc-900/60"
                       }`}
                     >
-                      {active && <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-accent" />}
-                      <Icon size={15} strokeWidth={1.5} className={active ? "text-accent" : ""} />
-                      <span className="font-mono tracking-wider">{label}</span>
-                      {active && <ChevronRight size={12} className="ml-auto text-accent" />}
+                      <div className={`flex items-center justify-center w-9 h-9 rounded-lg transition-all ${
+                        active
+                          ? "bg-accent/15 text-accent"
+                          : "bg-zinc-900 text-zinc-500 group-hover:text-white group-hover:bg-zinc-800"
+                      }`}>
+                        <Icon size={16} strokeWidth={1.75} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-[13px] font-display font-medium leading-tight ${active ? "text-white" : "text-zinc-200 group-hover:text-white"}`}>
+                          {label}
+                        </p>
+                        <p className="hidden lg:block text-[10.5px] font-mono text-zinc-500 tracking-wide mt-0.5 truncate">{desc}</p>
+                      </div>
+                      <ChevronRight size={14} className={`hidden lg:block transition-all ${active ? "text-accent translate-x-0.5" : "text-zinc-700 group-hover:text-zinc-500 group-hover:translate-x-0.5"}`} />
                     </Link>
                   );
                 })}
+
                 <button
                   onClick={signOut}
-                  className="flex items-center gap-3 px-4 py-3 w-full text-[13px] text-red-400/70 hover:text-red-400 hover:bg-zinc-900 transition-colors font-mono tracking-wider"
+                  className="group flex items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-950/60 hover:border-red-900/60 hover:bg-red-950/20 px-4 py-3 min-w-[180px] lg:min-w-0 flex-shrink-0 transition-all duration-300 text-left"
                 >
-                  <LogOut size={15} strokeWidth={1.5} />
-                  Sign Out
+                  <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-zinc-900 group-hover:bg-red-950/40 text-zinc-500 group-hover:text-red-400 transition-all">
+                    <LogOut size={16} strokeWidth={1.75} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-display font-medium text-zinc-300 group-hover:text-red-300 leading-tight transition-colors">Sign Out</p>
+                    <p className="hidden lg:block text-[10.5px] font-mono text-zinc-500 tracking-wide mt-0.5">End session</p>
+                  </div>
                 </button>
               </nav>
             </aside>
