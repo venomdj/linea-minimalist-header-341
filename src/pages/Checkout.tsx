@@ -107,7 +107,8 @@ export function calcPricing(subtotal: number, shippingId: ShippingId, state: str
 // ─── Form state ───────────────────────────────────────────────────────────────
 const initial: BuyerForm = {
   email: "", fullName: "", phone: "", address: "", address2: "",
-  city: "", state: "", pincode: "", shipping: "standard", screenshotName: "",
+  city: "", state: "", pincode: "", shipping: "standard",
+  paymentMethod: "upi", screenshotName: "",
 };
 
 const SAVED_DETAILS_KEY  = "mythicalvault.buyer.v1";
