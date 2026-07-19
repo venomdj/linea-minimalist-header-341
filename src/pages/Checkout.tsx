@@ -73,7 +73,8 @@ const buyerSchema = z.object({
     .trim()
     .regex(/^\d{6}$/, "Pincode must be 6 digits"),
   shipping: z.enum(["standard", "express"]),
-  screenshotName: z.string().min(1, "Upload your payment screenshot"),
+  paymentMethod: z.enum(["upi", "cod"]),
+  screenshotName: z.string().optional().or(z.literal("")),
 });
 
 type BuyerForm = z.infer<typeof buyerSchema>;
