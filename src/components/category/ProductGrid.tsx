@@ -100,6 +100,10 @@ const ProductGrid = ({ activeCategory = null, activeFilters }: Props) => {
     if (sort === "newest")     list = [...list].sort((a, b) => String(b.id).localeCompare(String(a.id)));
     if (sort === "name")       list = [...list].sort((a, b) => a.name.localeCompare(b.name));
 
+    // 7. Always push out-of-stock items to the bottom (stable within groups)
+    const isInStock = (p: typeof list[number]) => (p.inStock ?? (p.stock ?? 0) > 0);
+    list = [...list].sort((a, b) => Number(isInStock(b)) - Number(isInStock(a)));
+
     return list;
   }, [products, rows, activeCategory, activeFilters, rowMap]);
 
