@@ -926,7 +926,7 @@ const Checkout = () => {
             onClick={proceedToPayment}
             disabled={hasOutOfStockItems || isExpired || items.length === 0}
             className="rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 text-[11px] font-medium tracking-[0.1em] h-12 px-5 shrink-0 shadow-[0_6px_20px_-6px_hsl(var(--accent)/0.6)]">
-            <Zap size={13} className="mr-1" /> PAY WITH UPI
+            <Zap size={13} className="mr-1" /> {form.paymentMethod === "cod" ? "PLACE COD ORDER" : "PAY WITH UPI"}
           </Button>
         ) : (
           <Button
