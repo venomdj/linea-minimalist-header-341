@@ -297,6 +297,14 @@ const Checkout = () => {
       return;
     }
 
+    if (form.paymentMethod === "upi" && !form.screenshotName) {
+      setErrors((e) => ({ ...e, screenshotName: "Upload your payment screenshot" }));
+      toast.error("Upload your payment screenshot");
+      return;
+    }
+
+
+
     setSubmitting(true);
     const finalPricing = calcPricing(subtotal, form.shipping as ShippingId, form.state);
 
