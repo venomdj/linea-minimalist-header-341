@@ -353,7 +353,7 @@ const Checkout = () => {
         gst_amount: finalPricing.gstAmount,
         shipping_amount: finalPricing.shippingCost,
         total_amount: finalPricing.total,
-        payment_method: "upi",
+        payment_method: form.paymentMethod,
         payment_status: "pending",
         status: "pending" as const,
         order_date: new Date().toISOString(),
