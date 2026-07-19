@@ -17,7 +17,13 @@ import { useProducts } from "@/hooks/useProducts";
 
 const ProductCarousel = () => {
   const ref = useScrollReveal();
-  const { products, loading } = useProducts();
+  const { products: allProducts, loading } = useProducts();
+  // Hide out-of-stock items from the carousel — they update automatically
+  // via the useProducts realtime subscription when stock changes.
+  const products = useMemo(
+    () => allProducts.filter((p) => (p.inStock ?? (p.stock ?? 0) > 0)),
+    [allProducts]
+  );
   const hasAnimated = useRef(false);
   const [api, setApi] = useState<CarouselApi>();
 
