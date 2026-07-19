@@ -105,8 +105,9 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Inter, system-ui, sans-serif;
     font-feature-settings: 'ss01', 'cv11';
+    font-weight: 400;
     overflow-x: hidden;
     -webkit-tap-highlight-color: transparent;
   }
@@ -118,8 +119,22 @@
 
 
   h1, h2, h3, h4, .display {
-    font-family: 'Space Grotesk', 'Inter', sans-serif;
-    letter-spacing: -0.02em;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Inter, system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+  }
+  h1, .display-xl {
+    font-weight: 900;
+    letter-spacing: -0.045em;
+  }
+
+  /* Make prices, badges, and key stats pop */
+  .tabular-nums, [class*="tabular-nums"] {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+  strong, b {
+    font-weight: 700;
   }
 
   /* Selection */
