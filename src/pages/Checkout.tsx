@@ -878,7 +878,9 @@ const Checkout = () => {
                         disabled={hasOutOfStockItems || isExpired}
                         className="w-full h-14 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 text-sm font-medium tracking-[0.08em] shadow-[0_8px_28px_-8px_hsl(var(--accent)/0.55)] hover:shadow-[0_10px_34px_-6px_hsl(var(--accent)/0.65)] transition-shadow">
                         <Zap size={16} className="mr-1.5" />
-                        PAY WITH UPI · {formatPrice(pricing.total)}
+                        {form.paymentMethod === "cod"
+                          ? `PLACE COD ORDER · ${formatPrice(pricing.total)}`
+                          : `PAY WITH UPI · ${formatPrice(pricing.total)}`}
                         <ChevronRight size={16} className="ml-1.5" />
                       </Button>
                     ) : (
