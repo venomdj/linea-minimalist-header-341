@@ -73,7 +73,8 @@ const buyerSchema = z.object({
     .trim()
     .regex(/^\d{6}$/, "Pincode must be 6 digits"),
   shipping: z.enum(["standard", "express"]),
-  screenshotName: z.string().min(1, "Upload your payment screenshot"),
+  paymentMethod: z.enum(["upi", "cod"]),
+  screenshotName: z.string().optional().or(z.literal("")),
 });
 
 type BuyerForm = z.infer<typeof buyerSchema>;
@@ -106,7 +107,8 @@ export function calcPricing(subtotal: number, shippingId: ShippingId, state: str
 // ─── Form state ───────────────────────────────────────────────────────────────
 const initial: BuyerForm = {
   email: "", fullName: "", phone: "", address: "", address2: "",
-  city: "", state: "", pincode: "", shipping: "standard", screenshotName: "",
+  city: "", state: "", pincode: "", shipping: "standard",
+  paymentMethod: "upi", screenshotName: "",
 };
 
 const SAVED_DETAILS_KEY  = "mythicalvault.buyer.v1";
@@ -266,6 +268,11 @@ const Checkout = () => {
   const proceedToPayment = () => {
     if (!validateShippingStep()) return;
     setCurrentStep(2);
+    if (form.paymentMethod === "cod") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      void submitOrder();
+      return;
+    }
     setShowUpiModal(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -289,6 +296,14 @@ const Checkout = () => {
       toast.error("Please correct the highlighted fields");
       return;
     }
+
+    if (form.paymentMethod === "upi" && !form.screenshotName) {
+      setErrors((e) => ({ ...e, screenshotName: "Upload your payment screenshot" }));
+      toast.error("Upload your payment screenshot");
+      return;
+    }
+
+
 
     setSubmitting(true);
     const finalPricing = calcPricing(subtotal, form.shipping as ShippingId, form.state);
@@ -338,7 +353,7 @@ const Checkout = () => {
         gst_amount: finalPricing.gstAmount,
         shipping_amount: finalPricing.shippingCost,
         total_amount: finalPricing.total,
-        payment_method: "upi",
+        payment_method: form.paymentMethod,
         payment_status: "pending",
         status: "pending" as const,
         order_date: new Date().toISOString(),
@@ -678,6 +693,9 @@ const Checkout = () => {
                 </div>
               </section>
 
+
+
+
               {/* Shipping Method */}
               <section className="border border-border/60 bg-surface-1 rounded-xl shadow-card p-6 md:p-9">
                 <SectionHeader title="Shipping Method" step="03" />
@@ -701,6 +719,55 @@ const Checkout = () => {
                       <span className="text-sm text-foreground font-mono tabular-nums">{formatPrice(opt.price)}</span>
                     </label>
                   ))}
+                </RadioGroup>
+              </section>
+
+              {/* Payment Method */}
+              <section className="border border-border/60 bg-surface-1 rounded-xl shadow-card p-6 md:p-9">
+                <SectionHeader title="Payment Method" step="04" />
+                <RadioGroup
+                  value={form.paymentMethod}
+                  onValueChange={(v) => update("paymentMethod", v as "upi" | "cod")}
+                  className="space-y-3">
+                  <label htmlFor="pay-upi"
+                    className={`flex items-start justify-between p-4 rounded-lg border cursor-pointer transition-colors ${
+                      form.paymentMethod === "upi"
+                        ? "border-accent/50 bg-accent/5"
+                        : "border-border/70 hover:border-border hover:bg-surface-2"
+                    }`}>
+                    <div className="flex items-start gap-3">
+                      <RadioGroupItem id="pay-upi" value="upi" className="mt-1" />
+                      <div>
+                        <p className="text-sm text-foreground flex items-center gap-2">
+                          <Smartphone size={14} className="text-accent" /> UPI · QR / Apps
+                        </p>
+                        <p className="text-xs text-muted-foreground font-mono tracking-wider mt-1">
+                          Pay instantly via GPay, PhonePe, Paytm, BHIM
+                        </p>
+                      </div>
+                    </div>
+                    <span className="eyebrow text-verified">Instant</span>
+                  </label>
+
+                  <label htmlFor="pay-cod"
+                    className={`flex items-start justify-between p-4 rounded-lg border cursor-pointer transition-colors ${
+                      form.paymentMethod === "cod"
+                        ? "border-accent/50 bg-accent/5"
+                        : "border-border/70 hover:border-border hover:bg-surface-2"
+                    }`}>
+                    <div className="flex items-start gap-3">
+                      <RadioGroupItem id="pay-cod" value="cod" className="mt-1" />
+                      <div>
+                        <p className="text-sm text-foreground flex items-center gap-2">
+                          <Truck size={14} className="text-accent" /> Cash on Delivery
+                        </p>
+                        <p className="text-xs text-muted-foreground font-mono tracking-wider mt-1">
+                          Pay in cash when your vault arrives · Verified by phone
+                        </p>
+                      </div>
+                    </div>
+                    <span className="eyebrow text-muted-foreground">India only</span>
+                  </label>
                 </RadioGroup>
               </section>
 
@@ -811,7 +878,9 @@ const Checkout = () => {
                         disabled={hasOutOfStockItems || isExpired}
                         className="w-full h-14 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 text-sm font-medium tracking-[0.08em] shadow-[0_8px_28px_-8px_hsl(var(--accent)/0.55)] hover:shadow-[0_10px_34px_-6px_hsl(var(--accent)/0.65)] transition-shadow">
                         <Zap size={16} className="mr-1.5" />
-                        PAY WITH UPI · {formatPrice(pricing.total)}
+                        {form.paymentMethod === "cod"
+                          ? `PLACE COD ORDER · ${formatPrice(pricing.total)}`
+                          : `PAY WITH UPI · ${formatPrice(pricing.total)}`}
                         <ChevronRight size={16} className="ml-1.5" />
                       </Button>
                     ) : (
@@ -857,7 +926,7 @@ const Checkout = () => {
             onClick={proceedToPayment}
             disabled={hasOutOfStockItems || isExpired || items.length === 0}
             className="rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 text-[11px] font-medium tracking-[0.1em] h-12 px-5 shrink-0 shadow-[0_6px_20px_-6px_hsl(var(--accent)/0.6)]">
-            <Zap size={13} className="mr-1" /> PAY WITH UPI
+            <Zap size={13} className="mr-1" /> {form.paymentMethod === "cod" ? "PLACE COD ORDER" : "PAY WITH UPI"}
           </Button>
         ) : (
           <Button
