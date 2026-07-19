@@ -205,13 +205,14 @@
     transform: translateY(0);
   }
 
-  /* Eyebrow / mono label */
+  /* Eyebrow / mono label — now bolder + brighter to catch the eye */
   .eyebrow {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
     font-size: 0.6875rem;
-    letter-spacing: 0.18em;
+    font-weight: 600;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: hsl(var(--muted-foreground));
+    color: hsl(var(--foreground) / 0.75);
   }
 
   /* Hover lift */
