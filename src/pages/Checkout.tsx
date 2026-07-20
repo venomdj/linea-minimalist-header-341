@@ -160,6 +160,9 @@ const Checkout = () => {
   const [showScreenshotModal, setShowScreenshotModal] = useState(false);
   const [currentStep,       setCurrentStep]        = useState<1 | 2>(1); // 1=shipping, 2=payment
   const [timeLeft,          setTimeLeft]           = useState(RESERVATION_MINUTES * 60); // seconds
+  const [celebrating,       setCelebrating]        = useState(false);
+  const [forceWhatsApp,     setForceWhatsApp]      = useState(true);
+  const [whatsAppConfirmed, setWhatsAppConfirmed]  = useState(false);
 
   // Reservation countdown
   useEffect(() => {
