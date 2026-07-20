@@ -504,7 +504,7 @@ const Checkout = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Button asChild className="h-12 rounded-lg bg-[#25D366] text-black hover:bg-[#25D366]/90 text-xs tracking-[0.18em]">
-                <a href={waLink} target="_blank" rel="noreferrer">
+                <a href={waLink} target="_blank" rel="noreferrer" onClick={() => { setWhatsAppConfirmed(true); setForceWhatsApp(false); }}>
                   <MessageCircle size={15} /> CONFIRM ON WHATSAPP
                 </a>
               </Button>
