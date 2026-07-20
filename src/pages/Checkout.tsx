@@ -758,25 +758,23 @@ const Checkout = () => {
                     <span className="eyebrow text-verified">Instant</span>
                   </label>
 
-                  <label htmlFor="pay-cod"
-                    className={`flex items-start justify-between p-4 rounded-lg border cursor-pointer transition-colors ${
-                      form.paymentMethod === "cod"
-                        ? "border-accent/50 bg-accent/5"
-                        : "border-border/70 hover:border-border hover:bg-surface-2"
-                    }`}>
+                  <div
+                    className="flex items-start justify-between p-4 rounded-lg border border-border/50 bg-surface-2/40 opacity-60 cursor-not-allowed"
+                    aria-disabled="true"
+                    title="Cash on Delivery is temporarily unavailable">
                     <div className="flex items-start gap-3">
-                      <RadioGroupItem id="pay-cod" value="cod" className="mt-1" />
+                      <RadioGroupItem id="pay-cod" value="cod" className="mt-1" disabled />
                       <div>
                         <p className="text-sm text-foreground flex items-center gap-2">
-                          <Truck size={14} className="text-accent" /> Cash on Delivery
+                          <Truck size={14} className="text-muted-foreground" /> Cash on Delivery
                         </p>
                         <p className="text-xs text-muted-foreground font-mono tracking-wider mt-1">
-                          Pay in cash when your vault arrives · Verified by phone
+                          Currently on hold · Please use UPI for now
                         </p>
                       </div>
                     </div>
-                    <span className="eyebrow text-muted-foreground">India only</span>
-                  </label>
+                    <span className="eyebrow text-[hsl(38,92%,60%)]">On Hold</span>
+                  </div>
                 </RadioGroup>
               </section>
 
