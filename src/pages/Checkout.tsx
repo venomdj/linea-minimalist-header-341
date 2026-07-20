@@ -271,11 +271,6 @@ const Checkout = () => {
   const proceedToPayment = () => {
     if (!validateShippingStep()) return;
     setCurrentStep(2);
-    if (form.paymentMethod === "cod") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      void submitOrder();
-      return;
-    }
     setShowUpiModal(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
