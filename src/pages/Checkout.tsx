@@ -418,7 +418,14 @@ const Checkout = () => {
     ];
 
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col relative">
+        {celebrating && <AnimeCelebration name={success.fullName.split(" ")[0]} />}
+        {!celebrating && forceWhatsApp && !whatsAppConfirmed && (
+          <WhatsAppForceModal
+            waLink={waLink}
+            onConfirmed={() => { setWhatsAppConfirmed(true); setForceWhatsApp(false); }}
+          />
+        )}
         <CheckoutHeader />
         {/* Confirmation progress bar — step 4 */}
         <ProgressBar activeIndex={3} />
