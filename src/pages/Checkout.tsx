@@ -1288,4 +1288,99 @@ const Row = ({ label, value, muted }: { label: string; value: string; muted?: bo
   </div>
 );
 
+
+// ─── Anime-style celebration overlay ─────────────────────────────────────────
+const AnimeCelebration = ({ name }: { name: string }) => {
+  const sparkles = Array.from({ length: 24 });
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-sm overflow-hidden animate-fade-in">
+      {/* Radial burst lines */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="relative w-[900px] h-[900px] max-w-[140vw] max-h-[140vw] animate-[spin_6s_linear_infinite]">
+          {Array.from({ length: 18 }).map((_, i) => (
+            <span
+              key={i}
+              className="absolute left-1/2 top-1/2 w-1 h-[45%] -translate-x-1/2 origin-bottom bg-gradient-to-t from-transparent via-accent/40 to-accent/80"
+              style={{ transform: `translate(-50%, -100%) rotate(${(i * 360) / 18}deg)` }}
+            />
+          ))}
+        </div>
+      </div>
+      {/* Sparkles */}
+      {sparkles.map((_, i) => {
+        const left = Math.random() * 100;
+        const top = Math.random() * 100;
+        const delay = Math.random() * 1.2;
+        const size = 6 + Math.random() * 14;
+        return (
+          <span
+            key={i}
+            className="absolute rounded-full bg-accent shadow-[0_0_18px_hsl(var(--accent))] animate-[ping_1.6s_ease-out_infinite]"
+            style={{
+              left: `${left}%`, top: `${top}%`,
+              width: size, height: size,
+              animationDelay: `${delay}s`,
+              opacity: 0.85,
+            }}
+          />
+        );
+      })}
+      {/* Center card */}
+      <div className="relative text-center px-6 animate-scale-in">
+        <div className="mx-auto w-28 h-28 rounded-full bg-accent/20 border-2 border-accent flex items-center justify-center shadow-[0_0_60px_hsl(var(--accent)/0.6)] animate-[pulse_1.4s_ease-in-out_infinite]">
+          <Check size={56} className="text-accent" strokeWidth={3} />
+        </div>
+        <p className="mt-6 font-mono tracking-[0.4em] text-accent text-xs animate-fade-in">やった! · YATTA!</p>
+        <h1 className="mt-3 font-display text-5xl md:text-7xl font-black tracking-tight leading-none text-foreground drop-shadow-[0_2px_18px_hsl(var(--accent)/0.5)]">
+          ORDER
+          <br />
+          <span className="bg-gradient-to-r from-accent via-[hsl(38,92%,65%)] to-accent bg-clip-text text-transparent">
+            SECURED!
+          </span>
+        </h1>
+        <p className="mt-5 text-sm md:text-base text-muted-foreground max-w-sm mx-auto">
+          Nice one, <span className="text-foreground font-semibold">{name}</span> — your vault is locked in. Redirecting…
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// ─── Forced WhatsApp confirmation modal ──────────────────────────────────────
+const WhatsAppForceModal = ({
+  waLink, onConfirmed,
+}: { waLink: string; onConfirmed: () => void }) => (
+  <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
+    <div className="relative max-w-md w-full bg-surface-1 border border-[#25D366]/40 rounded-2xl shadow-[0_20px_80px_-10px_rgba(37,211,102,0.35)] p-7 md:p-9 animate-scale-in">
+      <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-[#25D366] flex items-center justify-center shadow-lg">
+        <MessageCircle size={22} className="text-black" />
+      </div>
+      <div className="text-center mt-4">
+        <p className="eyebrow text-[#25D366]">One Last Step</p>
+        <h2 className="mt-2 font-display text-2xl md:text-3xl font-bold text-foreground tracking-tight leading-tight">
+          Confirm your order on WhatsApp
+        </h2>
+        <p className="mt-3 text-sm text-muted-foreground">
+          To finalize verification, please send us your payment details on WhatsApp.
+          This is <span className="text-foreground font-semibold">required</span> to process your order.
+        </p>
+      </div>
+      <a
+        href={waLink}
+        target="_blank"
+        rel="noreferrer"
+        onClick={onConfirmed}
+        className="mt-6 w-full inline-flex items-center justify-center gap-2 h-14 rounded-lg bg-[#25D366] text-black hover:bg-[#25D366]/90 text-sm font-semibold tracking-[0.18em] shadow-[0_10px_30px_-6px_rgba(37,211,102,0.6)] transition-all hover:scale-[1.02]">
+        <MessageCircle size={18} /> OPEN WHATSAPP TO CONFIRM
+      </a>
+      <button
+        type="button"
+        onClick={onConfirmed}
+        className="mt-3 w-full text-center text-[10px] font-mono tracking-wider text-muted-foreground/60 hover:text-muted-foreground transition-colors">
+        I'll do it later (not recommended)
+      </button>
+    </div>
+  </div>
+);
+
 export default Checkout;
