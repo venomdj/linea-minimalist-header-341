@@ -389,6 +389,10 @@ const Checkout = () => {
       });
       setShowUpiModal(false);
       setShowScreenshotModal(false);
+      setCelebrating(true);
+      setForceWhatsApp(true);
+      setWhatsAppConfirmed(false);
+      setTimeout(() => setCelebrating(false), 3200);
       window.scrollTo({ top: 0, behavior: "smooth" });
       clear();
       toast.success("Order received — verification pending");
