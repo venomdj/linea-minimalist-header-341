@@ -120,21 +120,26 @@
 
   h1, h2, h3, h4, .display {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Inter, system-ui, sans-serif;
-    font-weight: 800;
-    letter-spacing: -0.035em;
+    font-weight: 600;
+    letter-spacing: -0.022em;
   }
   h1, .display-xl {
-    font-weight: 900;
-    letter-spacing: -0.045em;
+    font-weight: 700;
+    letter-spacing: -0.03em;
   }
+  h2 { font-weight: 650; }
+  h3, h4 { font-weight: 550; color: hsl(var(--foreground) / 0.94); }
 
-  /* Make prices, badges, and key stats pop */
+  p { color: hsl(var(--foreground) / 0.78); font-weight: 400; }
+
+  /* Prices & key stats — tinted with accent for separation */
   .tabular-nums, [class*="tabular-nums"] {
     font-variant-numeric: tabular-nums;
-    font-weight: 600;
+    font-weight: 550;
+    color: hsl(var(--accent));
   }
   strong, b {
-    font-weight: 700;
+    font-weight: 600;
   }
 
   /* Selection */
