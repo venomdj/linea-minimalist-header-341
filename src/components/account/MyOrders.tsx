@@ -200,7 +200,7 @@ function EmptyOrdersHero() {
             {recommended.map(p => (
               <Link
                 key={p.id}
-                to={`/product/${p.slug}`}
+                to={`/product/${p.id}`}
                 className="group rounded-2xl border border-zinc-800/80 bg-zinc-950 overflow-hidden hover:border-accent/40 transition-all duration-300"
               >
                 <div className="aspect-[4/5] bg-zinc-900 overflow-hidden relative">
