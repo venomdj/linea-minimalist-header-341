@@ -96,6 +96,34 @@ const LargeHero = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-transparent to-background/40" />
       </div>
 
+      {/* Ambient glow orbs — subtle, animated */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full opacity-60"
+          style={{
+            background:
+              "radial-gradient(closest-side, hsl(var(--accent) / 0.28), transparent 70%)",
+            animation: "pulse 7s ease-in-out infinite",
+          }}
+        />
+        <div
+          className="absolute top-1/3 -right-32 w-[480px] h-[480px] rounded-full opacity-50"
+          style={{
+            background:
+              "radial-gradient(closest-side, hsl(var(--accent) / 0.18), transparent 70%)",
+            animation: "pulse 9s ease-in-out 1.5s infinite",
+          }}
+        />
+        <div
+          className="absolute bottom-0 left-1/4 w-[380px] h-[380px] rounded-full opacity-40"
+          style={{
+            background:
+              "radial-gradient(closest-side, hsl(210 60% 55% / 0.14), transparent 70%)",
+            animation: "pulse 11s ease-in-out 3s infinite",
+          }}
+        />
+      </div>
+
       {/* Content */}
       <div className="relative z-10 flex-1 flex flex-col justify-end px-6 lg:px-12 pt-28 pb-12 lg:pt-32 lg:pb-24">
         <div className="max-w-4xl">
