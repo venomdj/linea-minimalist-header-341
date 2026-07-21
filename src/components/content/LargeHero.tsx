@@ -137,7 +137,7 @@ const LargeHero = () => {
             <br />
             <span className="text-foreground/60">for the cards</span>
             <br />
-            <span className="italic font-extralight">collectors actually want.</span>
+            <span className="italic font-extralight text-gradient-accent">collectors actually want.</span>
           </h1>
 
           <p
