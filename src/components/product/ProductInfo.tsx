@@ -31,17 +31,20 @@ const ProductInfo = ({ product }: Props) => {
   const handleBuy = () => {
     if (outOfStock) return;
     if (tab === "bid") { toast.info("Bidding coming soon"); return; }
-    add(product, 1);
-    toast.success(`${product.name} added to bag`);
+    add(product, qty);
+    toast.success(`${product.name} × ${qty} added to bag`);
     navigate("/checkout");
   };
 
   const handleAddToCart = () => {
     if (outOfStock) return;
     if (tab === "bid") { toast.info("Bidding coming soon"); return; }
-    add(product, 1);
-    toast.success(`${product.name} added to bag`);
+    add(product, qty);
+    toast.success(`${product.name} × ${qty} added to bag`);
   };
+
+  const dec = () => setQty((q) => Math.max(1, q - 1));
+  const inc = () => setQty((q) => Math.min(maxStock, q + 1));
 
   return (
     <div className="space-y-8">
