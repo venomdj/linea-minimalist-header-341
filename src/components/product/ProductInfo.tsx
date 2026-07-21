@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { BadgeCheck, Shield, TrendingUp, Heart, ShoppingBag } from "lucide-react";
+import { BadgeCheck, Shield, TrendingUp, Heart, ShoppingBag, Minus, Plus } from "lucide-react";
 import { formatPrice, rarityClass, type Product } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 import { useAuthGate } from "@/hooks/useAuthGate";  // ← NEW
@@ -13,7 +13,9 @@ interface Props { product: Product; }
 const ProductInfo = ({ product }: Props) => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<"buy" | "bid">("buy");
+  const [qty, setQty] = useState(1);
   const { add } = useCart();
+  const maxStock = product.stock ?? Infinity;
 
   // ── Auth gate — shows login modal for guests ──────────────────────────────
   const { guardedAction, AuthGate } = useAuthGate({
@@ -29,17 +31,20 @@ const ProductInfo = ({ product }: Props) => {
   const handleBuy = () => {
     if (outOfStock) return;
     if (tab === "bid") { toast.info("Bidding coming soon"); return; }
-    add(product, 1);
-    toast.success(`${product.name} added to bag`);
+    add(product, qty);
+    toast.success(`${product.name} × ${qty} added to bag`);
     navigate("/checkout");
   };
 
   const handleAddToCart = () => {
     if (outOfStock) return;
     if (tab === "bid") { toast.info("Bidding coming soon"); return; }
-    add(product, 1);
-    toast.success(`${product.name} added to bag`);
+    add(product, qty);
+    toast.success(`${product.name} × ${qty} added to bag`);
   };
+
+  const dec = () => setQty((q) => Math.max(1, q - 1));
+  const inc = () => setQty((q) => Math.min(maxStock, q + 1));
 
   return (
     <div className="space-y-8">
@@ -126,14 +131,56 @@ const ProductInfo = ({ product }: Props) => {
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
+            {/* Quantity stepper */}
+            {tab === "buy" && (
+              <div className="flex items-center justify-between border border-border bg-background px-4 py-2.5">
+                <div>
+                  <p className="eyebrow mb-0.5">Quantity</p>
+                  <p className="text-[10px] font-mono tracking-wider text-muted-foreground/80">
+                    {product.stock != null ? `${product.stock} in stock` : "In stock"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 border border-border">
+                  <button
+                    type="button"
+                    onClick={dec}
+                    disabled={qty <= 1}
+                    aria-label="Decrease quantity"
+                    className="w-9 h-9 flex items-center justify-center text-foreground hover:bg-surface-2 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Minus size={14} strokeWidth={1.75} />
+                  </button>
+                  <span className="w-10 text-center font-mono tabular-nums text-sm text-foreground select-none">
+                    {qty}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={inc}
+                    disabled={qty >= maxStock}
+                    aria-label="Increase quantity"
+                    className="w-9 h-9 flex items-center justify-center text-foreground hover:bg-surface-2 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Plus size={14} strokeWidth={1.75} />
+                  </button>
+                </div>
+              </div>
+            )}
+            {tab === "buy" && qty >= maxStock && maxStock !== Infinity && (
+              <p className="text-[11px] font-mono tracking-wider text-accent/90">
+                Max available reached — only {maxStock} in stock.
+              </p>
+            )}
+
             <div className="flex gap-2">
               {/* ── Buy Now — gated: guests see login modal ── */}
               <Button
                 onClick={() => guardedAction(handleBuy)}
                 className="flex-1 h-12 bg-foreground text-background hover:bg-foreground/90 rounded-none font-medium tracking-wider text-xs"
               >
-                {tab === "buy" ? `BUY NOW · ${formatPrice(product.price)}` : "PLACE A BID"}
+                {tab === "buy"
+                  ? `BUY NOW · ${formatPrice(product.price * qty)}`
+                  : "PLACE A BID"}
               </Button>
               <Button variant="outline" size="icon" className="h-12 w-12 rounded-none border-border hover:border-foreground/40 bg-transparent">
                 <Heart size={16} strokeWidth={1.5} />
@@ -146,7 +193,7 @@ const ProductInfo = ({ product }: Props) => {
                 variant="outline"
                 className="w-full h-12 rounded-none border-border hover:border-foreground/40 bg-transparent text-xs tracking-[0.18em] font-medium"
               >
-                <ShoppingBag size={14} strokeWidth={1.5} /> ADD TO CART
+                <ShoppingBag size={14} strokeWidth={1.5} /> ADD {qty > 1 ? `${qty} ` : ""}TO CART
               </Button>
             )}
           </div>
