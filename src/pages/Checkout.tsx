@@ -1287,58 +1287,76 @@ const Row = ({ label, value, muted }: { label: string; value: string; muted?: bo
 );
 
 
-// ─── Anime-style celebration overlay ─────────────────────────────────────────
+// ─── Professional order confirmation overlay ─────────────────────────────────
 const AnimeCelebration = ({ name }: { name: string }) => {
-  const sparkles = Array.from({ length: 24 });
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-sm overflow-hidden animate-fade-in">
-      {/* Radial burst lines */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="relative w-[900px] h-[900px] max-w-[140vw] max-h-[140vw] animate-[spin_6s_linear_infinite]">
-          {Array.from({ length: 18 }).map((_, i) => (
-            <span
-              key={i}
-              className="absolute left-1/2 top-1/2 w-1 h-[45%] -translate-x-1/2 origin-bottom bg-gradient-to-t from-transparent via-accent/40 to-accent/80"
-              style={{ transform: `translate(-50%, -100%) rotate(${(i * 360) / 18}deg)` }}
-            />
-          ))}
-        </div>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-xl overflow-hidden animate-fade-in">
+      {/* Ambient glow */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div
+          className="w-[520px] h-[520px] max-w-[90vw] max-h-[90vw] rounded-full opacity-70"
+          style={{
+            background:
+              "radial-gradient(closest-side, hsl(var(--accent) / 0.28), hsl(var(--accent) / 0.05) 55%, transparent 75%)",
+            animation: "pulse 3.2s ease-in-out infinite",
+          }}
+        />
       </div>
-      {/* Sparkles */}
-      {sparkles.map((_, i) => {
-        const left = Math.random() * 100;
-        const top = Math.random() * 100;
-        const delay = Math.random() * 1.2;
-        const size = 6 + Math.random() * 14;
-        return (
+
+      {/* Center */}
+      <div
+        className="relative text-center px-6"
+        style={{ animation: "scale-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both" }}
+      >
+        {/* Check with expanding rings */}
+        <div className="relative mx-auto w-24 h-24 flex items-center justify-center">
           <span
-            key={i}
-            className="absolute rounded-full bg-accent shadow-[0_0_18px_hsl(var(--accent))] animate-[ping_1.6s_ease-out_infinite]"
-            style={{
-              left: `${left}%`, top: `${top}%`,
-              width: size, height: size,
-              animationDelay: `${delay}s`,
-              opacity: 0.85,
-            }}
+            className="absolute inset-0 rounded-full border border-accent/40"
+            style={{ animation: "ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite" }}
           />
-        );
-      })}
-      {/* Center card */}
-      <div className="relative text-center px-6 animate-scale-in">
-        <div className="mx-auto w-28 h-28 rounded-full bg-accent/20 border-2 border-accent flex items-center justify-center shadow-[0_0_60px_hsl(var(--accent)/0.6)] animate-[pulse_1.4s_ease-in-out_infinite]">
-          <Check size={56} className="text-accent" strokeWidth={3} />
+          <span
+            className="absolute inset-0 rounded-full border border-accent/25"
+            style={{ animation: "ping 2.4s cubic-bezier(0, 0, 0.2, 1) 0.6s infinite" }}
+          />
+          <div className="relative w-20 h-20 rounded-full bg-accent/10 border border-accent/60 flex items-center justify-center shadow-[0_0_60px_-10px_hsl(var(--accent)/0.65)]">
+            <Check
+              size={40}
+              className="text-accent"
+              strokeWidth={2.25}
+              style={{ animation: "fade-in 0.6s ease-out 0.2s both" }}
+            />
+          </div>
         </div>
-        <p className="mt-6 font-mono tracking-[0.4em] text-accent text-xs animate-fade-in">やった! · YATTA!</p>
-        <h1 className="mt-3 font-display text-5xl md:text-7xl font-black tracking-tight leading-none text-foreground drop-shadow-[0_2px_18px_hsl(var(--accent)/0.5)]">
-          ORDER
-          <br />
-          <span className="bg-gradient-to-r from-accent via-[hsl(38,92%,65%)] to-accent bg-clip-text text-transparent">
-            SECURED!
-          </span>
-        </h1>
-        <p className="mt-5 text-sm md:text-base text-muted-foreground max-w-sm mx-auto">
-          Nice one, <span className="text-foreground font-semibold">{name}</span> — your vault is locked in. Redirecting…
+
+        <p
+          className="mt-8 eyebrow text-accent"
+          style={{ animation: "fade-in 0.6s ease-out 0.35s both" }}
+        >
+          Order Confirmed
         </p>
+        <h1
+          className="mt-3 font-display text-3xl md:text-5xl tracking-tight text-foreground leading-tight"
+          style={{ animation: "fade-in 0.7s ease-out 0.45s both" }}
+        >
+          Thank you, <span className="text-gradient-accent">{name.split(" ")[0]}</span>.
+        </h1>
+        <p
+          className="mt-4 text-sm md:text-base text-muted-foreground max-w-md mx-auto leading-relaxed"
+          style={{ animation: "fade-in 0.7s ease-out 0.6s both" }}
+        >
+          Your order has been received. Finalizing your confirmation…
+        </p>
+
+        {/* Subtle progress bar */}
+        <div
+          className="mt-8 mx-auto w-40 h-px bg-border overflow-hidden"
+          style={{ animation: "fade-in 0.5s ease-out 0.7s both" }}
+        >
+          <div
+            className="h-full bg-accent"
+            style={{ animation: "slide-in-right 2.6s cubic-bezier(0.65, 0, 0.35, 1) forwards" }}
+          />
+        </div>
       </div>
     </div>
   );
