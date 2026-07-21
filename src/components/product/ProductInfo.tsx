@@ -13,7 +13,9 @@ interface Props { product: Product; }
 const ProductInfo = ({ product }: Props) => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<"buy" | "bid">("buy");
+  const [qty, setQty] = useState(1);
   const { add } = useCart();
+  const maxStock = product.stock ?? Infinity;
 
   // ── Auth gate — shows login modal for guests ──────────────────────────────
   const { guardedAction, AuthGate } = useAuthGate({
