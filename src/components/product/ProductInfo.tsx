@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { BadgeCheck, Shield, TrendingUp, Heart, ShoppingBag } from "lucide-react";
+import { BadgeCheck, Shield, TrendingUp, Heart, ShoppingBag, Minus, Plus } from "lucide-react";
 import { formatPrice, rarityClass, type Product } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 import { useAuthGate } from "@/hooks/useAuthGate";  // ← NEW
