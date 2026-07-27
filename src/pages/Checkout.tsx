@@ -265,7 +265,8 @@ const Checkout = () => {
       cu: "INR",
       tn: `MYTHICAL VAULT Order ${form.email || "checkout"}`,
     });
-    return `upi://pay?${params.toString()}`;
+    // Some UPI apps mis-parse "+" as a literal plus — use %20 for spaces.
+    return `upi://pay?${params.toString().replace(/\+/g, "%20")}`;
   }, [pricing.total, form.email]);
 
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=10&data=${encodeURIComponent(upiLink)}`;
