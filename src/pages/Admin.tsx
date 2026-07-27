@@ -124,6 +124,16 @@ const Admin = () => {
               </span>
             )}
           </button>
+          <button
+            onClick={() => setActiveTab("announcements")}
+            className={`py-3 px-2 font-mono text-xs tracking-wider uppercase border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${
+              activeTab === "announcements"
+                ? "border-primary text-foreground font-medium"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Megaphone size={14} /> Announcements
+          </button>
         </div>
       </div>
 
