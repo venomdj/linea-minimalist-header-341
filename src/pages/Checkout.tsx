@@ -133,12 +133,54 @@ const TRUST_BADGES = [
 ] as const;
 
 // ─── UPI apps ─────────────────────────────────────────────────────────────────
+// `q` is the raw query string (pa=..&pn=..&am=..&cu=INR&tn=..)
 const UPI_APPS = [
-  { name: "GPay",    scheme: (link: string) => link.replace("upi://", "gpay://upi/") },
-  { name: "PhonePe", scheme: (link: string) => link.replace("upi://", "phonepe://pay?") },
-  { name: "Paytm",   scheme: (link: string) => link.replace("upi://", "paytmmp://pay?") },
-  { name: "BHIM",    scheme: (link: string) => link },
+  { name: "GPay",    pkg: "com.google.android.apps.nbu.paisa.user", url: (q: string) => `tez://upi/pay?${q}` },
+  { name: "PhonePe", pkg: "com.phonepe.app",                        url: (q: string) => `phonepe://pay?${q}` },
+  { name: "Paytm",   pkg: "net.one97.paytm",                        url: (q: string) => `paytmmp://pay?${q}` },
+  { name: "BHIM",    pkg: "in.org.npci.upiapp",                     url: (q: string) => `bhim://upi/pay?${q}` },
 ] as const;
+
+const isAndroid = () => /android/i.test(navigator.userAgent);
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isMobileDevice = () => isAndroid() || isIOS();
+
+/** Android intent:// URL — most reliable way to hit a specific UPI app. */
+const androidIntent = (q: string, pkg: string) =>
+  `intent://pay?${q}#Intent;scheme=upi;package=${pkg};end`;
+
+type UpiApp = (typeof UPI_APPS)[number];
+
+/** Opens a specific UPI app; falls back to the generic upi:// handler, then guides to QR. */
+const launchUpiApp = (app: UpiApp, upiLink: string) => {
+  const q = upiLink.split("?")[1] ?? "";
+
+  if (!isMobileDevice()) {
+    toast.info("UPI apps only open on your phone — scan the QR above instead.");
+    return;
+  }
+
+  const target = isAndroid() ? androidIntent(q, app.pkg) : app.url(q);
+  const start = Date.now();
+  let left = false;
+  const onHide = () => { if (document.hidden) left = true; };
+  document.addEventListener("visibilitychange", onHide);
+
+  try { window.location.href = target; } catch { /* ignore */ }
+
+  // Fallback: generic upi:// (lets the OS show the app chooser), then a hint.
+  window.setTimeout(() => {
+    if (left || document.hidden) { document.removeEventListener("visibilitychange", onHide); return; }
+    try { window.location.href = upiLink; } catch { /* ignore */ }
+    window.setTimeout(() => {
+      document.removeEventListener("visibilitychange", onHide);
+      if (left || document.hidden || Date.now() - start < 1200) return;
+      toast.error(`Couldn't open ${app.name}. Screenshot the QR and scan it inside your UPI app.`);
+    }, 1200);
+  }, 1200);
+};
+
+
 
 // ─── Component ────────────────────────────────────────────────────────────────
 const Checkout = () => {
@@ -223,7 +265,8 @@ const Checkout = () => {
       cu: "INR",
       tn: `MYTHICAL VAULT Order ${form.email || "checkout"}`,
     });
-    return `upi://pay?${params.toString()}`;
+    // Some UPI apps mis-parse "+" as a literal plus — use %20 for spaces.
+    return `upi://pay?${params.toString().replace(/\+/g, "%20")}`;
   }, [pricing.total, form.email]);
 
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=10&data=${encodeURIComponent(upiLink)}`;
@@ -1059,6 +1102,10 @@ const UpiModal = ({
 
           {/* QR code */}
           <div className="flex flex-col items-center gap-3">
+            <p className="w-full rounded-lg border border-accent/25 bg-accent/5 px-3 py-2.5 text-[11px] leading-relaxed text-foreground/80 text-center">
+              <span className="font-mono tracking-wider text-accent">TIP · </span>
+              If the app buttons below don’t open your UPI app, just screenshot this QR and scan it from your payment app’s gallery.
+            </p>
             <div className="bg-white p-3 border border-border rounded-lg inline-block">
               <img src={qrUrl} alt="UPI payment QR code" className="w-[200px] h-[200px] sm:w-[240px] sm:h-[240px] block" />
             </div>
@@ -1066,6 +1113,7 @@ const UpiModal = ({
               SCAN WITH ANY UPI APP
             </p>
           </div>
+
 
           {/* UPI ID + copy */}
           <div className="border border-border/70 bg-surface-1 rounded-lg p-4 space-y-3">
@@ -1100,14 +1148,23 @@ const UpiModal = ({
             <p className="eyebrow mb-3">Open in app</p>
             <div className="grid grid-cols-4 gap-2">
               {UPI_APPS.map((app) => (
-                <a key={app.name} href={app.scheme(upiLink)} rel="noreferrer"
+                <button
+                  key={app.name}
+                  type="button"
+                  onClick={() => launchUpiApp(app, upiLink)}
                   className="flex flex-col items-center justify-center gap-1.5 rounded-lg border border-border/70 bg-surface-1 hover:border-accent/50 hover:bg-surface-2 transition-colors py-3 text-[10px] font-mono tracking-wider text-muted-foreground hover:text-foreground">
                   <Smartphone size={16} />
                   {app.name}
-                </a>
+                </button>
               ))}
             </div>
+            <p className="mt-2 text-[10px] font-mono tracking-wider text-muted-foreground/70">
+              {typeof navigator !== "undefined" && !isMobileDevice()
+                ? "APP LINKS WORK ON MOBILE — SCAN THE QR ON DESKTOP"
+                : "NOT OPENING? SCREENSHOT THE QR & SCAN IT IN YOUR UPI APP"}
+            </p>
           </div>
+
 
           {/* Instructions */}
           <ol className="space-y-3 text-xs text-muted-foreground">
