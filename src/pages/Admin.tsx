@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import ProductForm from "@/components/admin/ProductForm";
 import AdminOrders from '../components/order/AdminOrders';
 import AdminNotifications from '@/components/admin/AdminNotifications';
+import AdminAnnouncements from '@/components/admin/AdminAnnouncements';
 import { useAdminNotificationsCount } from '@/hooks/useAdminNotificationsCount';
 import {
   AlertDialog,
