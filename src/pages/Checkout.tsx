@@ -149,6 +149,38 @@ const isMobileDevice = () => isAndroid() || isIOS();
 const androidIntent = (q: string, pkg: string) =>
   `intent://pay?${q}#Intent;scheme=upi;package=${pkg};end`;
 
+type UpiApp = (typeof UPI_APPS)[number];
+
+/** Opens a specific UPI app; falls back to the generic upi:// handler, then guides to QR. */
+const launchUpiApp = (app: UpiApp, upiLink: string) => {
+  const q = upiLink.split("?")[1] ?? "";
+
+  if (!isMobileDevice()) {
+    toast.info("UPI apps only open on your phone — scan the QR above instead.");
+    return;
+  }
+
+  const target = isAndroid() ? androidIntent(q, app.pkg) : app.url(q);
+  const start = Date.now();
+  let left = false;
+  const onHide = () => { if (document.hidden) left = true; };
+  document.addEventListener("visibilitychange", onHide);
+
+  try { window.location.href = target; } catch { /* ignore */ }
+
+  // Fallback: generic upi:// (lets the OS show the app chooser), then a hint.
+  window.setTimeout(() => {
+    if (left || document.hidden) { document.removeEventListener("visibilitychange", onHide); return; }
+    try { window.location.href = upiLink; } catch { /* ignore */ }
+    window.setTimeout(() => {
+      document.removeEventListener("visibilitychange", onHide);
+      if (left || document.hidden || Date.now() - start < 1200) return;
+      toast.error(`Couldn't open ${app.name}. Screenshot the QR and scan it inside your UPI app.`);
+    }, 1200);
+  }, 1200);
+};
+
+
 
 // ─── Component ────────────────────────────────────────────────────────────────
 const Checkout = () => {
