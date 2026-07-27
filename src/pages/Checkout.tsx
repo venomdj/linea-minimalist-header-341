@@ -1069,6 +1069,10 @@ const UpiModal = ({
 
           {/* QR code */}
           <div className="flex flex-col items-center gap-3">
+            <p className="w-full rounded-lg border border-accent/25 bg-accent/5 px-3 py-2.5 text-[11px] leading-relaxed text-foreground/80 text-center">
+              <span className="font-mono tracking-wider text-accent">TIP · </span>
+              If the app buttons below don’t open your UPI app, just screenshot this QR and scan it from your payment app’s gallery.
+            </p>
             <div className="bg-white p-3 border border-border rounded-lg inline-block">
               <img src={qrUrl} alt="UPI payment QR code" className="w-[200px] h-[200px] sm:w-[240px] sm:h-[240px] block" />
             </div>
@@ -1076,6 +1080,7 @@ const UpiModal = ({
               SCAN WITH ANY UPI APP
             </p>
           </div>
+
 
           {/* UPI ID + copy */}
           <div className="border border-border/70 bg-surface-1 rounded-lg p-4 space-y-3">
