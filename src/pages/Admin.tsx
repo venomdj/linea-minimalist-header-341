@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { LogOut, Plus, Pencil, Trash2, Package, Search, ClipboardList, Bell } from "lucide-react";
+import { LogOut, Plus, Pencil, Trash2, Package, Search, ClipboardList, Bell, Megaphone } from "lucide-react";
 
 const inr = (n: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
@@ -38,7 +38,7 @@ const Admin = () => {
   const [q, setQ] = useState("");
   
   // Tab control state: Defaults to managing products
-  const [activeTab, setActiveTab] = useState<"products" | "orders" | "notifications">("products");
+  const [activeTab, setActiveTab] = useState<"products" | "orders" | "notifications" | "announcements">("products");
   const unreadCount = useAdminNotificationsCount();
 
 
@@ -131,6 +131,7 @@ const Admin = () => {
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 space-y-8">
         {activeTab === "orders" && <AdminOrders />}
         {activeTab === "notifications" && <AdminNotifications />}
+        {activeTab === "announcements" && <AdminAnnouncements />}
 
 
         {/* VIEW 2: PRODUCTS DASHBOARD */}
