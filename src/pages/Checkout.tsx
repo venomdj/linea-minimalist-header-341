@@ -133,12 +133,22 @@ const TRUST_BADGES = [
 ] as const;
 
 // ─── UPI apps ─────────────────────────────────────────────────────────────────
+// `q` is the raw query string (pa=..&pn=..&am=..&cu=INR&tn=..)
 const UPI_APPS = [
-  { name: "GPay",    scheme: (link: string) => link.replace("upi://", "gpay://upi/") },
-  { name: "PhonePe", scheme: (link: string) => link.replace("upi://", "phonepe://pay?") },
-  { name: "Paytm",   scheme: (link: string) => link.replace("upi://", "paytmmp://pay?") },
-  { name: "BHIM",    scheme: (link: string) => link },
+  { name: "GPay",    pkg: "com.google.android.apps.nbu.paisa.user", url: (q: string) => `tez://upi/pay?${q}` },
+  { name: "PhonePe", pkg: "com.phonepe.app",                        url: (q: string) => `phonepe://pay?${q}` },
+  { name: "Paytm",   pkg: "net.one97.paytm",                        url: (q: string) => `paytmmp://pay?${q}` },
+  { name: "BHIM",    pkg: "in.org.npci.upiapp",                     url: (q: string) => `bhim://upi/pay?${q}` },
 ] as const;
+
+const isAndroid = () => /android/i.test(navigator.userAgent);
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isMobileDevice = () => isAndroid() || isIOS();
+
+/** Android intent:// URL — most reliable way to hit a specific UPI app. */
+const androidIntent = (q: string, pkg: string) =>
+  `intent://pay?${q}#Intent;scheme=upi;package=${pkg};end`;
+
 
 // ─── Component ────────────────────────────────────────────────────────────────
 const Checkout = () => {
