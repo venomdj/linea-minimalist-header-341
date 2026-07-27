@@ -39,6 +39,7 @@ function AppRoutes() {
   return (
     <>
       <ScrollToTop />
+      <AnnouncementSystem />
       <Routes>
         {/* OAuth callback */}
         <Route path="/auth/callback" element={<AuthCallback />} />
