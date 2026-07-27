@@ -1115,14 +1115,23 @@ const UpiModal = ({
             <p className="eyebrow mb-3">Open in app</p>
             <div className="grid grid-cols-4 gap-2">
               {UPI_APPS.map((app) => (
-                <a key={app.name} href={app.scheme(upiLink)} rel="noreferrer"
+                <button
+                  key={app.name}
+                  type="button"
+                  onClick={() => launchUpiApp(app, upiLink)}
                   className="flex flex-col items-center justify-center gap-1.5 rounded-lg border border-border/70 bg-surface-1 hover:border-accent/50 hover:bg-surface-2 transition-colors py-3 text-[10px] font-mono tracking-wider text-muted-foreground hover:text-foreground">
                   <Smartphone size={16} />
                   {app.name}
-                </a>
+                </button>
               ))}
             </div>
+            <p className="mt-2 text-[10px] font-mono tracking-wider text-muted-foreground/70">
+              {typeof navigator !== "undefined" && !isMobileDevice()
+                ? "APP LINKS WORK ON MOBILE — SCAN THE QR ON DESKTOP"
+                : "NOT OPENING? SCREENSHOT THE QR & SCAN IT IN YOUR UPI APP"}
+            </p>
           </div>
+
 
           {/* Instructions */}
           <ol className="space-y-3 text-xs text-muted-foreground">
