@@ -245,12 +245,20 @@ const phone = raw.length === 10 ? `91${raw}` : raw;
             <InfoRow label="Total"       value={`₹${e.total_amount.toLocaleString('en-IN')}`} bold />
             <div style={{ marginTop: 12, borderTop: '1px solid #27272a', paddingTop: 12 }}>
               <label style={fieldLabel}>Items</label>
-              {(e.line_items as { title: string; quantity: number; price: number }[]).map((item, i) => (
-                <p key={i} style={{ fontSize: 12, color: '#a1a1aa', fontFamily: 'monospace', marginBottom: 4 }}>
-                  {item.title} × {item.quantity} — ₹{(item.price * item.quantity).toLocaleString('en-IN')}
-                </p>
+              {(e.line_items as { title: string; quantity: number; price: number; image_url?: string | null }[]).map((item, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #18181b' }}>
+                  {item.image_url
+                    ? <img src={item.image_url} alt={item.title} style={{ width: 44, height: 44, objectFit: 'cover', border: '1px solid #27272a' }} />
+                    : <div style={{ width: 44, height: 44, background: '#18181b', border: '1px solid #27272a' }} />}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13, color: '#e4e4e7' }}>{item.title}</p>
+                    <p style={{ fontSize: 11, color: '#a1a1aa', fontFamily: 'monospace' }}>Qty {item.quantity} · ₹{item.price.toLocaleString('en-IN')} each</p>
+                  </div>
+                  <span style={{ fontSize: 13, color: '#e4e4e7', fontFamily: 'monospace' }}>₹{(item.price * item.quantity).toLocaleString('en-IN')}</span>
+                </div>
               ))}
             </div>
+
           </section>
         </div>
 
