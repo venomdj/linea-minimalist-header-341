@@ -662,6 +662,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      place_order_atomic: { Args: { p_order: Json }; Returns: Json }
       restore_stock_for_order: { Args: { p_order_id: string }; Returns: Json }
     }
     Enums: {
