@@ -1411,28 +1411,22 @@ const AnimeCelebration = ({ name }: { name: string }) => {
           Order Confirmed
         </p>
         <h1
-          className="mt-3 font-display text-3xl md:text-5xl tracking-tight text-foreground leading-tight"
+          className="mt-4 font-serif italic font-normal text-[2rem] md:text-[3.25rem] tracking-[-0.01em] text-foreground leading-[1.1]"
           style={{ animation: "fade-in 0.7s ease-out 0.45s both" }}
         >
-          Thank you, <span className="text-gradient-accent">{name.split(" ")[0]}</span>.
+          Thank you, <span className="text-gradient-accent">{name.split(" ")[0]}</span>
         </h1>
+        <div
+          className="mt-6 mx-auto h-px w-24 bg-gradient-to-r from-transparent via-accent/60 to-transparent"
+          style={{ animation: "fade-in 0.6s ease-out 0.6s both" }}
+        />
         <p
-          className="mt-4 text-sm md:text-base text-muted-foreground max-w-md mx-auto leading-relaxed"
-          style={{ animation: "fade-in 0.7s ease-out 0.6s both" }}
+          className="mt-6 text-sm md:text-base text-muted-foreground max-w-md mx-auto leading-relaxed"
+          style={{ animation: "fade-in 0.7s ease-out 0.7s both" }}
         >
-          Your order has been received. Finalizing your confirmation…
+          Your order has been received and reserved in the vault.
         </p>
 
-        {/* Subtle progress bar */}
-        <div
-          className="mt-8 mx-auto w-40 h-px bg-border overflow-hidden"
-          style={{ animation: "fade-in 0.5s ease-out 0.7s both" }}
-        >
-          <div
-            className="h-full bg-accent"
-            style={{ animation: "slide-in-right 2.6s cubic-bezier(0.65, 0, 0.35, 1) forwards" }}
-          />
-        </div>
       </div>
     </div>
   );
