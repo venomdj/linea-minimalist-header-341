@@ -355,21 +355,6 @@ const Checkout = () => {
       return;
     }
 
-    try {
-      const cartPayload = items.map((item) => ({ product_id: String(item.id), quantity: item.quantity }));
-      const { data: oosItems, error: stockErr } = await supabase.rpc("check_cart_stock", { cart: cartPayload });
-      if (!stockErr && oosItems && oosItems.length > 0) {
-        const names = (oosItems as { title: string; available: number }[])
-          .map((i) => `"${i.title}" (${i.available > 0 ? `only ${i.available} left` : "out of stock"})`)
-          .join(", ");
-        toast.error(`Some items are no longer available: ${names}. Please remove them before placing your order.`);
-        setSubmitting(false);
-        return;
-      }
-    } catch (stockCheckErr) {
-      console.warn("[Checkout] Stock check threw:", stockCheckErr);
-    }
-
     const orderNumber = generateOrderId();
 
     try {
@@ -400,27 +385,45 @@ const Checkout = () => {
         order_date: new Date().toISOString(),
       };
 
-      const { data: newOrder, error: orderErr } = await supabase
-        .from("orders").insert([orderPayload]).select("id").single();
+      // ── Ek hi atomic DB call: stock lock + check + decrement + order insert ──
+      // Ye "check_cart_stock" (read-only) + "orders.insert" (alag call) ki jagah
+      // leta hai, taaki 2 users ek saath race na kar sakein.
+      const cartPayload = items.map((item) => ({ product_id: String(item.id), quantity: item.quantity }));
+      const { data: result, error: rpcErr } = await supabase.rpc("place_order_atomic", {
+        p_order: orderPayload as never,
+        p_cart: cartPayload as never,
+      });
 
-      if (orderErr) {
-        console.error("[Checkout] Supabase order insert error:", JSON.stringify(orderErr, null, 2));
-        if (orderErr.message?.toLowerCase().includes("insufficient stock")) {
-          await refreshStock();
-          toast.error("Stock changed while placing your order. Your cart has been updated — please review and try again.");
-          setSubmitting(false);
-          return;
-        }
+      if (rpcErr) {
+        console.error("[Checkout] place_order_atomic error:", JSON.stringify(rpcErr, null, 2));
         const msg =
-          orderErr.code === "42501"
+          rpcErr.code === "42501"
             ? "PLEASE LOGIN BEFORE ORDERING :) ."
-            : orderErr.message
-            ? `Order failed: ${orderErr.message}`
+            : rpcErr.message
+            ? `Order failed: ${rpcErr.message}`
             : "Failed to save order. Please try again or contact support.";
         toast.error(msg);
         setSubmitting(false);
         return;
       }
+
+      // result shape: { success: boolean, out_of_stock?: [...], order_id?: string }
+      if (!result?.success) {
+        const oosItems = (result?.out_of_stock ?? []) as { title: string; available: number }[];
+        const names = oosItems
+          .map((i) => `"${i.title}" (${i.available > 0 ? `only ${i.available} left` : "out of stock"})`)
+          .join(", ");
+        await refreshStock();
+        toast.error(
+          names
+            ? `Someone just grabbed this before you: ${names}. Please review your cart.`
+            : "This item is no longer available. Please review your cart."
+        );
+        setSubmitting(false);
+        return;
+      }
+
+      const newOrder = { id: result.order_id as string };
 
       setSubmitting(false);
       if (newOrder?.id) {
