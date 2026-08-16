@@ -389,38 +389,57 @@ const Checkout = () => {
         shipping_city: form.city,
         shipping_state: form.state,
         shipping_pincode: form.pincode,
-        line_items: lineItems as never,
+        line_items: lineItems,
         subtotal: finalPricing.subtotal,
         gst_amount: finalPricing.gstAmount,
         shipping_amount: finalPricing.shippingCost,
         total_amount: finalPricing.total,
         payment_method: form.paymentMethod,
         payment_status: "pending",
-        status: "pending" as const,
         order_date: new Date().toISOString(),
       };
 
-      const { data: newOrder, error: orderErr } = await supabase
-        .from("orders").insert([orderPayload]).select("id").single();
+      // Atomic placement: locks each product row, verifies + reserves stock and
+      // creates the order in one transaction — two buyers can never both win
+      // the last unit of an item.
+      const { data: placed, error: orderErr } = await supabase.rpc(
+        "place_order_atomic" as never,
+        { p_order: orderPayload } as never,
+      );
+      const newOrder = placed as { id: string; order_number: string } | null;
 
       if (orderErr) {
-        console.error("[Checkout] Supabase order insert error:", JSON.stringify(orderErr, null, 2));
-        if (orderErr.message?.toLowerCase().includes("insufficient stock")) {
+        console.error("[Checkout] Order placement error:", JSON.stringify(orderErr, null, 2));
+        const raw = orderErr.message ?? "";
+
+        if (raw.includes("INSUFFICIENT_STOCK") || raw.toLowerCase().includes("insufficient stock")) {
+          const m = raw.match(/INSUFFICIENT_STOCK:(.*?):(\d+)/);
           await refreshStock();
-          toast.error("Stock changed while placing your order. Your cart has been updated — please review and try again.");
+          toast.error(
+            m
+              ? `"${m[1]}" — only ${m[2]} left. Someone just bought it. Your bag has been updated.`
+              : "Stock changed while placing your order. Your bag has been updated — please review and try again.",
+          );
+          setSubmitting(false);
+          return;
+        }
+        if (raw.includes("UNAVAILABLE")) {
+          await refreshStock();
+          toast.error("An item in your bag is no longer available. Your bag has been updated.");
           setSubmitting(false);
           return;
         }
         const msg =
           orderErr.code === "42501"
             ? "PLEASE LOGIN BEFORE ORDERING :) ."
-            : orderErr.message
-            ? `Order failed: ${orderErr.message}`
+            : raw
+            ? `Order failed: ${raw}`
             : "Failed to save order. Please try again or contact support.";
         toast.error(msg);
         setSubmitting(false);
         return;
       }
+
 
       setSubmitting(false);
       if (newOrder?.id) {
