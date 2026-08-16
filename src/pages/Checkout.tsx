@@ -389,38 +389,57 @@ const Checkout = () => {
         shipping_city: form.city,
         shipping_state: form.state,
         shipping_pincode: form.pincode,
-        line_items: lineItems as never,
+        line_items: lineItems,
         subtotal: finalPricing.subtotal,
         gst_amount: finalPricing.gstAmount,
         shipping_amount: finalPricing.shippingCost,
         total_amount: finalPricing.total,
         payment_method: form.paymentMethod,
         payment_status: "pending",
-        status: "pending" as const,
         order_date: new Date().toISOString(),
       };
 
-      const { data: newOrder, error: orderErr } = await supabase
-        .from("orders").insert([orderPayload]).select("id").single();
+      // Atomic placement: locks each product row, verifies + reserves stock and
+      // creates the order in one transaction — two buyers can never both win
+      // the last unit of an item.
+      const { data: placed, error: orderErr } = await supabase.rpc(
+        "place_order_atomic" as never,
+        { p_order: orderPayload } as never,
+      );
+      const newOrder = placed as { id: string; order_number: string } | null;
 
       if (orderErr) {
-        console.error("[Checkout] Supabase order insert error:", JSON.stringify(orderErr, null, 2));
-        if (orderErr.message?.toLowerCase().includes("insufficient stock")) {
+        console.error("[Checkout] Order placement error:", JSON.stringify(orderErr, null, 2));
+        const raw = orderErr.message ?? "";
+
+        if (raw.includes("INSUFFICIENT_STOCK") || raw.toLowerCase().includes("insufficient stock")) {
+          const m = raw.match(/INSUFFICIENT_STOCK:(.*?):(\d+)/);
           await refreshStock();
-          toast.error("Stock changed while placing your order. Your cart has been updated — please review and try again.");
+          toast.error(
+            m
+              ? `"${m[1]}" — only ${m[2]} left. Someone just bought it. Your bag has been updated.`
+              : "Stock changed while placing your order. Your bag has been updated — please review and try again.",
+          );
+          setSubmitting(false);
+          return;
+        }
+        if (raw.includes("UNAVAILABLE")) {
+          await refreshStock();
+          toast.error("An item in your bag is no longer available. Your bag has been updated.");
           setSubmitting(false);
           return;
         }
         const msg =
           orderErr.code === "42501"
             ? "PLEASE LOGIN BEFORE ORDERING :) ."
-            : orderErr.message
-            ? `Order failed: ${orderErr.message}`
+            : raw
+            ? `Order failed: ${raw}`
             : "Failed to save order. Please try again or contact support.";
         toast.error(msg);
         setSubmitting(false);
         return;
       }
+
 
       setSubmitting(false);
       if (newOrder?.id) {
@@ -479,10 +498,10 @@ const Checkout = () => {
                 <Check size={26} className="text-verified" />
               </div>
               <p className="eyebrow">Order Received</p>
-              <h1 className="font-display text-3xl md:text-5xl text-foreground tracking-tight leading-[1.05]">
+              <h1 className="font-serif italic font-normal text-[1.9rem] md:text-[3rem] text-foreground tracking-[-0.01em] leading-[1.12]">
                 Thank you, {success.fullName.split(" ")[0]}.
                 <br />
-                Your vault is being prepared.
+                <span className="text-gradient-accent">Your vault is being prepared.</span>
               </h1>
               <p className="text-sm text-muted-foreground max-w-xl mx-auto">
                 We've received your payment screenshot. Our team will verify the transaction and
@@ -1392,28 +1411,22 @@ const AnimeCelebration = ({ name }: { name: string }) => {
           Order Confirmed
         </p>
         <h1
-          className="mt-3 font-display text-3xl md:text-5xl tracking-tight text-foreground leading-tight"
+          className="mt-4 font-serif italic font-normal text-[2rem] md:text-[3.25rem] tracking-[-0.01em] text-foreground leading-[1.1]"
           style={{ animation: "fade-in 0.7s ease-out 0.45s both" }}
         >
-          Thank you, <span className="text-gradient-accent">{name.split(" ")[0]}</span>.
+          Thank you, <span className="text-gradient-accent">{name.split(" ")[0]}</span>
         </h1>
+        <div
+          className="mt-6 mx-auto h-px w-24 bg-gradient-to-r from-transparent via-accent/60 to-transparent"
+          style={{ animation: "fade-in 0.6s ease-out 0.6s both" }}
+        />
         <p
-          className="mt-4 text-sm md:text-base text-muted-foreground max-w-md mx-auto leading-relaxed"
-          style={{ animation: "fade-in 0.7s ease-out 0.6s both" }}
+          className="mt-6 text-sm md:text-base text-muted-foreground max-w-md mx-auto leading-relaxed"
+          style={{ animation: "fade-in 0.7s ease-out 0.7s both" }}
         >
-          Your order has been received. Finalizing your confirmation…
+          Your order has been received and reserved in the vault.
         </p>
 
-        {/* Subtle progress bar */}
-        <div
-          className="mt-8 mx-auto w-40 h-px bg-border overflow-hidden"
-          style={{ animation: "fade-in 0.5s ease-out 0.7s both" }}
-        >
-          <div
-            className="h-full bg-accent"
-            style={{ animation: "slide-in-right 2.6s cubic-bezier(0.65, 0, 0.35, 1) forwards" }}
-          />
-        </div>
       </div>
     </div>
   );
