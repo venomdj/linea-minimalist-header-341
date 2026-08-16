@@ -322,9 +322,27 @@ const phone = raw.length === 10 ? `91${raw}` : raw;
                       </p>
                     )}
                   </td>
-                  <td style={{ padding: '10px 12px', color: '#a1a1aa' }}>
-                    {(order.line_items as unknown[]).length} item{(order.line_items as unknown[]).length !== 1 ? 's' : ''}
+                  <td style={{ padding: '10px 12px', color: '#a1a1aa', minWidth: 240 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {(order.line_items as { title: string; quantity: number; price: number; image_url?: string | null }[]).map((it, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          {it.image_url
+                            ? <img src={it.image_url} alt={it.title} style={{ width: 34, height: 34, objectFit: 'cover', border: '1px solid #27272a', flexShrink: 0 }} />
+                            : <div style={{ width: 34, height: 34, background: '#18181b', border: '1px solid #27272a', flexShrink: 0 }} />}
+                          <div style={{ minWidth: 0 }}>
+                            <p style={{ color: '#e4e4e7', fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 200 }}>{it.title}</p>
+                            <p style={{ color: '#a1a1aa', fontSize: 11 }}>
+                              × {it.quantity} · ₹{(it.price * it.quantity).toLocaleString('en-IN')}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                      <span style={{ color: '#71717a', fontSize: 10, letterSpacing: '0.08em' }}>
+                        {(order.line_items as unknown[]).length} ITEM{(order.line_items as unknown[]).length !== 1 ? 'S' : ''}
+                      </span>
+                    </div>
                   </td>
+
                   <td style={{ padding: '10px 12px', color: '#e4e4e7', whiteSpace: 'nowrap' }}>
                     ₹{order.total_amount.toLocaleString('en-IN')}
                   </td>
