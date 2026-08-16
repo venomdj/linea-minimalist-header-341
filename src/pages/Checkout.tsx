@@ -498,10 +498,10 @@ const Checkout = () => {
                 <Check size={26} className="text-verified" />
               </div>
               <p className="eyebrow">Order Received</p>
-              <h1 className="font-display text-3xl md:text-5xl text-foreground tracking-tight leading-[1.05]">
+              <h1 className="font-serif italic font-normal text-[1.9rem] md:text-[3rem] text-foreground tracking-[-0.01em] leading-[1.12]">
                 Thank you, {success.fullName.split(" ")[0]}.
                 <br />
-                Your vault is being prepared.
+                <span className="text-gradient-accent">Your vault is being prepared.</span>
               </h1>
               <p className="text-sm text-muted-foreground max-w-xl mx-auto">
                 We've received your payment screenshot. Our team will verify the transaction and
