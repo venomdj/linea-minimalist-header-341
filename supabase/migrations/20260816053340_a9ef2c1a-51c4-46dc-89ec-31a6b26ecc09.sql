@@ -1,0 +1,2 @@
+ALTER TABLE public.stock_log DROP CONSTRAINT IF EXISTS stock_log_change_type_check;
+ALTER TABLE public.stock_log ADD CONSTRAINT stock_log_change_type_check CHECK (change_type = ANY (ARRAY['deduct'::text, 'restore'::text, 'manual_adjust'::text, 'reserve'::text, 'release'::text]));
