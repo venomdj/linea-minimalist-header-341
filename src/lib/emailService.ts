@@ -15,6 +15,8 @@ export interface EmailOrderPayload {
   emailType: EmailType;
   trackingNumber?: string;
   trackingUrl?: string;
+  /** Bypass the duplicate-suppression guard (used for confirmation re-sends). */
+  force?: boolean;
 }
 
 async function invokeOnce(payload: EmailOrderPayload): Promise<boolean> {
