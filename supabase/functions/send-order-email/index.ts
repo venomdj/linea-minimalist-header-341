@@ -519,7 +519,6 @@ if (missing.length) {
     });
   } catch (sendErr) {
 
-  } catch (sendErr) {
     // Log failure
     await supabase.from("email_log").insert({
       order_id: orderId,
