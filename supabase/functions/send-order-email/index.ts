@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { buildInvoicePdfBase64, invoiceFilename } from "./invoice.ts";
+
 
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -474,14 +476,33 @@ if (missing.length) {
     return jsonResponse({ success: false, error: "No recipient email address" }, 400);
   }
 
-  // ── Send via Resend ──────────────────────────────────────────────────────────
+  // ── Invoice attachment (order confirmation only) ─────────────────────────────
+  const attachments: Array<{ filename: string; content: string }> = [];
+  if (emailType === "order_confirmation") {
+    try {
+      attachments.push({
+        filename: invoiceFilename(enrichedOrder),
+        content: buildInvoicePdfBase64(enrichedOrder),
+      });
+    } catch (pdfErr) {
+      console.error("[send-order-email] invoice generation failed:", pdfErr);
+    }
+  }
+
+  // ── Send via Resend (Lovable connector gateway) ──────────────────────────────
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) {
+    return jsonResponse({ success: false, error: "LOVABLE_API_KEY is not configured" }, 500);
+  }
+
   let resendData: unknown;
   try {
     resendData = await withRetry(async () => {
-      const res = await fetch("https://api.resend.com/emails", {
+      const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${RESEND_API_KEY}`,
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "X-Connection-Api-Key": RESEND_API_KEY!,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -489,6 +510,7 @@ if (missing.length) {
           to: [toEmail],
           subject,
           html,
+          ...(attachments.length ? { attachments } : {}),
         }),
       });
       if (!res.ok) {
@@ -498,6 +520,7 @@ if (missing.length) {
       return res.json();
     });
   } catch (sendErr) {
+
     // Log failure
     await supabase.from("email_log").insert({
       order_id: orderId,
