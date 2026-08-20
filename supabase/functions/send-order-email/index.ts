@@ -410,20 +410,23 @@ if (missing.length) {
   }
 
   const { orderId, emailType, trackingNumber, trackingUrl } = body;
+  const force = (body as { force?: boolean }).force === true;
   if (!orderId || !emailType) {
     return jsonResponse({ success: false, error: "orderId and emailType are required" }, 400);
   }
 
-  // ── Idempotency check ────────────────────────────────────────────────────────
+  // ── Idempotency check (skipped when force = true) ────────────────────────────
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  const { data: existing } = await supabase
-    .from("email_log")
-    .select("id")
-    .eq("order_id", orderId)
-    .eq("email_type", emailType)
-    .eq("status", "sent")
-    .maybeSingle();
+  const { data: existing } = force
+    ? { data: null }
+    : await supabase
+        .from("email_log")
+        .select("id")
+        .eq("order_id", orderId)
+        .eq("email_type", emailType)
+        .eq("status", "sent")
+        .maybeSingle();
 
   if (existing) {
     console.info(`[send-order-email] Duplicate suppressed: ${emailType} for ${orderId}`);
