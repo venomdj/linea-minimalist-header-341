@@ -49,7 +49,7 @@ const ShoppingBag = ({ isOpen, onClose, cartItems, updateQuantity, onViewFavorit
       />
       
       {/* Off-canvas panel */}
-      <div className="absolute right-0 top-0 h-screen w-96 bg-background border-l border-border animate-slide-in-right flex flex-col">
+      <div className="absolute right-0 top-0 h-screen max-h-screen w-96 max-w-[90vw] bg-background border-l border-border animate-slide-in-right flex flex-col overflow-hidden overscroll-contain">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 className="text-lg font-light text-foreground">Shopping Bag</h2>
@@ -63,7 +63,7 @@ const ShoppingBag = ({ isOpen, onClose, cartItems, updateQuantity, onViewFavorit
         </div>
         
         {/* Content */}
-        <div className="flex-1 flex flex-col p-6">
+        <div className="flex-1 min-h-0 flex flex-col p-6">
           {/* Mobile favorites toggle - only show on mobile */}
           {onViewFavorites && (
             <div className="md:hidden mb-6 pb-6 border-b border-border">
@@ -80,7 +80,7 @@ const ShoppingBag = ({ isOpen, onClose, cartItems, updateQuantity, onViewFavorit
           )}
           
           {cartItems.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex-1 min-h-0 flex items-center justify-center">
               <p className="text-muted-foreground text-sm text-center">
                 Your shopping bag is empty.<br />
                 Continue shopping to add items to your bag.
@@ -89,7 +89,7 @@ const ShoppingBag = ({ isOpen, onClose, cartItems, updateQuantity, onViewFavorit
           ) : (
             <>
               {/* Cart items */}
-              <div className="flex-1 overflow-y-auto space-y-6 mb-6">
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain cart-scroll space-y-6 mb-6 pr-2 -mr-2">
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex gap-4">
                     <div className="w-20 h-20 bg-muted/10 rounded-lg overflow-hidden">
