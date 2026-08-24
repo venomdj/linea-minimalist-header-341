@@ -21,7 +21,18 @@ interface ShoppingBagProps {
 }
 
 const ShoppingBag = ({ isOpen, onClose, cartItems, updateQuantity, onViewFavorites }: ShoppingBagProps) => {
+  // Lock background page scroll while the bag is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
 
   const subtotal = cartItems.reduce((sum, item) => {
     const price = parseFloat(item.price.replace(/[₹,]/g, ""));
