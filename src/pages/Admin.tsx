@@ -9,6 +9,7 @@ import ProductForm from "@/components/admin/ProductForm";
 import AdminOrders from '../components/order/AdminOrders';
 import AdminNotifications from '@/components/admin/AdminNotifications';
 import AdminAnnouncements from '@/components/admin/AdminAnnouncements';
+import AdminPromoCodes from '@/components/admin/AdminPromoCodes';
 import { useAdminNotificationsCount } from '@/hooks/useAdminNotificationsCount';
 import {
   AlertDialog,
@@ -22,7 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { LogOut, Plus, Pencil, Trash2, Package, Search, ClipboardList, Bell, Megaphone } from "lucide-react";
+import { LogOut, Plus, Pencil, Trash2, Package, Search, ClipboardList, Bell, Megaphone, Ticket } from "lucide-react";
 
 const inr = (n: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
@@ -38,7 +39,7 @@ const Admin = () => {
   const [q, setQ] = useState("");
   
   // Tab control state: Defaults to managing products
-  const [activeTab, setActiveTab] = useState<"products" | "orders" | "notifications" | "announcements">("products");
+  const [activeTab, setActiveTab] = useState<"products" | "orders" | "notifications" | "announcements" | "promos">("products");
   const unreadCount = useAdminNotificationsCount();
 
 
@@ -134,6 +135,16 @@ const Admin = () => {
           >
             <Megaphone size={14} /> Announcements
           </button>
+          <button
+            onClick={() => setActiveTab("promos")}
+            className={`py-3 px-2 font-mono text-xs tracking-wider uppercase border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${
+              activeTab === "promos"
+                ? "border-primary text-foreground font-medium"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Ticket size={14} /> Promo Codes
+          </button>
         </div>
       </div>
 
@@ -142,6 +153,7 @@ const Admin = () => {
         {activeTab === "orders" && <AdminOrders />}
         {activeTab === "notifications" && <AdminNotifications />}
         {activeTab === "announcements" && <AdminAnnouncements />}
+        {activeTab === "promos" && <AdminPromoCodes />}
 
 
         {/* VIEW 2: PRODUCTS DASHBOARD */}
