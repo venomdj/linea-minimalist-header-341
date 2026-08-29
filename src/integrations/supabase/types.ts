@@ -243,6 +243,7 @@ export type Database = {
           customer_name: string
           customer_phone: string | null
           delivered_at: string | null
+          discount_amount: number
           estimated_delivery: string | null
           gst_amount: number
           id: string
@@ -252,6 +253,7 @@ export type Database = {
           order_number: string
           payment_method: string
           payment_status: string
+          promo_code: string | null
           shipped_at: string | null
           shipping_address: string | null
           shipping_address2: string | null
@@ -278,6 +280,7 @@ export type Database = {
           customer_name: string
           customer_phone?: string | null
           delivered_at?: string | null
+          discount_amount?: number
           estimated_delivery?: string | null
           gst_amount?: number
           id?: string
@@ -287,6 +290,7 @@ export type Database = {
           order_number: string
           payment_method: string
           payment_status?: string
+          promo_code?: string | null
           shipped_at?: string | null
           shipping_address?: string | null
           shipping_address2?: string | null
@@ -313,6 +317,7 @@ export type Database = {
           customer_name?: string
           customer_phone?: string | null
           delivered_at?: string | null
+          discount_amount?: number
           estimated_delivery?: string | null
           gst_amount?: number
           id?: string
@@ -322,6 +327,7 @@ export type Database = {
           order_number?: string
           payment_method?: string
           payment_status?: string
+          promo_code?: string | null
           shipped_at?: string | null
           shipping_address?: string | null
           shipping_address2?: string | null
@@ -468,6 +474,105 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_code_redemptions: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          discount_amount: number
+          id: string
+          order_id: string | null
+          promo_code_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          discount_amount?: number
+          id?: string
+          order_id?: string | null
+          promo_code_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          discount_amount?: number
+          id?: string
+          order_id?: string | null
+          promo_code_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_code_redemptions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_code_redemptions_promo_code_id_fkey"
+            columns: ["promo_code_id"]
+            isOneToOne: false
+            referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promo_codes: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          discount_type: string
+          discount_value: number
+          enabled: boolean
+          expires_at: string | null
+          id: string
+          max_discount: number | null
+          min_order_value: number
+          per_user_limit: number | null
+          starts_at: string | null
+          updated_at: string
+          usage_limit: number | null
+          used_count: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          enabled?: boolean
+          expires_at?: string | null
+          id?: string
+          max_discount?: number | null
+          min_order_value?: number
+          per_user_limit?: number | null
+          starts_at?: string | null
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          enabled?: boolean
+          expires_at?: string | null
+          id?: string
+          max_discount?: number | null
+          min_order_value?: number
+          per_user_limit?: number | null
+          starts_at?: string | null
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
+        }
+        Relationships: []
+      }
       saved_addresses: {
         Row: {
           address_line1: string
@@ -606,6 +711,13 @@ export type Database = {
         }[]
       }
       check_stock_availability: { Args: { p_items: Json }; Returns: Json }
+      compute_promo_discount: {
+        Args: {
+          p_code: Database["public"]["Tables"]["promo_codes"]["Row"]
+          p_subtotal: number
+        }
+        Returns: number
+      }
       decrement_stock: {
         Args: { p_product_id: string; p_quantity: number }
         Returns: Json
@@ -628,6 +740,7 @@ export type Database = {
           customer_name: string
           customer_phone: string | null
           delivered_at: string | null
+          discount_amount: number
           estimated_delivery: string | null
           gst_amount: number
           id: string
@@ -637,6 +750,7 @@ export type Database = {
           order_number: string
           payment_method: string
           payment_status: string
+          promo_code: string | null
           shipped_at: string | null
           shipping_address: string | null
           shipping_address2: string | null
@@ -664,6 +778,10 @@ export type Database = {
       }
       place_order_atomic: { Args: { p_order: Json }; Returns: Json }
       restore_stock_for_order: { Args: { p_order_id: string }; Returns: Json }
+      validate_promo_code: {
+        Args: { p_code: string; p_email?: string; p_subtotal: number }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "user"
