@@ -39,8 +39,8 @@ const PromoCodeField = ({
               <p className="text-xs text-muted-foreground mt-1">
                 {applied.description ||
                   (applied.discountType === "percentage"
-                    ? `${applied.discountValue}% off your order`
-                    : `${formatPrice(applied.discountValue)} off your order`)}
+                    ? `${applied.discountValue}% off on your order :D`
+                    : `${formatPrice(applied.discountValue)} off on your order :D`)}
               </p>
               <p className="mt-1.5 font-display text-lg text-verified tabular-nums">
                 You save {formatPrice(applied.discount)}
