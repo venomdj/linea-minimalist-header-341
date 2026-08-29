@@ -9,6 +9,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import AnnouncementSystem from "./components/announcements/AnnouncementSystem";
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import Index from "./pages/Index";
 import Category from "./pages/Category";
 import ProductDetail from "./pages/ProductDetail";
@@ -90,17 +91,19 @@ function AppRoutes() {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <AuthProvider>
-        <CartProvider>
-          <BrowserRouter basename={import.meta.env.BASE_URL}>
-            <AppRoutes />
-          </BrowserRouter>
-        </CartProvider>
-      </AuthProvider>
-    </TooltipProvider>
+    <ThemeProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AuthProvider>
+          <CartProvider>
+            <BrowserRouter basename={import.meta.env.BASE_URL}>
+              <AppRoutes />
+            </BrowserRouter>
+          </CartProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
