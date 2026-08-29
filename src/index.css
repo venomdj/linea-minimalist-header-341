@@ -3,91 +3,99 @@
 @tailwind utilities;
 
 /* MYTHICAL VAULT — Premium Collector Marketplace Design System
-   Charcoal matte aesthetic, muted accents, luxury commercial polish */
+   Light editorial aesthetic, crisp contrast, restrained brass accent,
+   inspired by Butter.video's clean geometric premium feel. */
 
 @layer base {
   :root {
-    /* Core charcoal palette (HSL) */
-    --background: 0 0% 5%;          /* deep matte black */
-    --foreground: 30 8% 92%;        /* warm bone white */
+    /* Core light palette (HSL) */
+    --background: 40 20% 98.5%;     /* warm paper white */
+    --foreground: 20 8% 9%;         /* near-black ink */
 
-    --surface-1: 0 0% 7%;           /* card surface */
-    --surface-2: 0 0% 9%;           /* raised */
-    --surface-3: 0 0% 11%;          /* hover */
+    --surface-1: 0 0% 100%;         /* card surface — pure white */
+    --surface-2: 40 15% 96.5%;      /* raised / section fill */
+    --surface-3: 40 12% 93.5%;      /* hover */
 
-    --nav-background: 0 0% 5%;
-    --nav-foreground: 30 8% 85%;
-    --nav-hover: 30 8% 100%;
+    --nav-background: 0 0% 100%;
+    --nav-foreground: 20 8% 9%;
+    --nav-hover: 20 8% 0%;
 
-    --primary: 30 8% 92%;
-    --primary-foreground: 0 0% 6%;
-    --primary-hover: 0 0% 100%;
+    --primary: 20 8% 9%;            /* near-black — pill buttons */
+    --primary-foreground: 40 20% 98.5%;
+    --primary-hover: 20 8% 18%;
 
-    --secondary: 0 0% 11%;
-    --secondary-foreground: 30 8% 90%;
+    --secondary: 40 15% 96%;
+    --secondary-foreground: 20 8% 9%;
 
-    --muted: 0 0% 10%;
-    --muted-foreground: 220 8% 58%;
+    --muted: 40 12% 95%;
+    --muted-foreground: 220 8% 42%;
 
-    --accent: 36 35% 58%;           /* muted brass/amber */
-    --accent-foreground: 0 0% 6%;
+    --accent: 32 55% 44%;           /* deepened brass/amber for light-bg contrast */
+    --accent-foreground: 40 20% 98.5%;
 
-    --border: 0 0% 14%;
-    --input: 0 0% 14%;
-    --ring: 36 35% 58%;
+    --border: 30 10% 89%;
+    --input: 30 10% 89%;
+    --ring: 32 55% 44%;
 
-    --card: 0 0% 7%;
-    --card-foreground: 30 8% 92%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 8% 9%;
 
-    --popover: 0 0% 7%;
-    --popover-foreground: 30 8% 92%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 8% 9%;
 
-    --destructive: 0 70% 55%;
+    --destructive: 0 65% 48%;
     --destructive-foreground: 0 0% 98%;
 
-    /* Rarity tokens (muted, sophisticated) */
-    --rarity-common: 30 5% 55%;
-    --rarity-rare: 200 25% 55%;
-    --rarity-epic: 280 20% 60%;
-    --rarity-legendary: 36 50% 60%;
-    --rarity-grail: 350 45% 58%;
+    /* Rarity tokens (deepened for legibility on light surfaces) */
+    --rarity-common: 30 5% 42%;
+    --rarity-rare: 205 40% 42%;
+    --rarity-epic: 280 25% 46%;
+    --rarity-legendary: 32 60% 42%;
+    --rarity-grail: 350 55% 46%;
 
-    --verified: 150 25% 55%;
+    --verified: 150 35% 34%;
 
-    --status-bar: 0 0% 0%;
-    --status-bar-foreground: 30 8% 88%;
+    --status-bar: 0 0% 100%;
+    --status-bar-foreground: 20 8% 9%;
 
-    --radius: 0.25rem;
+    --radius: 1rem;
 
-    /* Premium gradients */
-    --gradient-fade-top: linear-gradient(180deg, hsl(0 0% 5% / 0) 0%, hsl(0 0% 5% / 1) 100%);
-    --gradient-fade-bottom: linear-gradient(0deg, hsl(0 0% 5% / 0) 0%, hsl(0 0% 5% / 1) 100%);
-    --gradient-hero: radial-gradient(ellipse at 30% 20%, hsl(36 30% 20% / 0.25) 0%, hsl(0 0% 5% / 0) 60%);
-    --gradient-shine: linear-gradient(135deg, hsl(36 50% 65% / 0) 30%, hsl(36 50% 75% / 0.35) 50%, hsl(36 50% 65% / 0) 70%);
+    /* Premium gradients — softened for a light surface */
+    --gradient-fade-top: linear-gradient(180deg, hsl(40 20% 98.5% / 0) 0%, hsl(40 20% 98.5% / 1) 100%);
+    --gradient-fade-bottom: linear-gradient(0deg, hsl(40 20% 98.5% / 0) 0%, hsl(40 20% 98.5% / 1) 100%);
+    --gradient-hero: radial-gradient(ellipse at 30% 20%, hsl(32 55% 80% / 0.35) 0%, hsl(40 20% 98.5% / 0) 60%);
+    --gradient-shine: linear-gradient(135deg, hsl(32 55% 60% / 0) 30%, hsl(32 55% 70% / 0.4) 50%, hsl(32 55% 60% / 0) 70%);
 
-    /* Shadows */
-    --shadow-card: 0 1px 2px hsl(0 0% 0% / 0.6), 0 8px 32px -8px hsl(0 0% 0% / 0.6);
-    --shadow-elevated: 0 24px 60px -20px hsl(0 0% 0% / 0.8);
+    /* Shadows — soft, diffuse, low-opacity (no harsh black) */
+    --shadow-card: 0 1px 2px hsl(20 10% 10% / 0.04), 0 10px 30px -12px hsl(20 10% 10% / 0.10);
+    --shadow-elevated: 0 30px 70px -24px hsl(20 10% 10% / 0.16);
 
     /* Transitions */
     --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
     --transition-smooth: all 0.4s var(--ease-out-expo);
 
-    --sidebar-background: 0 0% 7%;
-    --sidebar-foreground: 30 8% 80%;
-    --sidebar-primary: 30 8% 92%;
-    --sidebar-primary-foreground: 0 0% 6%;
-    --sidebar-accent: 0 0% 11%;
-    --sidebar-accent-foreground: 30 8% 92%;
-    --sidebar-border: 0 0% 14%;
-    --sidebar-ring: 36 35% 58%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 20 8% 22%;
+    --sidebar-primary: 20 8% 9%;
+    --sidebar-primary-foreground: 40 20% 98.5%;
+    --sidebar-accent: 40 15% 95%;
+    --sidebar-accent-foreground: 20 8% 9%;
+    --sidebar-border: 30 10% 89%;
+    --sidebar-ring: 32 55% 44%;
   }
 
   .dark {
-    /* same charcoal — already dark-first */
+    /* Optional dark mode kept for future use — same charcoal as before */
     --background: 0 0% 5%;
     --foreground: 30 8% 92%;
+    --surface-1: 0 0% 7%;
+    --surface-2: 0 0% 9%;
+    --surface-3: 0 0% 11%;
+    --card: 0 0% 7%;
+    --card-foreground: 30 8% 92%;
+    --border: 0 0% 14%;
+    --muted-foreground: 220 8% 58%;
   }
 }
 
@@ -105,7 +113,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Inter, system-ui, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
     font-feature-settings: 'ss01', 'cv11';
     font-weight: 400;
     overflow-x: hidden;
@@ -117,20 +125,22 @@
     input, select, textarea { font-size: 16px; }
   }
 
-
+  /* Large, confident, geometric display type — Butter-style headings */
   h1, h2, h3, h4, .display {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Inter, system-ui, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", system-ui, sans-serif;
     font-weight: 600;
-    letter-spacing: -0.022em;
+    letter-spacing: -0.025em;
+    color: hsl(var(--foreground));
   }
   h1, .display-xl {
     font-weight: 700;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.035em;
+    line-height: 1.02;
   }
-  h2 { font-weight: 650; }
-  h3, h4 { font-weight: 550; color: hsl(var(--foreground) / 0.94); }
+  h2 { font-weight: 650; letter-spacing: -0.03em; }
+  h3, h4 { font-weight: 550; color: hsl(var(--foreground) / 0.92); }
 
-  p { color: hsl(var(--foreground) / 0.78); font-weight: 400; }
+  p { color: hsl(var(--foreground) / 0.62); font-weight: 400; }
 
   /* Prices & key stats — tinted with accent for separation */
   .tabular-nums, [class*="tabular-nums"] {
@@ -144,7 +154,7 @@
 
   /* Selection */
   ::selection {
-    background: hsl(var(--accent) / 0.4);
+    background: hsl(var(--accent) / 0.22);
     color: hsl(var(--foreground));
   }
 
@@ -159,35 +169,45 @@
   /* Shopping Bag drawer scroll container — always-visible slim scrollbar */
   .cart-scroll {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--muted-foreground) / 0.45) hsl(var(--border) / 0.25);
+    scrollbar-color: hsl(var(--muted-foreground) / 0.35) hsl(var(--border) / 0.4);
     -webkit-overflow-scrolling: touch;
   }
   .cart-scroll::-webkit-scrollbar { width: 8px; }
   .cart-scroll::-webkit-scrollbar-track {
-    background: hsl(var(--border) / 0.25);
+    background: hsl(var(--border) / 0.4);
     border-radius: 8px;
   }
   .cart-scroll::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.45);
+    background: hsl(var(--muted-foreground) / 0.35);
     border-radius: 8px;
   }
   .cart-scroll::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.7);
+    background: hsl(var(--muted-foreground) / 0.55);
   }
 
-  /* Premium glass surface — used sparingly */
+  /* Floating pill glass surface — used for nav bars, sticky headers */
   .glass {
-    background: hsl(0 0% 5% / 0.6);
-    backdrop-filter: blur(20px) saturate(140%);
-    -webkit-backdrop-filter: blur(20px) saturate(140%);
-    border: 1px solid hsl(30 8% 92% / 0.06);
+    background: hsl(0 0% 100% / 0.72);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid hsl(20 8% 9% / 0.06);
   }
 
   .glass-strong {
-    background: hsl(0 0% 4% / 0.75);
-    backdrop-filter: blur(28px) saturate(160%);
-    -webkit-backdrop-filter: blur(28px) saturate(160%);
-    border-bottom: 1px solid hsl(30 8% 92% / 0.05);
+    background: hsl(0 0% 100% / 0.85);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border-bottom: 1px solid hsl(20 8% 9% / 0.06);
+  }
+
+  /* Pill navigation — floating rounded-full container, Butter-style */
+  .nav-pill {
+    border-radius: 9999px;
+    border: 1px solid hsl(20 8% 9% / 0.08);
+    background: hsl(0 0% 100% / 0.85);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    box-shadow: var(--shadow-card);
   }
 
   /* Subtle noise grain overlay */
@@ -196,23 +216,23 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    opacity: 0.04;
-    mix-blend-mode: overlay;
+    opacity: 0.025;
+    mix-blend-mode: multiply;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
-  /* Vignette */
+  /* Vignette — softened for light backgrounds */
   .vignette::before {
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background: radial-gradient(ellipse at center, transparent 50%, hsl(0 0% 0% / 0.6) 100%);
+    background: radial-gradient(ellipse at center, transparent 55%, hsl(20 10% 10% / 0.10) 100%);
   }
 
-  /* Text gradient (premium subtle) */
+  /* Text gradient (premium subtle — ink fading to soft grey) */
   .text-gradient-accent {
-    background: linear-gradient(180deg, hsl(var(--foreground)) 0%, hsl(var(--foreground) / 0.7) 100%);
+    background: linear-gradient(180deg, hsl(var(--foreground)) 0%, hsl(var(--foreground) / 0.55) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -229,14 +249,14 @@
     transform: translateY(0);
   }
 
-  /* Eyebrow / mono label — now bolder + brighter to catch the eye */
+  /* Eyebrow / mono label */
   .eyebrow {
     font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
     font-size: 0.6875rem;
     font-weight: 500;
     letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: hsl(var(--accent) / 0.85);
+    color: hsl(var(--accent) / 0.9);
   }
 
   /* Hover lift */
@@ -244,7 +264,8 @@
     transition: transform 0.5s var(--ease-out-expo), box-shadow 0.5s var(--ease-out-expo);
   }
   .hover-lift:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-elevated);
   }
 
   /* Shine sweep (for cards) */
@@ -281,11 +302,12 @@
   }
   .pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
 
-  /* Gold glow — luxury accent treatments (hero message rotator, premium badges) */
+  /* Accent glow — kept for premium badges, now tuned for light backgrounds */
   .text-glow-gold {
-    text-shadow: 0 0 14px hsl(var(--accent) / 0.35), 0 0 32px hsl(var(--accent) / 0.12);
+    text-shadow: 0 0 1px hsl(var(--accent) / 0.15);
   }
   .dot-glow-gold {
-    box-shadow: 0 0 5px hsl(var(--accent) / 0.9), 0 0 14px hsl(var(--accent) / 0.55), 0 0 22px hsl(var(--accent) / 0.25);
+    box-shadow: 0 0 4px hsl(var(--accent) / 0.7), 0 0 10px hsl(var(--accent) / 0.35);
   }
 }
+
