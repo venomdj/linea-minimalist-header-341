@@ -30,6 +30,15 @@
 </head>
 
   <body>
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("mythicalvault.theme.v1");
+          var isDark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+          if (isDark) document.documentElement.classList.add("dark");
+        } catch (e) {}
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
