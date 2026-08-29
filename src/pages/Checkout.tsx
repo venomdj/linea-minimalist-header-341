@@ -42,6 +42,8 @@ import { toast } from "sonner";
 import CheckoutHeader from "@/components/header/CheckoutHeader";
 import Footer from "@/components/footer/Footer";
 import { useCart } from "@/context/CartContext";
+import { usePromoCode } from "@/hooks/usePromoCode";
+import PromoCodeField from "@/components/checkout/PromoCodeField";
 import { formatPrice } from "@/data/products";
 import {
   INDIAN_STATES,
@@ -89,7 +91,7 @@ export const shippingOptions = [
 type ShippingId = (typeof shippingOptions)[number]["id"];
 
 // ─── Pricing calculator ───────────────────────────────────────────────────────
-export function calcPricing(subtotal: number, shippingId: ShippingId, state: string) {
+export function calcPricing(subtotal: number, shippingId: ShippingId, state: string, discount = 0) {
   const shippingCost = shippingOptions.find((s) => s.id === shippingId)?.price ?? 0;
   const taxableValue = Math.round(subtotal / (1 + GST_RATE));
   const totalGst     = subtotal - taxableValue;
@@ -97,10 +99,11 @@ export function calcPricing(subtotal: number, shippingId: ShippingId, state: str
   const cgst = sameState ? Math.round(totalGst / 2) : 0;
   const sgst = sameState ? totalGst - cgst : 0;
   const igst = sameState ? 0 : totalGst;
-  const total = subtotal + shippingCost;
+  const safeDiscount = Math.min(Math.max(discount, 0), subtotal + shippingCost);
+  const total = subtotal + shippingCost - safeDiscount;
   return {
     shippingCost, taxableValue, totalGst, sameState, cgst, sgst, igst,
-    total, subtotal, gstAmount: totalGst,
+    total, subtotal, gstAmount: totalGst, discount: safeDiscount,
   };
 }
 
@@ -252,9 +255,17 @@ const Checkout = () => {
     } catch { /* ignore */ }
   };
 
+  const {
+    applied: appliedPromo,
+    error: promoError,
+    checking: promoChecking,
+    validate: validatePromo,
+    clear: clearPromo,
+  } = usePromoCode(subtotal, form.email);
+
   const pricing = useMemo(
-    () => calcPricing(subtotal, form.shipping as ShippingId, form.state),
-    [subtotal, form.shipping, form.state]
+    () => calcPricing(subtotal, form.shipping as ShippingId, form.state, appliedPromo?.discount ?? 0),
+    [subtotal, form.shipping, form.state, appliedPromo]
   );
 
   const upiLink = useMemo(() => {
@@ -347,7 +358,7 @@ const Checkout = () => {
 
 
     setSubmitting(true);
-    const finalPricing = calcPricing(subtotal, form.shipping as ShippingId, form.state);
+    const finalPricing = calcPricing(subtotal, form.shipping as ShippingId, form.state, appliedPromo?.discount ?? 0);
 
     if (finalPricing.total !== pricing.total) {
       toast.error("Pricing changed during checkout. Please review your order.");
@@ -393,6 +404,8 @@ const Checkout = () => {
         subtotal: finalPricing.subtotal,
         gst_amount: finalPricing.gstAmount,
         shipping_amount: finalPricing.shippingCost,
+        discount_amount: finalPricing.discount,
+        promo_code: appliedPromo?.code ?? null,
         total_amount: finalPricing.total,
         payment_method: form.paymentMethod,
         payment_status: "pending",
@@ -429,6 +442,17 @@ const Checkout = () => {
           setSubmitting(false);
           return;
         }
+        if (raw.includes("PROMO_INVALID")) {
+          clearPromo();
+          const m = raw.match(/PROMO_INVALID:?\s*(.*)/);
+          toast.error(
+            m && m[1]
+              ? m[1]
+              : "Your promo code is no longer valid. Please review your order and try again.",
+          );
+          setSubmitting(false);
+          return;
+        }
         const msg =
           orderErr.code === "42501"
             ? "PLEASE LOGIN BEFORE ORDERING :) ."
@@ -457,6 +481,7 @@ const Checkout = () => {
       setTimeout(() => setCelebrating(false), 3200);
       window.scrollTo({ top: 0, behavior: "smooth" });
       clear();
+      clearPromo();
       toast.success("Order received — verification pending");
     } catch (err) {
       console.error("[Checkout] Order creation error:", err);
@@ -917,7 +942,25 @@ const Checkout = () => {
                       <Row
                         label="Shipping"
                         value={pricing.shippingCost === 0 ? "Free" : formatPrice(pricing.shippingCost)} />
+                      {pricing.discount > 0 && (
+                        <Row
+                          label={`Discount (${appliedPromo?.code})`}
+                          value={`− ${formatPrice(pricing.discount)}`}
+                          accent
+                        />
+                      )}
                     </div>
+
+                    {/* Promo code */}
+                    <PromoCodeField
+                      applied={appliedPromo}
+                      error={promoError}
+                      checking={promoChecking}
+                      onApply={(code) => validatePromo(code)}
+                      onClear={clearPromo}
+                      formatPrice={formatPrice}
+                      disabled={submitting}
+                    />
 
                     {/* Total */}
                     <div className="border-t border-border/70 pt-5">
@@ -930,6 +973,11 @@ const Checkout = () => {
                       <p className="text-[11px] font-mono tracking-wider text-muted-foreground mt-1.5">
                         Inclusive of all taxes · GSTIN 27AAACA1234F1Z5
                       </p>
+                      {pricing.discount > 0 && (
+                        <p className="text-[11px] font-mono tracking-wider text-verified mt-1 flex items-center gap-1.5">
+                          <Check size={11} /> You saved {formatPrice(pricing.discount)} with {appliedPromo?.code}
+                        </p>
+                      )}
                     </div>
 
                     {hasOutOfStockItems && (
@@ -1355,10 +1403,17 @@ const Field = ({
   </div>
 );
 
-const Row = ({ label, value, muted }: { label: string; value: string; muted?: boolean }) => (
+const Row = ({
+  label, value, muted, accent,
+}: { label: string; value: string; muted?: boolean; accent?: boolean }) => (
   <div className="flex justify-between items-center">
-    <span className="text-muted-foreground">{label}</span>
-    <span className={`tabular-nums font-mono ${muted ? "text-muted-foreground" : "text-foreground"}`}>{value}</span>
+    <span className={accent ? "text-verified" : "text-muted-foreground"}>{label}</span>
+    <span
+      className={`tabular-nums font-mono ${
+        accent ? "text-verified font-semibold" : muted ? "text-muted-foreground" : "text-foreground"
+      }`}>
+      {value}
+    </span>
   </div>
 );
 
